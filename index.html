@@ -1,0 +1,78 @@
+const htmlCode = `
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .search-box {
+      width: 100%;
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      display: block;
+    }
+    .results {
+      margin: 20px auto;
+      width: 100%;
+      max-width: 600px;
+      padding: 0 10px;
+    }
+    .result-item {
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      background: #222;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .result-item:hover {
+      background: #333;
+    }
+    @media (max-width: 600px) {
+      .search-box {
+        font-size: 14px;
+        padding: 10px;
+      }
+      .result-item {
+        font-size: 14px;
+        padding: 10px;
+      }
+    }
+  </style>
+
+  <input type="text" class="search-box" placeholder="Search for a song..." id="searchBox">
+  <div class="results" id="results"></div>
+
+  <script>
+    const resultsDiv = document.getElementById("results");
+    const searchBox = document.getElementById("searchBox");
+    let debounceTimeout;
+
+    async function searchSongs(query) {
+      if (!query) {
+        resultsDiv.innerHTML = "";
+        return;
+      }
+      const res = await fetch("https://musicbrainz.org/ws/2/recording?query=" + encodeURIComponent(query) + "&fmt=json");
+      const data = await res.json();
+      resultsDiv.innerHTML = data.recordings.slice(0, 10).map(r =>
+        \`<div class="result-item"><strong>\${r.title}</strong> – \${r["artist-credit"][0].name}</div>\`
+      ).join("");
+    }
+
+    searchBox.addEventListener("input", (e) => {
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(() => {
+        searchSongs(e.target.value.trim());
+      }, 300); // debounce for performance
+    });
+  </script>
+`;
