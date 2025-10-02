@@ -12,7 +12,6 @@
       margin: 0;
       padding: 1rem;
     }
-
     h2 {
       text-align: center;
       color: #111;
@@ -20,11 +19,10 @@
       font-size: 1.25rem;
       margin-bottom: 1rem;
     }
-
     .search-box {
       width: 100%;
       max-width: 100%;
-      margin: 0 auto 1rem;
+      margin: 0 auto 0.5rem;
       padding: 0.75rem 1rem;
       border: 2px solid #009ca6; /* teal */
       border-radius: 50px;
@@ -33,9 +31,13 @@
       transition: border-color 0.3s ease;
       box-sizing: border-box;
     }
+    .search-box:focus { border-color: #111; }
 
-    .search-box:focus {
-      border-color: #111;
+    .status {
+      max-width: 100%;
+      margin: 0 auto 0.75rem;
+      font-size: 0.9rem;
+      color: #666;
     }
 
     .results {
@@ -57,56 +59,25 @@
       transition: background 0.2s ease, transform 0.1s ease;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-
-    .result-item:hover {
-      background: #e6f7f8; /* subtle teal tint */
-      transform: translateY(-2px);
-    }
+    .result-item:hover { background: #e6f7f8; transform: translateY(-2px); }
 
     .result-item img {
-      width: 60px;
-      height: 60px;
-      border-radius: 8px;
-      object-fit: cover;
+      width: 60px; height: 60px; border-radius: 8px; object-fit: cover;
     }
-
-    .song-info {
-      flex-grow: 1;
-      min-width: 0;
-    }
-
+    .song-info { flex-grow: 1; min-width: 0; }
     .song-title {
-      font-weight: 600;
-      font-size: 1rem;
-      color: #111;
-      margin-bottom: 0.25rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-weight: 600; font-size: 1rem; color: #111; margin-bottom: 0.25rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-
     .artist-name {
-      font-size: 0.9rem;
-      color: #555;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 0.9rem; color: #555;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-
-    .selected {
-      border: 2px solid #009ca6;
-      background: #f0fbfb;
-    }
+    .selected { border: 2px solid #009ca6; background: #f0fbfb; }
 
     @media (max-width: 600px) {
-      .search-box {
-        font-size: 14px;
-        padding: 10px;
-      }
-      .result-item {
-        font-size: 14px;
-        padding: 10px;
-      }
+      .search-box { font-size: 14px; padding: 10px; }
+      .result-item { font-size: 14px; padding: 10px; }
     }
   </style>
 </head>
@@ -118,19 +89,94 @@
     class="search-box"
     placeholder="Start typing a song or artist..."
   />
+  <div id="status" class="status"></div>
   <div id="results" class="results"></div>
 
   <script>
     const searchBox = document.getElementById("search");
     const resultsDiv = document.getElementById("results");
+    const statusDiv = document.getElementById("status");
+
+    function setStatus(msg) {
+      statusDiv.textContent = msg || "";
+    }
 
     async function searchSongs(term) {
       if (!term) {
         resultsDiv.innerHTML = "";
+        setStatus("");
         return;
       }
 
+      const url = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=song&country=US&limit=8`;
+
       try {
-        const response = await fetch(
-          `https://itunes.apple.com/search?term=${encodeURIComponent(
-            term
+        setStatus("Searching…");
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) throw new Error("HTTP " + response.status);
+
+        const data = await response.json();
+        resultsDiv.innerHTML = "";
+
+        if (!data || !Array.isArray(data.results)) {
+          setStatus("No results.");
+          return;
+        }
+        if (data.results.length === 0) {
+          setStatus("No results found. Try a different spelling or song.");
+          return;
+        }
+
+        setStatus("");
+        data.results.forEach((track) => {
+          const item = document.createElement("div");
+          item.className = "result-item";
+          item.innerHTML = `
+            <img src="${track.artworkUrl60}" alt="Album Art">
+            <div class="song-info">
+              <div class="song-title">${track.trackName || "Unknown Title"}</div>
+              <div class="artist-name">${track.artistName || "Unknown Artist"}</div>
+            </div>
+          `;
+
+          item.onclick = () => {
+            document.querySelectorAll(".result-item").forEach(el => el.classList.remove("selected"));
+            item.classList.add("selected");
+
+            // Send selection to parent (e.g., Jotform) if embedded
+            try {
+              window.parent.postMessage(
+                {
+                  action: "setFields",
+                  fields: {
+                    song_title: track.trackName || "",
+                    artist: track.artistName || "",
+                    album: track.collectionName || "",
+                    link: track.trackViewUrl || ""
+                  }
+                },
+                "*"
+              );
+            } catch (e) {
+              // no-op if not embedded
+            }
+          };
+
+          resultsDiv.appendChild(item);
+        });
+      } catch (err) {
+        console.error("Search error:", err);
+        setStatus("Search failed. (Check console).");
+      }
+    }
+
+    let debounceTimeout;
+    searchBox.addEventListener("input", () => {
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(() => {
+        searchSongs(searchBox.value.trim());
+      }, 300);
+    });
+  </script>
+</body>
+</html>
