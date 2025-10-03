@@ -35,10 +35,9 @@
     #thanksOverlay {
       position: fixed; inset: 0;
       background: #f3f4ff;
-      display: none; /* show via JS */
+      display: none; /* shown via JS */
       align-items: center; justify-content: center;
-      z-index: 9999;
-      padding: 24px;
+      z-index: 9999; padding: 24px;
     }
     #thanksCard {
       background:#fff; border-radius:20px; box-shadow:0 12px 30px rgba(0,0,0,.08);
@@ -74,7 +73,7 @@
 
     <div class="spacer"></div>
 
-    <!-- Jotform (prefilled via URL; we add ts= to force a fresh load) -->
+    <!-- Jotform (prefilled via URL; add ts= to force a fresh load) -->
     <div class="card">
       <iframe id="jotFrame" title="Song Request Form" loading="lazy" style="height:1400px" src=""></iframe>
     </div>
@@ -99,7 +98,7 @@
     const JOT_ID   = '252746100648052'; // change if you clone the form
     const JOT_BASE = `https://form.jotform.com/${JOT_ID}`;
 
-    /* -------- INIT: force a fresh, blank form on page load -------- */
+    /* -------- INIT: load a fresh, blank form -------- */
     (function initForm() {
       setFormSrc({}); // blank load with cache-buster
     })();
@@ -231,10 +230,7 @@
       if (e.key === 'Enter') { e.preventDefault(); doSearch(searchInput.value.trim()); }
     });
 
-    /* -------- Turn Jotform's iframe Thank-You into a full-page Thank-You --------
-       Jotform sends postMessage events to the parent window. We'll listen for messages
-       whose origin is a Jotform domain and whose payload hints that the submission
-       completed, then show our overlay. This avoids changing your Jotform settings. */
+    /* -------- Turn the iFrame Thank-You into a full-page Thank-You -------- */
     const JF_ORIGINS = [
       'https://form.jotform.com',
       'https://www.jotform.com',
@@ -243,52 +239,93 @@
       'https://www.jotformeu.com'
     ];
 
-    function looksLikeSubmissionComplete(data) {
-      // Jotform messages vary; handle common patterns safely.
-      if (!data) return false;
-      if (typeof data === 'string') {
-        const s = data.toLowerCase();
-        return s.includes('submission') && (s.includes('complete') || s.includes('completed') || s.includes('success'));
-      }
-      if (typeof data === 'object') {
-        const t = (data.type || data.event || '').toLowerCase();
-        const m = (data.message || data.status || '').toLowerCase();
-        return (t.includes('submission') && (t.includes('complete') || t.includes('success')))
-            || (m.includes('submission') && (m.includes('complete') || m.includes('success')))
-            || (data.name && String(data.name).toLowerCase().includes('thankyou'));
-      }
+    // robust matcher for Jotform messages that indicate "thank you / submission complete"
+    function isSubmissionCompleteMessage(data) {
+      try {
+        if (!data) return false;
+
+        // Strings: look for common thank-you / submission keywords
+        if (typeof data === 'string') {
+          const s = data.toLowerCase();
+          return (
+            s.includes('thankyou') ||
+            s.includes('thank you') ||
+            (s.includes('submission') && (s.includes('complete') || s.includes('success')))
+          );
+        }
+
+        // Objects: check common fields used by Jotform scripts
+        if (typeof data === 'object') {
+          const fields = [
+            'type', 'event', 'name', 'message', 'status', 'action', 'customEvent'
+          ];
+          const values = fields.map(k => (data[k] || '').toString().toLowerCase()).join(' | ');
+
+          return (
+            values.includes('thankyou') ||
+            values.includes('thank you') ||
+            values.includes('submission-complete') ||
+            values.includes('submission complete') ||
+            values.includes('form-submit-successful') ||
+            values.includes('submit-success') ||
+            values.includes('cards:submit:success') ||
+            values.includes('redirected to thank you')
+          );
+        }
+      } catch (_) {}
       return false;
     }
 
+    // We also watch height messages: the Thank-You page is typically much shorter.
+    let lastHeights = [];
+    function heightSuggestsThankYou(h) {
+      lastHeights.push(h);
+      if (lastHeights.length > 6) lastHeights.shift();
+      const avg = lastHeights.reduce((a,b)=>a+b,0)/lastHeights.length;
+      // Heuristic: if average height suddenly drops below ~600px, it's likely a thank-you card.
+      return avg > 0 && avg < 600;
+    }
+
     window.addEventListener('message', (e) => {
-      try {
-        const fromJotform = JF_ORIGINS.some(origin => e.origin === origin);
-        if (!fromJotform) return;
-        if (looksLikeSubmissionComplete(e.data)) {
-          showThanksOverlay();
+      const fromJotform = JF_ORIGINS.includes(e.origin);
+      if (!fromJotform) return;
+
+      const d = e.data;
+
+      // 1) explicit submission-complete detection
+      if (isSubmissionCompleteMessage(d)) {
+        showThanksOverlay();
+        return;
+      }
+
+      // 2) Height messages come as objects like {type:'setHeight', height: N}
+      if (d && typeof d === 'object') {
+        const t = (d.type || d.event || '').toString().toLowerCase();
+        const h = Number(d.height || d.newHeight || d.h || 0);
+        if (t.includes('height') && h) {
+          if (heightSuggestsThankYou(h)) {
+            showThanksOverlay();
+            return;
+          }
         }
-      } catch (_) {}
+      }
     });
 
     function showThanksOverlay(){
       const ov = document.getElementById('thanksOverlay');
+      if (ov.style.display === 'flex') return; // already shown
       ov.style.display = 'flex';
-      // Optional: stop background page scrolling
       document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
     }
 
-    // "Submit another request" button — reloads to a fresh blank form
+    // "Submit another request" resets everything
     document.getElementById('againBtn').addEventListener('click', () => {
-      // Hide overlay
       document.getElementById('thanksOverlay').style.display = 'none';
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
-      // Reset selection label
       selected.innerHTML = '';
-      // Reset form & keep page in place
       setFormSrc({});
-      // Optionally clear search/results
       searchInput.value = '';
       clearResults();
     });
