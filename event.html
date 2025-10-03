@@ -35,14 +35,13 @@
 <body>
   <div class="wrap">
     <div class="logo">
-      <!-- Optional per-event logo: put your image at /assets/client-logo.png or swap this src -->
       <img src="assets/client-logo.png" alt="Client Logo" onerror="this.style.display='none'">
     </div>
 
     <div class="card">
       <h2>Search for a Song</h2>
 
-      <!-- Live search (inline) -->
+      <!-- Live search -->
       <input id="search" class="search-box" type="text" placeholder="Type a song or artist…" inputmode="search" autocomplete="off" />
       <div id="status" class="status"></div>
       <div id="results" class="results"></div>
@@ -52,21 +51,27 @@
 
     <div class="spacer"></div>
 
-    <!-- Jotform embed (prefilled via URL when a track is chosen) -->
+    <!-- Jotform (will be prefilled via URL; we add ts= to force a fresh load) -->
     <div class="card">
       <iframe id="jotFrame"
         title="Song Request Form"
         loading="lazy"
         style="height:1400px"
-        src="https://form.jotform.com/252746100648052">
+        src="">
       </iframe>
     </div>
   </div>
 
   <script>
     /* -------- CONFIG -------- */
-    const JOT_ID   = '252746100648052';                 // change if you clone the form
+    const JOT_ID   = '252746100648052'; // change if you clone the form
     const JOT_BASE = `https://form.jotform.com/${JOT_ID}`;
+
+    /* -------- INIT: force a fresh, blank form on page load -------- */
+    (function initForm() {
+      const ts = Date.now();
+      document.getElementById('jotFrame').src = `${JOT_BASE}?ts=${ts}`;
+    })();
 
     /* -------- SEARCH (inline) -------- */
     const searchInput = document.getElementById('search');
@@ -169,13 +174,14 @@
       if (itemEl) itemEl.classList.add('selected');
 
       // visual confirmation
-      selectedEl.innerHTML = `Selected: <strong>${title || 'Unknown Title'} — ${artist || 'Unknown Artist'}</strong>`;
+      selected.innerHTML = `Selected: <strong>${title || 'Unknown Title'} — ${artist || 'Unknown Artist'}</strong>`;
 
-      // prefill Jotform via URL params (hidden fields on your form)
+      // prefill Jotform via URL params AND force a fresh load with ts=
       const params = new URLSearchParams({
         q12_song_title: title || '',
         q8_artist: artist || '',
-        q9_link: link || ''
+        q9_link: link || '',
+        ts: Date.now().toString()   // cache-buster so it doesn't reuse a Thank You session
       });
       document.getElementById('jotFrame').src = `${JOT_BASE}?${params.toString()}`;
     }
