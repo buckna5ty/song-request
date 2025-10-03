@@ -15,29 +15,18 @@
   .wrap{padding:12px;}
   .field{display:flex;flex-direction:column;gap:6px;max-width:var(--field-w);margin:0 auto;}
 
-  /* Input EXACTLY like Jotform field (size, padding, border, radius, behavior) */
   .input{
-    width:100%;
-    height:48px;
-    padding:0 14px;
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    background:var(--bg);
-    box-sizing:border-box;
-    font-size:16px;
-    line-height:1.25;
-    outline:none;
-    appearance:none; -webkit-appearance:none;
-    box-shadow:none;
+    width:100%; height:48px; padding:0 14px;
+    border:1px solid var(--border); border-radius:var(--radius);
+    background:var(--bg); box-sizing:border-box;
+    font-size:16px; line-height:1.25; outline:none;
+    appearance:none; -webkit-appearance:none; box-shadow:none;
   }
-  /* No hover highlight (to match Your Name) */
   .input:hover{ border-color: var(--border); box-shadow:none; }
-  /* Same teal focus ring */
   .input:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
 
   .status{max-width:var(--field-w);margin:6px auto 0;font-size:13px;color:var(--muted);min-height:18px;text-align:left;}
-  .status:empty{margin:0;min-height:0;} /* remove blank space when unused */
-
+  .status:empty{margin:0;min-height:0;}
   .results{max-width:var(--field-w);margin:10px auto 0;}
   .hidden{display:none !important;}
   .item{display:grid;grid-template-columns:56px 1fr;align-items:center;gap:12px;
@@ -56,9 +45,9 @@
 <body>
   <div class="wrap">
     <div class="field">
-      <!-- No label inside the widget (parent provides it) -->
+      <!-- Parent provides the label; this is only the input -->
       <input id="q" class="input" type="text"
-             placeholder="Start typing…"
+             placeholder="start typing..."
              autocomplete="off" inputmode="search" />
     </div>
     <div id="status" class="status"></div>
@@ -76,7 +65,6 @@
   }
   function clearResults(){ resultsEl.innerHTML=''; }
 
-  /* Resize helpers */
   function resizeTo(h){
     try { window.parent.postMessage({action:'resize', height:h}, '*'); } catch(_) {}
     try { window.top.postMessage({action:'resize', height:h}, '*'); } catch(_) {}
@@ -88,10 +76,9 @@
   function hideResults(){
     clearResults();
     resultsEl.classList.add('hidden');
-    resizeTo(88); // very compact height after a selection (collapses gap)
+    resizeTo(88);
   }
 
-  /* JSONP for iTunes/Deezer */
   function jsonp(url, cbParam='callback'){
     return new Promise((resolve, reject) => {
       const cb='cb_'+Math.random().toString(36).slice(2);
@@ -155,12 +142,10 @@
     document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected'));
     el?.classList.add('selected');
 
-    // Send selection to parent (index.html)
     const msg = { action:'setFields', fields:{ song_title:title||'', artist:artist||'', link:link||'' } };
     try { window.parent.postMessage(msg, '*'); } catch(_) {}
     try { window.top.postMessage(msg, '*'); } catch(_) {}
 
-    // Hide results until typing resumes
     hideResults();
   }
 
@@ -181,7 +166,6 @@
     if(e.key==='Enter'){ e.preventDefault(); doSearch(q.value.trim()); }
   });
 
-  /* Tell parent we're ready (so it can focus the Name field) and set a tiny height */
   window.addEventListener('load', ()=>{
     try { window.parent.postMessage({action:'ready'}, '*'); } catch(_) {}
     try { window.top.postMessage({action:'ready'}, '*'); } catch(_) {}
