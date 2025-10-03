@@ -20,17 +20,19 @@
   <script src="https://cdn.jotfor.ms/s/static/70873410d56/js/errorNavigation.js"></script>
 
   <style>
-    /* Match Jotform page look; only tiny tweaks */
     body { background:#f3f2ff; margin:0; }
     .dce-logo { text-align:center; margin: 18px 0 8px; }
     .dce-logo img { max-width:220px; height:auto; }
+
     /* Hide the real submission fields from guests */
     #id_12, #id_8, #id_9 { display:none !important; }
-    /* Widget iframe will auto-resize via postMessage; set a sensible min/max */
+
+    /* Widget iframe auto-resizes (no big gap) */
     #searchWidget { width:100%; border:0; height:420px; transition:height .2s ease; }
-    .form-subLabel { color:#6b7280; font-size:12px; }
-    /* Selected field is hidden until a song is picked */
+
+    /* Selected field starts hidden until a pick */
     #id_disp_selected { display:none; }
+    .form-subLabel { color:#6b7280; font-size:12px; }
   </style>
 
   <script>
@@ -38,13 +40,16 @@
     JotForm.singleProduct = false;
     JotForm.init(function(){});
 
-    /* IDs of the hidden fields (from your Jotform export) */
-    const FIELD_IDS = { song_title: 'input_12', artist: 'input_8', link: 'input_9' };
+    /* IDs (and QIDs) of your hidden/visible fields */
+    const MAP = {
+      yourName:   { id: 'input_7',  q: 7,  uname: 'q7_yourName' },
+      song_title: { id: 'input_12', q: 12, uname: 'song_title' },
+      artist:     { id: 'input_8',  q: 8,  uname: 'artist' },
+      link:       { id: 'input_9',  q: 9,  uname: 'link' }
+    };
 
-    /* Helpers to set hidden fields + update the "Song – Artist" display */
     function setHiddenField(key, value) {
-      const id = FIELD_IDS[key];
-      const el = id ? document.getElementById(id) : null;
+      const el = document.getElementById(MAP[key]?.id);
       if (el) {
         el.value = value || '';
         el.dispatchEvent(new Event('input', { bubbles:true }));
@@ -53,6 +58,7 @@
       }
       return false;
     }
+
     function showSelectedField(text) {
       const li = document.getElementById('id_disp_selected');
       const input = document.getElementById('input_disp_selected');
@@ -62,17 +68,18 @@
         input.value = '';
       } else {
         input.value = text;
-        li.style.display = '';
+        li.style.display = ''; /* reveal */
       }
     }
 
-    /* Submission: build a real POST back to Jotform */
+    /* Build a robust POST back to Jotform (send both unique names & qIDs) */
     function submitToJotform(ev){
       ev.preventDefault();
-      const nameVal  = (document.getElementById('input_7') || {}).value || '';
-      const titleVal = (document.getElementById(FIELD_IDS.song_title) || {}).value || '';
-      const artistVal= (document.getElementById(FIELD_IDS.artist) || {}).value || '';
-      const linkVal  = (document.getElementById(FIELD_IDS.link) || {}).value || '';
+
+      const nameVal  = (document.getElementById(MAP.yourName.id)   || {}).value || '';
+      const titleVal = (document.getElementById(MAP.song_title.id) || {}).value || '';
+      const artistVal= (document.getElementById(MAP.artist.id)     || {}).value || '';
+      const linkVal  = (document.getElementById(MAP.link.id)       || {}).value || '';
 
       const tmp = document.createElement('form');
       tmp.action = 'https://submit.jotform.com/submit/252746100648052';
@@ -83,12 +90,24 @@
         const i=document.createElement('input');
         i.type='hidden'; i.name=name; i.value=value||''; tmp.appendChild(i);
       }
+
+      /* Required base params */
       add('formID','252746100648052');
-      add('q7_yourName', nameVal);
-      add('song_title',  titleVal);
-      add('artist',      artistVal);
-      add('link',        linkVal);
       add('simple_spc','252746100648052-252746100648052');
+
+      /* Your Name (both forms) */
+      add(MAP.yourName.uname, nameVal);
+      add(`q${MAP.yourName.q}_yourName`, nameVal);
+
+      /* Song fields — send BOTH the unique name and qID variants */
+      add(MAP.song_title.uname, titleVal);           // song_title
+      add(`q${MAP.song_title.q}_song_title`, titleVal);
+
+      add(MAP.artist.uname, artistVal);              // artist
+      add(`q${MAP.artist.q}_artist`, artistVal);
+
+      add(MAP.link.uname, linkVal);                  // link
+      add(`q${MAP.link.q}_link`, linkVal);
 
       document.body.appendChild(tmp);
       tmp.submit();
@@ -106,9 +125,10 @@
         if (link       !== undefined) setHiddenField('link',       link);
 
         const label = [song_title, artist].filter(Boolean).join(' — ');
-        showSelectedField(label);
+        showSelectedField(label);   /* ensure it appears after a pick */
       }
 
+      /* Auto-resize the iframe so there’s no gap */
       if (msg.action === 'resize' && typeof msg.height === 'number') {
         const iframe = document.getElementById('searchWidget');
         if (iframe) {
@@ -119,7 +139,6 @@
       }
     });
 
-    /* Wire submit button after DOM ready */
     document.addEventListener('DOMContentLoaded', () => {
       const btn = document.getElementById('input_2');
       if (btn) btn.addEventListener('click', submitToJotform);
@@ -133,34 +152,35 @@
     </div>
 
     <ul class="form-section page-section" role="presentation">
-      <!-- Your Name (visible; Jotform style) -->
+      <!-- Your Name -->
       <li class="form-line jf-required" data-type="control_textbox" id="id_7">
         <label class="form-label form-label-top form-label-auto" id="label_7" for="input_7">
           Your Name<span class="form-required">*</span>
         </label>
         <div id="cid_7" class="form-input-wide jf-required" data-layout="half">
-          <input type="text" id="input_7" name="q7_yourName" class="form-textbox validate[required]" style="width:310px" data-component="textbox" required />
+          <input type="text" id="input_7" name="q7_yourName" class="form-textbox validate[required]" style="width:310px" required />
         </div>
       </li>
 
-      <!-- Live search as a Jotform-styled field -->
+      <!-- Live search field -->
       <li class="form-line" data-type="control_widget" id="id_widget">
         <label class="form-label form-label-top form-label-auto" id="label_widget" for="searchWidget">Song or Artist</label>
         <div id="cid_widget" class="form-input-wide" data-layout="half">
           <iframe id="searchWidget" src="widget.html" title="Song Search"></iframe>
-          <div class="form-subLabel" style="margin-top:6px;">Tip: Tap a result to use it. The form will fill instantly.</div>
+          <!-- Tip removed by request -->
         </div>
       </li>
 
-      <!-- Single read-only field: "Song – Artist" (hidden until a pick) -->
+      <!-- Single read-only display: "Song – Artist" (hidden until a pick) -->
       <li class="form-line" data-type="control_textbox" id="id_disp_selected">
         <label class="form-label form-label-top form-label-auto" for="input_disp_selected">Selected</label>
         <div class="form-input-wide" data-layout="half">
-          <input type="text" id="input_disp_selected" class="form-textbox" style="width:310px;background:#f7f7f7;border-color:#e5e7eb" readonly aria-readonly="true" />
+          <input type="text" id="input_disp_selected" class="form-textbox"
+                 style="width:310px;background:#f7f7f7;border-color:#e5e7eb" readonly aria-readonly="true" />
         </div>
       </li>
 
-      <!-- Hidden submission fields (sent to Sheets) -->
+      <!-- Hidden fields actually submitted to Sheets -->
       <li class="form-line" id="id_12" style="display:none">
         <label class="form-label form-label-top form-label-auto" for="input_12">song_title</label>
         <div id="cid_12" class="form-input-wide" data-layout="half">
