@@ -15,11 +15,11 @@
     font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;
   }
   .wrap{padding:12px;}
-  .field{display:flex;flex-direction:column;gap:6px;max-width:var(--field-w);margin:0 auto;}
+  .field{display:flex;flex-direction:column;gap:6px;max-width:var(--field-w);margin:0 auto;position:relative;}
 
   /* Input matches parent form field */
   .input{
-    width:100%; height:48px; padding:0 14px;
+    width:100%; height:48px; padding:0 38px 0 14px; /* room for clear button */
     border:1px solid var(--border); border-radius:var(--radius);
     background:var(--bg); box-sizing:border-box;
     font-size:16px; line-height:1.25; outline:none;
@@ -28,6 +28,17 @@
   .input:hover{ border-color: var(--border); box-shadow:none; }
   .input:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
 
+  /* Clear (×) button inside the field */
+  .clear{
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    width:28px; height:28px; border-radius:50%;
+    display:none; align-items:center; justify-content:center;
+    border:1px solid var(--border); background:#fafafa; color:#555;
+    cursor:pointer; user-select:none; line-height:1; font-size:16px;
+  }
+  .clear:hover{ background:#f5f5f5; }
+  .clear:active{ transform:translateY(-50%) scale(.98); }
+
   .status{max-width:var(--field-w);margin:6px auto 0;font-size:13px;color:var(--muted);min-height:18px;text-align:left;}
   .status:empty{margin:0;min-height:0;}
 
@@ -35,8 +46,14 @@
   .selected{
     max-width:var(--field-w); margin:10px auto 0;
     border:1px solid var(--border); border-radius:var(--radius);
+    background:#fff; display:none;
+    transition: box-shadow .15s ease, border-color .15s ease, background .15s ease;
+  }
+  /* Highlight when a track is selected */
+  .selected.active{
+    border-color: var(--teal);
+    box-shadow: 0 0 0 4px var(--ring);
     background:#fff;
-    display:none; /* hidden until a selection is made */
   }
   .sel-inner{
     display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center;
@@ -66,11 +83,8 @@
   .ttl{margin:0 0 2px;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .art{margin:0;color:#555;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-  /* Tiny helper row under selected (optional link, stays subtle) */
-  .sel-meta{
-    border-top:1px dashed #edf2f7; padding:10px 12px; font-size:12px; color:#6b7280;
-    display:none; /* we keep link internal, so hidden by default */
-  }
+  /* Tiny (hidden) helper row under selected for future use */
+  .sel-meta{border-top:1px dashed #edf2f7; padding:10px 12px; font-size:12px; color:#6b7280; display:none;}
   .sel-link{ color:#0ea5a6; text-decoration:none; }
   .sel-link:hover{ text-decoration:underline; }
 </style>
@@ -78,10 +92,11 @@
 <body>
   <div class="wrap">
     <div class="field">
-      <!-- Parent page provides the label; this is only the input -->
+      <!-- Parent provides the label; this is only the input -->
       <input id="q" class="input" type="text"
              placeholder="start typing..."
              autocomplete="off" inputmode="search" />
+      <button id="clearBtn" class="clear" type="button" aria-label="Clear search">×</button>
     </div>
 
     <div id="status" class="status"></div>
@@ -96,7 +111,6 @@
         </div>
       </div>
       <div id="selMeta" class="sel-meta">
-        <!-- If you later want to show a link for staff only, toggle this on -->
         <a id="selLink" class="sel-link" href="#" target="_blank" rel="noopener">Open</a>
       </div>
     </div>
@@ -108,7 +122,9 @@
 <script>
   const $ = (s)=>document.querySelector(s);
   const q=$('#q'), statusEl=$('#status'), resultsEl=$('#results');
-  const selectedBox=$('#selected'), selCover=$('#selCover'), selTitle=$('#selTitle'), selArtist=$('#selArtist'), selMeta=$('#selMeta'), selLink=$('#selLink');
+  const selectedBox=$('#selected'), selTitle=$('#selTitle'), selArtist=$('#selArtist');
+  let selCoverEl=$('#selCover');
+  const selLink=$('#selLink'), clearBtn=$('#clearBtn');
 
   let debounce=null,lastTerm='',lastTag=null;
 
@@ -118,7 +134,6 @@
   }
   function clearResults(){ resultsEl.innerHTML=''; }
 
-  /* Resize helpers so the parent iframe hugs the content */
   function resizeTo(h){
     try { window.parent.postMessage({action:'resize', height:h}, '*'); } catch(_) {}
     try { window.top.postMessage({action:'resize', height:h}, '*'); } catch(_) {}
@@ -136,8 +151,18 @@
     resultsEl.classList.remove('hidden');
     reportHeight();
   }
+  function hideSelected(){
+    selectedBox.style.display='none';
+    selectedBox.classList.remove('active');
+    // revert cover to placeholder glyph
+    if (selCoverEl && selCoverEl.tagName.toLowerCase() === 'img') {
+      selCoverEl.outerHTML = `<div id="selCover" class="sel-cover" aria-hidden="true">♪</div>`;
+      selCoverEl = document.getElementById('selCover');
+    }
+    selTitle.textContent=''; selArtist.textContent='';
+    reportHeight();
+  }
 
-  /* JSONP for iTunes/Deezer (CORSless) */
   function jsonp(url, cbParam='callback'){
     return new Promise((resolve, reject) => {
       const cb='cb_'+Math.random().toString(36).slice(2);
@@ -200,30 +225,25 @@
   function showSelectedCard({title, artist, cover, link}){
     // artwork
     if (cover) {
-      selCover.innerHTML = '';
-      selCover.style.background = 'transparent';
-      selCover.classList.remove('noimg');
       const img = document.createElement('img');
       img.src = cover; img.alt = 'Album cover'; img.className = 'sel-cover';
-      selCover.replaceWith(img);
-      // reselect element reference
-      selCover.id = '';
-      img.id = 'selCover';
-      // update reference variable
-      window.selCover = img;
+      if (selCoverEl) selCoverEl.replaceWith(img);
+      selCoverEl = img;
     } else {
-      // revert to note icon box
-      selCover.outerHTML = `<div id="selCover" class="sel-cover" aria-hidden="true">♪</div>`;
-      window.selCover = document.getElementById('selCover');
+      if (!selCoverEl || selCoverEl.tagName.toLowerCase()==='img') {
+        const box = document.createElement('div');
+        box.id='selCover'; box.className='sel-cover'; box.setAttribute('aria-hidden','true'); box.textContent='♪';
+        if (selCoverEl) selCoverEl.replaceWith(box);
+        selCoverEl = box;
+      }
     }
 
     selTitle.textContent  = title || 'Unknown Title';
     selArtist.textContent = artist || 'Unknown Artist';
-
-    // we keep link hidden for guests, but you can toggle if desired
-    if (link) { selLink.href = link; /* selMeta.style.display='block'; */ }
+    if (link) { selLink.href = link; }
 
     selectedBox.style.display = 'block';
+    selectedBox.classList.add('active');   // highlight
     reportHeight();
   }
 
@@ -231,7 +251,7 @@
     document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected'));
     el?.classList.add('selected');
 
-    // Send selection to the parent page (fills hidden fields + selected label)
+    // Send selection to the parent page
     const msg = { action:'setFields', fields:{ song_title:title||'', artist:artist||'', link:link||'' } };
     try { window.parent.postMessage(msg, '*'); } catch(_) {}
     try { window.top.postMessage(msg, '*'); } catch(_) {}
@@ -242,7 +262,12 @@
   }
 
   async function doSearch(term){
-    if(!term){ setStatus(''); hideResults(); return; }
+    if(!term){
+      setStatus('');
+      hideResults();
+      hideSelected();               // remove pinned card when cleared
+      return;
+    }
     setStatus('Searching…');
     try{ const a=await searchITunes(term); if(a.length){ setStatus(''); render(a); return; } }catch(e){}
     try{ const b=await searchDeezer(term); if(b.length){ setStatus(''); render(b); return; } }catch(e){}
@@ -250,18 +275,30 @@
     catch(e){ setStatus('Search failed.', true); hideResults(); }
   }
 
-  // Typing shows results (selection card remains visible)
+  // Typing shows results; also toggles clear button after 1+ char
   q.addEventListener('input', ()=>{
-    const t=q.value.trim(); if(t===lastTerm) return; lastTerm=t;
+    const raw=q.value;                       // do not trim for button visibility
+    clearBtn.style.display = raw.length>=1 ? 'flex' : 'none';
+    const t = raw.trim();
+    if(t===lastTerm) return; lastTerm=t;
     clearTimeout(debounce); debounce=setTimeout(()=>doSearch(t), 260);
   });
 
-  // Enter triggers a search (don’t submit forms accidentally)
+  // Enter triggers a search (no accidental submit)
   q.addEventListener('keydown',(e)=>{
     if(e.key==='Enter'){ e.preventDefault(); doSearch(q.value.trim()); }
   });
 
-  // Tell parent we're ready and start small
+  // Clear button behavior
+  clearBtn.addEventListener('click', ()=>{
+    q.value=''; lastTerm=''; q.focus({preventScroll:true});
+    clearBtn.style.display='none';
+    setStatus('');
+    hideResults();
+    hideSelected();
+  });
+
+  // Ready ping + compact start
   window.addEventListener('load', ()=>{
     try { window.parent.postMessage({action:'ready'}, '*'); } catch(_) {}
     try { window.top.postMessage({action:'ready'}, '*'); } catch(_) {}
