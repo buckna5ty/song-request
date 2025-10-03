@@ -8,7 +8,7 @@
   :root{
     --ink:#111; --muted:#616161; --border:#e5e7eb;
     --ring:rgba(14,165,166,.25); --radius:8px;
-    --teal:#0ea5a6; --field-w:640px;
+    --teal:#0ea5a6; --field-w:640px; --bg:#fff;
   }
   html,body{margin:0;padding:0;background:#fff;color:var(--ink);
     font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;}
@@ -22,12 +22,17 @@
     border:1px solid var(--border);
     border-radius:var(--radius);
     font-size:16px;
+    line-height:1.25;
     outline:none;
-    background:#fff;
+    background:var(--bg);
     box-sizing:border-box;
     transition:box-shadow .15s,border-color .15s;
+    appearance:none; -webkit-appearance:none;
+    box-shadow:none;
   }
-  .input:focus{border-color:var(--teal);box-shadow:0 0 0 4px var(--ring);}
+  .input:hover{ border-color: var(--border); box-shadow:none; } /* match Name: no hover highlight */
+  .input:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
+
   .status{max-width:var(--field-w);margin:6px auto 0;font-size:13px;color:var(--muted);min-height:18px;text-align:left;}
   .results{max-width:var(--field-w);margin:10px auto 0;}
   .hidden{display:none !important;}
