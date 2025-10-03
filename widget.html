@@ -14,13 +14,12 @@
     margin:0;padding:0;background:#fff;color:var(--ink);
     font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;
   }
-  /* compact bottom so parent submit can sit tight below */
+  /* compact to let parent submit sit close */
   .wrap{padding:12px 12px 6px;}
   .field{display:flex;flex-direction:column;gap:6px;max-width:var(--field-w);margin:0 auto;position:relative;}
 
-  /* Input styled to match parent form */
   .input{
-    width:100%; height:48px; padding:0 38px 0 14px; /* room for clear button */
+    width:100%; height:48px; padding:0 38px 0 14px;
     border:1px solid var(--border); border-radius:var(--radius);
     background:var(--bg); box-sizing:border-box;
     font-size:16px; line-height:1.25; outline:none;
@@ -29,7 +28,6 @@
   .input:hover{ border-color: var(--border); box-shadow:none; }
   .input:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
 
-  /* Clear (×) button inside the field */
   .clear{
     position:absolute; right:10px; top:50%; transform:translateY(-50%);
     width:28px; height:28px; border-radius:50%;
@@ -43,30 +41,18 @@
   .status{max-width:var(--field-w);margin:6px auto 0;font-size:13px;color:var(--muted);min-height:18px;text-align:left;}
   .status:empty{margin:0;min-height:0;}
 
-  /* Pinned selected card */
   .selected{
     max-width:var(--field-w); margin:6px auto 0;
     border:1px solid var(--border); border-radius:var(--radius);
     background:#fff; display:none;
     transition: box-shadow .15s ease, border-color .15s ease, background .15s ease;
   }
-  .selected.active{
-    border-color: var(--teal);
-    box-shadow: 0 0 0 4px var(--ring);
-    background:#fff;
-  }
-  .sel-inner{
-    display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center;
-    padding:10px;
-  }
-  .sel-cover{
-    width:72px;height:72px;border-radius:10px;object-fit:cover;background:#e9eef0;
-    color:#7a8a8d;display:grid;place-items:center;font-size:14px;
-  }
+  .selected.active{ border-color: var(--teal); box-shadow: 0 0 0 4px var(--ring); background:#fff; }
+  .sel-inner{ display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center; padding:10px; }
+  .sel-cover{ width:72px;height:72px;border-radius:10px;object-fit:cover;background:#e9eef0;color:#7a8a8d;display:grid;place-items:center;font-size:14px; }
   .sel-title{ margin:0 0 2px; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .sel-artist{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-  /* Results while typing */
   .results{max-width:var(--field-w);margin:6px auto 0;}
   .hidden{display:none !important;}
   .item{
@@ -87,9 +73,7 @@
 <body>
   <div class="wrap">
     <div class="field">
-      <input id="q" class="input" type="text"
-             placeholder="start typing..."
-             autocomplete="off" inputmode="search" />
+      <input id="q" class="input" type="text" placeholder="start typing..." autocomplete="off" inputmode="search" />
       <button id="clearBtn" class="clear" type="button" aria-label="Clear search">×</button>
     </div>
 
@@ -111,45 +95,43 @@
   </div>
 
 <script>
-  /* --------- DOM refs --------- */
   const $ = (s)=>document.querySelector(s);
-  const q = $('#q');
-  const clearBtn = $('#clearBtn');
-  const statusEl = $('#status');
-  const resultsEl = $('#results');
-  const selectedBox = $('#selected');
-  const selTitle = $('#selTitle');
-  const selArtist = $('#selArtist');
-  let selCoverEl = $('#selCover');
+  const q=$('#q'), clearBtn=$('#clearBtn'), statusEl=$('#status'),
+        resultsEl=$('#results'), selectedBox=$('#selected'),
+        selTitle=$('#selTitle'), selArtist=$('#selArtist');
+  let selCoverEl=$('#selCover');
 
-  /* --------- state --------- */
-  let debounce = null;
-  let lastTerm = '';
-  let lastTag = null;
+  let debounce=null, lastTerm='', lastTag=null;
 
-  /* --------- helpers --------- */
+  /* ----- Height reporting (robust) ----- */
+  let heightRAF=null;
+  function postHeight() {
+    // measure the full doc height
+    const h = Math.max(
+      document.body.scrollHeight, document.documentElement.scrollHeight,
+      document.body.offsetHeight, document.documentElement.offsetHeight
+    );
+    try { window.parent.postMessage({action:'resize', height: h}, '*'); } catch(_) {}
+    try { window.top.postMessage({action:'resize', height: h}, '*'); } catch(_) {}
+  }
+  function scheduleHeight() {
+    if (heightRAF) cancelAnimationFrame(heightRAF);
+    heightRAF = requestAnimationFrame(postHeight);
+  }
+  // Observe layout changes
+  new ResizeObserver(scheduleHeight).observe(document.documentElement);
+  new MutationObserver(scheduleHeight).observe(document.body, {subtree:true, childList:true, attributes:true, characterData:true});
+
+  /* ----- UI helpers ----- */
   function setStatus(m='',err=false){
     statusEl.textContent=m;
     statusEl.style.color=err?'#b00020':'#616161';
+    scheduleHeight();
   }
-  function clearResults(){ resultsEl.innerHTML=''; }
-  function resizeTo(h){
-    try { window.parent.postMessage({action:'resize', height:h}, '*'); } catch(_) {}
-    try { window.top.postMessage({action:'resize', height:h}, '*'); } catch(_) {}
-  }
-  function reportHeight(){
-    const h = document.documentElement.scrollHeight;
-    resizeTo(h);
-  }
-  function hideResults(){
-    clearResults();
-    resultsEl.classList.add('hidden');
-    reportHeight();
-  }
-  function showResults(){
-    resultsEl.classList.remove('hidden');
-    reportHeight();
-  }
+  function clearResults(){ resultsEl.innerHTML=''; scheduleHeight(); }
+  function hideResults(){ resultsEl.classList.add('hidden'); clearResults(); }
+  function showResults(){ resultsEl.classList.remove('hidden'); scheduleHeight(); }
+
   function hideSelected(){
     selectedBox.style.display='none';
     selectedBox.classList.remove('active');
@@ -158,10 +140,10 @@
       selCoverEl = document.getElementById('selCover');
     }
     selTitle.textContent=''; selArtist.textContent='';
-    reportHeight();
+    scheduleHeight();
   }
 
-  /* --------- transport: JSONP for iTunes/Deezer (CORSless) --------- */
+  /* ----- JSONP (iTunes, Deezer) ----- */
   function jsonp(url, cbParam='callback'){
     return new Promise((resolve, reject) => {
       const cb='cb_'+Math.random().toString(36).slice(2);
@@ -171,7 +153,7 @@
       const s=document.createElement('script'); lastTag=s;
       const timer=setTimeout(()=>{cleanup();reject(new Error('timeout'));},9000);
       function cleanup(){ clearTimeout(timer); try{delete window[cb];}catch{} if(s.parentNode)s.parentNode.removeChild(s); }
-      window[cb]=(data)=>{ cleanup(); resolve(data); reportHeight(); };
+      window[cb]=(data)=>{ cleanup(); resolve(data); scheduleHeight(); };
       s.onerror=()=>{ cleanup(); reject(new Error('jsonp error')); };
       s.src=src; document.body.appendChild(s);
     });
@@ -196,7 +178,7 @@
     });
     if (!r.ok) throw new Error('mb http '+r.status);
     const data = await r.json();
-    reportHeight();
+    scheduleHeight();
     return (data.recordings || []).map(rec => {
       const ac = rec['artist-credit'];
       const artist = ac && ac[0] && ac[0].name ? ac[0].name : '';
@@ -204,28 +186,36 @@
     });
   }
 
-  /* --------- renderers --------- */
+  /* ----- renderers ----- */
   function render(list){
     clearResults();
     showResults();
     list.forEach(({title, artist, cover, link})=>{
       const div=document.createElement('div');
       div.className='item'; div.setAttribute('role','button'); div.setAttribute('tabindex','0');
-      const img = cover ? `<img class="cover" src="${cover}" alt="Album cover">`
-                        : `<div class="cover" aria-hidden="true">♪</div>`;
-      div.innerHTML = `${img}<div class="info"><p class="ttl">${title||'Unknown Title'}</p><p class="art">${artist||('Unknown Artist')}</p></div>`;
+      let imgHTML;
+      if (cover) {
+        imgHTML = `<img class="cover" src="${cover}" alt="Album cover">`;
+      } else {
+        imgHTML = `<div class="cover" aria-hidden="true">♪</div>`;
+      }
+      div.innerHTML = `${imgHTML}<div class="info"><p class="ttl">${title||'Unknown Title'}</p><p class="art">${artist||('Unknown Artist')}</p></div>`;
       const select=()=>useSong({title,artist,cover,link}, div);
       div.onclick=select;
       div.onkeyup=(e)=>{ if(e.key==='Enter'||e.key===' ') select(); };
+      // when images load, recalc height
+      const pic = div.querySelector('img.cover');
+      if (pic) pic.addEventListener('load', scheduleHeight, {once:true});
       resultsEl.appendChild(div);
     });
-    reportHeight();
+    scheduleHeight();
   }
 
   function showSelectedCard({title, artist, cover, link}){
     if (cover) {
       const img = document.createElement('img');
       img.src = cover; img.alt = 'Album cover'; img.className = 'sel-cover';
+      img.addEventListener('load', scheduleHeight, {once:true});
       if (selCoverEl) selCoverEl.replaceWith(img);
       selCoverEl = img;
     } else {
@@ -241,29 +231,26 @@
 
     selectedBox.style.display = 'block';
     selectedBox.classList.add('active');
-    reportHeight();
+    scheduleHeight();
   }
 
-  /* --------- selection --------- */
   function useSong({title,artist,cover,link}, el){
     document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected'));
     el?.classList.add('selected');
 
-    // Notify parent page
-    const msg = { action:'setFields', fields:{ song_title:title||'', artist:artist||'', link:link||'' } };
-    try { window.parent.postMessage(msg, '*'); } catch(_) {}
-    try { window.top.postMessage(msg, '*'); } catch(_) {}
+    try { window.parent.postMessage({ action:'setFields', fields:{ song_title:title||'', artist:artist||'', link:link||'' } }, '*'); } catch(_) {}
+    try { window.top.postMessage({ action:'setFields', fields:{ song_title:title||'', artist:artist||'', link:link||'' } }, '*'); } catch(_) {}
 
     showSelectedCard({title,artist,cover,link});
     hideResults();
   }
 
-  /* --------- search flow --------- */
+  /* ----- search flow ----- */
   async function doSearch(term){
     if(!term){
       setStatus('');
       hideResults();
-      // keep pinned card until user clears input with ×
+      // keep card until user clears with ×
       return;
     }
     setStatus('Searching…');
@@ -273,15 +260,14 @@
     catch(e){ setStatus('Search failed.', true); hideResults(); }
   }
 
-  /* --------- events --------- */
+  /* ----- events ----- */
   q.addEventListener('input', ()=>{
-    const raw=q.value;                     // do not trim for button visibility
+    const raw=q.value;
     clearBtn.style.display = raw.length>=1 ? 'flex' : 'none';
     const t = raw.trim();
-    if(t===lastTerm) return;
-    lastTerm=t;
-    clearTimeout(debounce);
-    debounce=setTimeout(()=>doSearch(t), 260);
+    if(t===lastTerm) return; lastTerm=t;
+    clearTimeout(debounce); debounce=setTimeout(()=>doSearch(t), 260);
+    scheduleHeight();
   });
 
   q.addEventListener('keydown',(e)=>{
@@ -293,14 +279,13 @@
     clearBtn.style.display='none';
     setStatus('');
     hideResults();
-    hideSelected(); // also remove pinned card when cleared
+    hideSelected();
   });
 
   window.addEventListener('load', ()=>{
     try { window.parent.postMessage({action:'ready'}, '*'); } catch(_) {}
     try { window.top.postMessage({action:'ready'}, '*'); } catch(_) {}
-    // small starting height so parent submit sits right under the widget
-    resizeTo(70);
+    scheduleHeight();
   });
 </script>
 </body>
