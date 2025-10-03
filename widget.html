@@ -42,14 +42,20 @@
   function setStatus(m='',err=false){ statusEl.textContent=m; statusEl.style.color=err?'#b00020':'#616161'; }
   function clearResults(){ resultsEl.innerHTML=''; }
 
-  /* Tell parent our height so the iframe resizes (removes gap) */
+  /* Report height to parent so iframe auto-resizes */
   function reportHeight(){
     const h = document.documentElement.scrollHeight;
     try { window.parent.postMessage({action:'resize', height:h}, '*'); } catch(_) {}
     try { window.top.postMessage({action:'resize', height:h}, '*'); } catch(_) {}
   }
 
-  // JSONP helper for iTunes & Deezer (cross-origin friendly)
+  function hideResults(){
+    clearResults();
+    resultsEl.classList.add('hidden');
+    reportHeight();
+  }
+
+  // JSONP helper for iTunes & Deezer
   function jsonp(url, cbParam='callback'){
     return new Promise((resolve, reject) => {
       const cb='cb_'+Math.random().toString(36).slice(2);
@@ -101,17 +107,11 @@
     reportHeight();
   }
 
-  function hideResults(){
-    clearResults();
-    resultsEl.classList.add('hidden');
-    reportHeight();
-  }
-
   function useSong({title,artist,link}, el){
     document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected'));
     el?.classList.add('selected');
 
-    // Send selection to parent (index.html) — NO RELOAD
+    // Send selection to parent (index.html)
     const msg = { action:'setFields', fields:{ song_title:title||'', artist:artist||'', link:link||'' } };
     try { window.parent.postMessage(msg, '*'); } catch(_) {}
     try { window.top.postMessage(msg, '*'); } catch(_) {}
