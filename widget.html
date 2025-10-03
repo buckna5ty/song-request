@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DCE • Song Search Widget</title>
+<style>
+  :root{
+    --ink:#111; --muted:#616161; --border:#e5e7eb;
+    --ring:rgba(33,150,243,.25); --accent:#009ca6;
+    --radius:10px; --radius-sm:8px;
+  }
+  html,body{margin:0;padding:0;background:#fff;color:var(--ink);
+    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji", sans-serif;}
+  .wrap{padding:12px;}
+  .field{display:flex;flex-direction:column;gap:6px;max-width:640px;margin:0 auto;}
+  .label{font-size:14px;font-weight:600;color:#333;}
+  .input{height:48px;padding:0 14px;border:1px solid var(--border);border-radius:var(--radius-sm);
+    font-size:16px;outline:none;background:#fff;box-sizing:border-box;transition: box-shadow .15s, border-color .15s;}
+  .input:focus{border-color:#2196f3;box-shadow:0 0 0 4px var(--ring);}
+  .status{max-width:640px;margin:6px auto 0;font-size:13px;color:var(--muted);min-height:18px;text-align:left;}
+  .results{max-width:640px;margin:10px auto 0;}
+  .item{display:grid;grid-template-columns:56px 1fr;align-items:center;gap:12px;padding:10px;border:1px solid var(--border);
+    border-radius:var(--radius-sm);background:#fafafa;transition: background .15s, transform .06s, border-color .15s;cursor:pointer;margin-bottom:10px;}
+  .item:hover{background:#f5f5f5;} .item:active{transform:scale(.996);}
+  .item.selected{border-color:#2196f3;box-shadow:0 0 0 4px var(--ring);background:#fff;}
+  .cover{width:56px;height:56px;border-radius:8px;object-fit:cover;background:#e9eef0;color:#7a8a8d;display:grid;place-items:center;font-size:12px;}
+  .info{min-width:0;}
+  .ttl{margin:0 0 2px;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .art{margin:0;color:#555;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .foot{max-width:640px;margin:6px auto 0;font-size:12px;color:#999;text-align:left;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="field">
+      <label class="label" for="q">Song or Artist</label>
+      <input id="q" class="input" type="text" placeholder="Start typing… (e.g., ‘Uptown Funk’ or ‘Bruno Mars’)" autocomplete="off" inputmode="search" />
+    </div>
+    <div id="status" class="status"></div>
+    <div id="results" class="results"></div>
+    <div class="foot">Tip: Tap a result to use it. Your form will reload with the song filled in.</div>
+  </div>
+
+<script>
+  // ===== CONFIG: put your Jotform ID here (the form that contains THIS widget) =====
+  const JOT_ID = '252746100648052'; // <-- CHANGE if you clone the form
+  const JOT_BASE = `https://form.jotform.com/${JOT_ID}`;
+
+  // ===== Helpers =====
+  const $ = (s) => document.querySelector(s);
+  const q = $('#q'); const statusEl = $('#status'); const resultsEl = $('#results');
+  let debounce=null,lastTerm='',lastTag=null;
+
+  function setStatus(msg='', err=false){ statusEl.textContent = msg; statusEl.style.color = err ? '#b00020' : '#616161'; }
+  function clearResults(){ resultsEl.innerHTML=''; }
+
+  // JSONP for iTunes & Deezer (works cross-origin in iframes)
+  function jsonp(url, cbParam='callback'){
+    return new Promise((resolve, reject) => {
+      const cb='cb_'+Math.random().toString(36).slice(2);
+      const sep=url.includes('?')?'&':'?';
+      const src=`${url}${sep}${cbParam}=${cb}`;
+      if (lastTag && lastTag.parentNode) lastTag.parentNode.removeChild(lastTag);
+      const s=document.createElement('script'); lastTag=s;
+      const timer=setTimeout(()=>{cleanup();reject(new Error('timeout'));},9000);
+      function cleanup(){ clearTimeout(timer); try{delete window[cb];}catch{} if(s.parentNode)s.parentNode.removeChild(s); }
+      window[cb]=(data)=>{ cleanup(); resolve(data); };
+      s.onerror=()=>{ cleanup(); reject(new Error('jsonp error')); };
+      s.src=src; document.body.appendChild(s);
+    });
+  }
+
+  async function searchITunes(term){
+    const data = await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=8`, 'callback');
+    return (data?.results || []).map(t => ({ title:t.trackName, artist:t.artistName, cover:t.artworkUrl60, link:t.trackViewUrl }));
+  }
+  async function searchDeezer(term){
+    const data = await jsonp(`https://api.deezer.com/search?q=${encodeURIComponent(term)}&limit=8&output=jsonp`, 'callback');
+    return (data?.data || []).map(d => ({ title:d.title, artist:d?.artist?.name||'', cover:d?.album?.cover_medium||d?.album?.cover||'', link:d.link||'' }));
+  }
+  async function searchMB(term){
+    const r = await fetch(`https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(term)}&fmt=json&limit=8`, {
+      headers:{'User-Agent':'DCE-SongRequest/1.0 (https://www.davidcharlesevents.com)'}, cache:'no-store'
+    });
+    if (!r.ok) throw new Error('mb http '+r.status);
+    const data = await r.json();
+    return (data.recordings || []).map(rec => {
+      const ac = rec['artist-credit']; const artist = ac && ac[0] && ac[0].name ? ac[0].name : '';
+      return { title: rec.title, artist, cover:'', link:`https://musicbrainz.org/recording/${rec.id}` };
+    });
+  }
+
+  function render(list){
+    clearResults();
+    list.forEach(({title, artist, cover, link})=>{
+      const div=document.createElement('div');
+      div.className='item'; div.setAttribute('role','button'); div.setAttribute('tabindex','0');
+      const img = cover ? `<img class="cover" src="${cover}" alt="Album cover">` : `<div class="cover" aria-hidden="true">♪</div>`;
+      div.innerHTML = `${img}<div class="info"><p class="ttl">${title||'Unknown Title'}</p><p class="art">${artist||'Unknown Artist'}</p></div>`;
+      const select=()=>useSong({title,artist,link}, div);
+      div.onclick=select; div.onkeyup=(e)=>{ if(e.key==='Enter'||e.key===' ') select(); };
+      resultsEl.appendChild(div);
+    });
+  }
+
+  async function doSearch(term){
+    if(!term){ setStatus(''); clearResults(); return; }
+    setStatus('Searching…');
+    try{ const a=await searchITunes(term); if(a.length){ setStatus(''); render(a); return; } }catch(e){}
+    try{ const b=await searchDeezer(term); if(b.length){ setStatus(''); render(b); return; } }catch(e){}
+    try{ const c=await searchMB(term); setStatus(c.length?'':'No results'); render(c); }catch(e){ setStatus('Search failed.', true); clearResults(); }
+  }
+
+  // The key: reload the SAME Jotform with query params for hidden fields.
+  function useSong({title,artist,link}, el){
+    document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected'));
+    el?.classList.add('selected');
+
+    const params = new URLSearchParams({
+      song_title: title || '',
+      artist:     artist || '',
+      link:       link   || '',
+      ts:         Date.now().toString() // cache-buster so JF doesn’t reuse Thank-You
+    });
+
+    // Navigate the TOP window so we leave the embedded widget and come back to the form with prefill.
+    try {
+      window.top.location.href = `${JOT_BASE}?${params.toString()}`;
+    } catch {
+      // Fallback: same behavior via parent (older browsers)
+      parent.location.href = `${JOT_BASE}?${params.toString()}`;
+    }
+  }
+
+  // Debounced live search
+  q.addEventListener('input', ()=>{
+    const t=q.value.trim(); if(t===lastTerm) return; lastTerm=t;
+    clearTimeout(debounce); debounce=setTimeout(()=>doSearch(t), 260);
+  });
+  q.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); doSearch(q.value.trim()); } });
+
+  // Optional: autofocus input when the widget loads
+  window.addEventListener('load', ()=>{ q.focus({preventScroll:true}); });
+</script>
+</body>
+</html>
