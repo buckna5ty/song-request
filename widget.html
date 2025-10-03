@@ -21,7 +21,6 @@
   .info{min-width:0;}
   .ttl{margin:0 0 2px;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .art{margin:0;color:#555;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .foot{max-width:640px;margin:6px auto 0;font-size:12px;color:#999;text-align:left;}
 </style>
 </head>
 <body>
@@ -32,7 +31,6 @@
     </div>
     <div id="status" class="status"></div>
     <div id="results" class="results"></div>
-    <div class="foot">Tip: Tap a result to use it. The form will fill instantly.</div>
   </div>
 
 <script>
@@ -43,7 +41,6 @@
   function setStatus(m='',err=false){ statusEl.textContent=m; statusEl.style.color=err?'#b00020':'#616161'; }
   function clearResults(){ resultsEl.innerHTML=''; }
 
-  // JSONP helper for iTunes & Deezer
   function jsonp(url, cbParam='callback'){
     return new Promise((resolve, reject) => {
       const cb='cb_'+Math.random().toString(36).slice(2);
