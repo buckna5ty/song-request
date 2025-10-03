@@ -20,14 +20,13 @@
 <body>
   <div class="wrap">
     <div class="logo">
-      <!-- swap this if you want a different logo per event -->
-      <img src="https://raw.githubusercontent.com/buckna5ty/dce-2025-10-12-smith-wedding/main/assets/client-logo.png" alt="Client Logo" onerror="this.style.display='none'">
+      <img src="assets/client-logo.png" alt="Client Logo" onerror="this.style.display='none'">
     </div>
 
     <div class="card">
       <h2>Search for a Song</h2>
-      <!-- Widget lives at this repo root -->
-      <iframe id="searchFrame" src="./index.html" title="Song Search" loading="lazy" style="height:520px"></iframe>
+      <!-- NOTE the ?title=0 to hide the widget’s own heading -->
+      <iframe id="searchFrame" src="./index.html?title=0" title="Song Search" loading="lazy" style="height:520px"></iframe>
     </div>
 
     <div id="selected"></div>
@@ -72,7 +71,6 @@
         q9_link: link
       });
       document.getElementById('jotFrame').src = `${JOT_BASE}?${params.toString()}`;
-      // (Hidden fields on the Jotform will receive these values.)
     });
   </script>
 </body>
