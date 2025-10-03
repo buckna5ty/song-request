@@ -1,222 +1,52 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html lang="en" class="supernova ">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <link rel="alternate" type="application/json+oembed" href="https://www.jotform.com/oembed/?format=json&amp;url=https%3A%2F%2Fform.jotform.com%2F252746100648052" title="oEmbed Form">
-  <link rel="alternate" type="text/xml+oembed" href="https://www.jotform.com/oembed/?format=xml&amp;url=https%3A%2F%2Fform.jotform.com%2F252746100648052" title="oEmbed Form">
-  <meta property="og:title" content="Song Request Template">
-  <meta property="og:url" content="https://form.jotform.com/252746100648052">
-  <meta property="og:description" content="Please click the link to complete this form.">
-  <meta name="slack-app-id" content="AHNMASS8M">
-  <meta property="og:image" content="https://cdn.jotfor.ms/assets/img/landing/opengraph.png" />
-  <link rel="shortcut icon" href="https://cdn.jotfor.ms/assets/img/favicons/favicon-2021-light%402x.png">
-  <link rel="apple-touch-icon" href="https://cdn.jotfor.ms/assets/img/favicons/favicon-2021-light%402x.png">
-
-  <link rel="canonical" href="https://form.jotform.com/252746100648052" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=1" />
-  <meta name="HandheldFriendly" content="true" />
-  <title>Song Request Template</title>
-
-  <!-- Jotform CSS (from export) -->
-  <link type="text/css" rel="stylesheet" href="https://cdn.jotfor.ms/stylebuilder/static/form-common.css?v=66f5606"/>
-  <style type="text/css">@media print{*{-webkit-print-color-adjust: exact !important;color-adjust: exact !important;}.form-section{display:inline!important}.form-pagebreak{display:none!important}.form-section-closed{height:auto!important}.page-section{position:initial!important}}</style>
-  <link id="custom-font" type="text/css" rel="stylesheet" href="//cdn.jotfor.ms/fonts/?family=Inter" />
-  <link type="text/css" rel="stylesheet" href="https://cdn.jotfor.ms/themes/CSS/5e6b428acc8c4e222d1beb91.css?v=3.3.65870"/>
-  <link type="text/css" rel="stylesheet" href="https://cdn.jotfor.ms/css/styles/payment/payment_styles.css?3.3.65870" />
-  <link type="text/css" rel="stylesheet" href="https://cdn.jotfor.ms/css/styles/payment/payment_feature.css?3.3.65870" />
-
-  <!-- Jotform JS (from export) -->
-  <script>window.enableEventObserver=true</script>
-  <script src="https://cdn.jotfor.ms/s/static/70873410d56/static/prototype.forms.js" type="text/javascript"></script>
-  <script src="https://cdn.jotfor.ms/s/static/70873410d56/static/jotform.forms.js" type="text/javascript"></script>
-  <script src="https://cdn.jotfor.ms/s/static/70873410d56/js/vendor/smoothscroll.min.js" type="text/javascript"></script>
-  <script src="https://cdn.jotfor.ms/s/static/70873410d56/js/errorNavigation.js" type="text/javascript"></script>
-
-  <!-- Small layout helpers + force-hide hidden fields -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Song Search</title>
   <style>
-    .dce-wrap { max-width: 920px; margin: 0 auto; padding: 16px; }
-    .dce-logo { text-align: center; margin: 12px 0 20px; }
-    .dce-logo img { max-width: 220px; height: auto; }
-
-    /* Hide the exported hidden fields so guests never see them */
-    #id_12,  /* song_title */
-    #id_8,   /* artist */
-    #id_9    /* link (hidden, filled) */
-    { display: none !important; }
-
-    /* tiny selected confirmation */
-    #selectedStatus { 
-      max-width: 920px; margin: 8px auto 24px; font: 14px/1.4 Inter, Arial, sans-serif; 
-      color: #333; 
-    }
-    #selectedStatus strong { color: #009ca6; }
+    :root { --accent:#009ca6; --ring:rgba(0,0,0,0.08); }
+    body { font-family: Inter, "Helvetica Neue", Arial, sans-serif; background:#fff; color:#111; margin:0; padding:16px; }
+    h2 { margin:0 0 12px; text-align:center; font-weight:600; }
+    .search-box { width:100%; max-width:560px; margin:0 auto 12px; padding:12px 16px; border:2px solid var(--ring); border-radius:999px; font-size:16px; outline:none; display:block; box-sizing:border-box; }
+    .search-box:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,156,166,.15); }
+    .status { max-width:560px; margin:6px auto 0; font-size:13px; color:#666; text-align:center; min-height:18px; }
+    .results { max-width:560px; margin:8px auto 0; }
+    .result-item { display:flex; align-items:center; gap:12px; padding:10px; margin-bottom:8px; border-radius:12px; background:#fafafa; cursor:pointer; transition:background .2s ease, transform .1s ease; box-shadow:0 1px 2px rgba(0,0,0,.05); }
+    .result-item:hover { background:#f2fbfc; }
+    .result-item.selected { border:2px solid var(--accent); background:#f8feff; }
+    .cover { width:56px; height:56px; border-radius:8px; object-fit:cover; flex:0 0 56px; background:#e9ecef; display:flex; align-items:center; justify-content:center; font-size:12px; color:#777; }
+    .song-info { flex:1; min-width:0; }
+    .song-title { font-weight:600; font-size:15px; }
+    .artist-name { font-size:13px; color:#555; }
   </style>
-
-  <script type="text/javascript">
-    JotForm.newDefaultTheme = true;
-    JotForm.extendsNewTheme = false;
-    JotForm.singleProduct = false;
-    JotForm.newPaymentUIForNewCreatedForms = true;
-    JotForm.texts = {"pleaseWait":"Please wait..."}; /* keep minimal */
-    JotForm.init(function(){});
-    setTimeout(function() {
-      JotForm.paymentExtrasOnTheFly([null,null,{"name":"submit2","qid":"2","text":"Submit","type":"control_button"},null,null,null,null,{"description":"","name":"yourName","qid":"7","subLabel":"","text":"Your Name","type":"control_textbox"},{"description":"","name":"artist","qid":"8","subLabel":"","text":"artist","type":"control_textbox"},{"description":"","name":"link","qid":"9","subLabel":"","text":"link","type":"control_textbox"},null,null,{"description":"","name":"song_title","qid":"12","subLabel":"","text":"song_title","type":"control_textbox"}]);
-    }, 20);
-  </script>
 </head>
 <body>
+  <h2>Search for a Song</h2>
+  <input id="search" class="search-box" type="text" placeholder="Type a song or artist…" inputmode="search" autocomplete="off" />
+  <div id="status" class="status"></div>
+  <div id="results" class="results"></div>
 
-  <div class="dce-wrap">
-    <!-- (1) Optional client logo -->
-    <div class="dce-logo">
-      <img src="assets/client-logo.png" alt="Client Logo">
-    </div>
-
-    <!-- (2) Live search iframe -->
-    <div style="margin:0 0 8px 0">
-      <iframe
-        id="songSearch"
-        src="https://buckna5ty.github.io/song-request/"
-        style="width:100%;max-width:100%;border:0;height:520px"
-        loading="lazy"
-        title="Song Search"
-      ></iframe>
-    </div>
-
-    <!-- (2b) Selected confirmation (NO link shown) -->
-    <div id="selectedStatus"></div>
-
-    <!-- (3) Jotform form (from export) -->
-    <form class="jotform-form" onsubmit="return typeof testSubmitFunction !== 'undefined' && testSubmitFunction();" action="https://submit.jotform.com/submit/252746100648052" method="post" name="form_252746100648052" id="252746100648052" accept-charset="utf-8" autocomplete="on">
-      <input type="hidden" name="formID" value="252746100648052" />
-      <input type="hidden" id="JWTContainer" value="" />
-      <input type="hidden" id="cardinalOrderNumber" value="" />
-      <input type="hidden" id="jsExecutionTracker" name="jsExecutionTracker" value="build-date-1759445765667" />
-      <input type="hidden" id="submitSource" name="submitSource" value="unknown" />
-      <input type="hidden" id="submitDate" name="submitDate" value="undefined" />
-      <input type="hidden" id="buildDate" name="buildDate" value="1759445765667" />
-      <input type="hidden" name="uploadServerUrl" value="https://upload.jotform.com/upload" />
-      <input type="hidden" name="eventObserver" value="1" />
-      <div role="main" class="form-all">
-        <ul class="form-section page-section" role="presentation">
-          <li class="form-line jf-required" data-type="control_textbox" id="id_7">
-            <label class="form-label form-label-top form-label-auto" id="label_7" for="input_7" aria-hidden="false">
-              Your Name<span class="form-required">*</span>
-            </label>
-            <div id="cid_7" class="form-input-wide jf-required" data-layout="half">
-              <input type="text" id="input_7" name="q7_yourName" data-type="input-textbox" class="form-textbox validate[required]" style="width:310px" size="310" data-component="textbox" aria-labelledby="label_7" required value="" />
-            </div>
-          </li>
-
-          <!-- Hidden fields (stay hidden via CSS) -->
-          <li class="form-line always-hidden" data-type="control_textbox" id="id_12">
-            <label class="form-label form-label-top form-label-auto" id="label_12" for="input_12" aria-hidden="false"> song_title </label>
-            <div id="cid_12" class="form-input-wide always-hidden" data-layout="half">
-              <input type="text" id="input_12" name="q12_song_title" class="form-textbox" style="width:310px" size="310" aria-labelledby="label_12" value="" />
-            </div>
-          </li>
-
-          <li class="form-line always-hidden" data-type="control_textbox" id="id_8">
-            <label class="form-label form-label-top form-label-auto" id="label_8" for="input_8" aria-hidden="false"> artist </label>
-            <div id="cid_8" class="form-input-wide always-hidden" data-layout="half">
-              <input type="text" id="input_8" name="q8_artist" class="form-textbox" style="width:310px" size="310" aria-labelledby="label_8" value="" />
-            </div>
-          </li>
-
-          <!-- Link now being filled, but not shown -->
-          <li class="form-line always-hidden" data-type="control_textbox" id="id_9">
-            <label class="form-label form-label-top form-label-auto" id="label_9" for="input_9" aria-hidden="false"> link </label>
-            <div id="cid_9" class="form-input-wide always-hidden" data-layout="half">
-              <input type="text" id="input_9" name="q9_link" class="form-textbox" style="width:310px" size="310" aria-labelledby="label_9" value="" />
-            </div>
-          </li>
-
-          <li class="form-line" data-type="control_button" id="id_2">
-            <div id="cid_2" class="form-input-wide" data-layout="full">
-              <div data-align="auto" class="form-buttons-wrapper form-buttons-auto jsTest-button-wrapperField">
-                <button id="input_2" type="submit" class="form-submit-button submit-button jf-form-buttons jsTest-submitField legacy-submit" data-component="button">Submit</button>
-              </div>
-            </div>
-          </li>
-
-          <li style="display:none">Should be Empty: <input type="text" name="website" value="" type="hidden" /></li>
-        </ul>
-      </div>
-
-      <script>JotForm.showJotFormPowered = "0";</script>
-      <script>JotForm.poweredByText = "Powered by Jotform";</script>
-      <input type="hidden" class="simple_spc" id="simple_spc" name="simple_spc" value="252746100648052" />
-      <script type="text/javascript">
-        var all_spc = document.querySelectorAll("form[id='252746100648052'] .si" + "mple" + "_spc");
-        for (var i = 0; i < all_spc.length; i++) {
-          all_spc[i].value = "252746100648052-252746100648052";
-        }
-      </script>
-    </form>
-  </div> <!-- /.dce-wrap -->
-
-  <!-- Jotform flags -->
-  <script type="text/javascript">JotForm.ownerView=true;</script>
-  <script type="text/javascript">JotForm.isNewSACL=true;</script>
-
-  <!-- Listener: fills song_title + artist + link (no link displayed) -->
   <script>
-    // Prefer stable IDs from your export; fall back to unique names
-    const ID_MAP   = { song_title: 'input_12', artist: 'input_8', link: 'input_9' };
-    const NAME_MAP = { song_title: 'song_title', artist: 'artist', link: 'link' };
+    const searchInput = document.getElementById('search');
+    const statusEl = document.getElementById('status');
+    const resultsEl = document.getElementById('results');
+    let debounce = null, lastTerm = '', lastTag = null;
 
-    function setByIdOrName(key, value) {
-      // 1) by ID (e.g., input_12)
-      const byId = document.getElementById(ID_MAP[key]);
-      if (byId) {
-        byId.value = value ?? '';
-        byId.dispatchEvent(new Event('input', { bubbles: true }));
-        byId.dispatchEvent(new Event('change', { bubbles: true }));
-        return true;
-      }
-      // 2) exact name (e.g., name="song_title")
-      let byName = document.querySelector(`[name="${NAME_MAP[key]}"]`);
-      if (byName) {
-        byName.value = value ?? '';
-        byName.dispatchEvent(new Event('input', { bubbles: true }));
-        byName.dispatchEvent(new Event('change', { bubbles: true }));
-        return true;
-      }
-      // 3) endsWith (matches q12_song_title, q8_artist, q9_link)
-      byName = Array.from(document.querySelectorAll('input[type="text"], input[type="hidden"]'))
-        .find(n => n.name && n.name.endsWith(NAME_MAP[key]));
-      if (byName) {
-        byName.value = value ?? '';
-        byName.dispatchEvent(new Event('input', { bubbles: true }));
-        byName.dispatchEvent(new Event('change', { bubbles: true }));
-        return true;
-      }
-      console.warn('Field not found for', key);
-      return false;
-    }
+    const setStatus = (msg='', err=false) => {
+      statusEl.textContent = msg;
+      statusEl.style.color = err ? '#b00020' : '#666';
+    };
+    const clearResults = () => { resultsEl.innerHTML = ''; };
 
-    function showSelected(title, artist) {
-      const el = document.getElementById('selectedStatus');
-      if (!el) return;
-      if (!title && !artist) { el.textContent = ''; return; }
-      el.innerHTML = 'Selected: <strong>' + (title || 'Unknown Title') + ' — ' + (artist || 'Unknown Artist') + '</strong>';
-    }
-
-    // Receive messages from the search iframe
-    window.addEventListener('message', (e) => {
-      const msg = e.data;
-      if (!msg || msg.action !== 'setFields' || !msg.fields) return;
-
-      const title  = msg.fields.song_title || '';
-      const artist = msg.fields.artist || '';
-      const link   = msg.fields.link || '';
-
-      if (title)  setByIdOrName('song_title', title);
-      if (artist) setByIdOrName('artist',     artist);
-      if (link)   setByIdOrName('link',       link);
-
-      showSelected(title, artist); // no link rendered
-    });
-  </script>
-</body>
-</html>
+    function jsonp(url, cbParam='callback'){
+      return new Promise((resolve, reject) => {
+        const cb = 'cb_' + Math.random().toString(36).slice(2);
+        const sep = url.includes('?') ? '&' : '?';
+        const src = `${url}${sep}${cbParam}=${cb}`;
+        if (lastTag && lastTag.parentNode) lastTag.parentNode.removeChild(lastTag);
+        const s = document.createElement('script');
+        lastTag = s;
+        const timer = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, 9000);
+        function cleanup(){ clearTimeout(timer); try{delete window[cb];}catch{} if (s.parentNode) s.parentNode.removeChild(s); }
+        window[cb] = (data) => { cleanup()
