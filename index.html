@@ -49,4 +49,96 @@
         lastTag = s;
         const timer = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, 9000);
         function cleanup(){ clearTimeout(timer); try{delete window[cb];}catch{} if (s.parentNode) s.parentNode.removeChild(s); }
-        window[cb] = (data) => { cleanup()
+        window[cb] = (data) => { cleanup(); resolve(data); };
+        s.onerror = () => { cleanup(); reject(new Error('jsonp error')); };
+        s.src = src;
+        document.body.appendChild(s);
+      });
+    }
+
+    async function searchITunes(term){
+      const data = await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=8`, 'callback');
+      return (data?.results || []).map(t => ({
+        title: t.trackName, artist: t.artistName,
+        cover: t.artworkUrl60, link: t.trackViewUrl
+      }));
+    }
+    async function searchDeezer(term){
+      const data = await jsonp(`https://api.deezer.com/search?q=${encodeURIComponent(term)}&limit=8&output=jsonp`, 'callback');
+      return (data?.data || []).map(d => ({
+        title: d.title, artist: d?.artist?.name || '',
+        cover: d?.album?.cover_medium || d?.album?.cover || '',
+        link: d.link || ''
+      }));
+    }
+    async function searchMB(term){
+      const r = await fetch(`https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(term)}&fmt=json&limit=8`, {
+        headers: {'User-Agent':'DCE-SongRequest/1.0 (https://www.davidcharlesevents.com)'}, cache:'no-store'
+      });
+      if (!r.ok) throw new Error('mb http '+r.status);
+      const data = await r.json();
+      return (data.recordings || []).map(rec => {
+        const ac = rec['artist-credit']; const artist = ac && ac[0] && ac[0].name ? ac[0].name : '';
+        return { title: rec.title, artist, cover:'', link:`https://musicbrainz.org/recording/${rec.id}` };
+      });
+    }
+
+    function render(list){
+      clearResults();
+      list.forEach(({title, artist, cover, link}) => {
+        const item = document.createElement('div');
+        item.className = 'result-item';
+        const img = cover ? `<img class="cover" src="${cover}" alt="Art">` : `<div class="cover">♪</div>`;
+        item.innerHTML = `${img}
+          <div class="song-info">
+            <div class="song-title">${title || 'Unknown Title'}</div>
+            <div class="artist-name">${artist || 'Unknown Artist'}</div>
+          </div>`;
+        item.onclick = () => {
+          document.querySelectorAll('.result-item').forEach(x => x.classList.remove('selected'));
+          item.classList.add('selected');
+          try {
+            window.parent.postMessage({
+              action:'setFields',
+              fields:{ song_title: title||'', artist: artist||'', link: link||'' }
+            }, '*');
+          } catch(e){}
+        };
+        resultsEl.appendChild(item);
+      });
+    }
+
+    async function doSearch(term){
+      if (!term) { setStatus(''); clearResults(); return; }
+      setStatus('Searching…');
+      try {
+        const a = await searchITunes(term);
+        if (a.length) { setStatus(''); render(a); return; }
+      } catch(e){}
+      try {
+        const b = await searchDeezer(term);
+        if (b.length) { setStatus(''); render(b); return; }
+      } catch(e){}
+      try {
+        const c = await searchMB(term);
+        setStatus(c.length ? '' : 'No results');
+        render(c);
+      } catch(e){
+        setStatus('Search failed.', true);
+        clearResults();
+      }
+    }
+
+    searchInput.addEventListener('input', () => {
+      const t = searchInput.value.trim();
+      if (t === lastTerm) return;
+      lastTerm = t;
+      clearTimeout(debounce);
+      debounce = setTimeout(() => doSearch(t), 300);
+    });
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); doSearch(searchInput.value.trim()); }
+    });
+  </script>
+</body>
+</html>
