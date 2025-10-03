@@ -7,275 +7,189 @@
   <title>Song Requests • David Charles Events</title>
   <link rel="preconnect" href="https://form.jotform.com">
 
-  <!-- ===== Brand System ===== -->
   <style>
+    /* ===== Jotform-esque, neutral styling ===== */
     :root{
-      --bg: #f6fafb;         /* page background */
-      --card: #ffffff;       /* card background */
-      --ink: #0e1a1b;        /* primary text */
-      --muted: #5a6b6d;      /* secondary text */
-      --ring: rgba(0,0,0,.08);
-      --shadow: 0 8px 28px rgba(0,0,0,.08);
-      --accent: #009ca6;     /* DCE teal */
-      --accent-10: rgba(0,156,166,.10);
-      --accent-15: rgba(0,156,166,.15);
-      --accent-20: rgba(0,156,166,.20);
-      --success: #10b981;
-      --radius-lg: 18px;
-      --radius-sm: 12px;
-      --gap: 16px;
-      --px: 16px;            /* page side padding */
-      --maxw: 920px;
+      --ink:#111;
+      --muted:#616161;
+      --bg:#ffffff;          /* Jotform pages are usually white */
+      --card:#fff;
+      --border:#e5e7eb;      /* light gray border like JF */
+      --ring:rgba(33,150,243,.25); /* subtle blue-ish focus halo */
+      --accent:#009ca6;      /* DCE teal for highlights/pills */
+      --radius:10px;
+      --radius-sm:8px;
+      --maxw:920px;
+      --pad:16px;
     }
 
-    /* Page */
     html, body { height:100%; }
-    body {
+    body{
       margin:0;
-      background: radial-gradient(1000px 600px at 80% -10%, #e8fbff 0%, transparent 60%) var(--bg);
+      background:var(--bg);
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
-      color: var(--ink);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    .wrap {
-      max-width: var(--maxw);
-      margin: 0 auto;
-      padding: 20px var(--px) 32px;
+      color:var(--ink);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
 
-    /* Header */
-    .header {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 14px;
-      align-items: center;
-      margin-bottom: 16px;
+    .wrap{ max-width:var(--maxw); margin:0 auto; padding: 18px var(--pad) 28px; }
+
+    /* Header (optional logo/meta) */
+    .header{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .logo{ width:160px; height:auto; border-radius:8px; }
+    .title{ font-weight:800; font-size:clamp(20px,3.4vw,28px); margin:0; }
+    .sub{ margin:0; color:var(--muted); font-size:14px; }
+
+    /* Sections look like JF blocks (white, bordered, minimal shadows) */
+    .section{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:14px;
+      margin-top:12px;
     }
-    .logo {
-      width: 160px; height:auto;
-      border-radius: 10px;
-    }
-    .event-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
-    .event-title {
-      font-weight: 800;
-      font-size: clamp(20px, 3.8vw, 28px);
-      letter-spacing: -0.02em;
-      margin: 0;
-    }
-    .event-sub {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
+    .section h2{
+      margin:6px 8px 12px;
+      font-size:clamp(18px,3vw,22px);
+      font-weight:800;
+      letter-spacing:-.01em;
     }
 
-    /* Section cards */
-    .card {
-      background: var(--card);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      padding: 16px;
-      margin-top: 14px;
-      border: 1px solid rgba(0,0,0,.03);
+    /* ===== Song search matches Jotform inputs ===== */
+    .field{
+      display:flex; flex-direction:column; gap:6px;
+      max-width:640px; margin:0 auto;
     }
-    .card h2 {
-      margin: 6px 0 12px;
-      text-align: center;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      font-size: clamp(18px, 3.4vw, 22px);
+    .label{
+      font-size:14px; color:#333; font-weight:600;
     }
-
-    /* Search UI */
-    .search-row { display:flex; flex-direction:column; align-items:center; }
-    .search-box {
-      width: 100%;
-      max-width: 620px;
-      margin: 0 auto 10px;
-      padding: 14px 18px;
-      border: 2px solid var(--ring);
-      border-radius: 999px;
-      font-size: 16px;
-      outline: none;
-      box-sizing: border-box;
+    .input{
+      height:48px;
+      padding:0 14px;
+      border:1px solid var(--border);
+      border-radius:var(--radius-sm);
+      font-size:16px;
+      outline:none;
       background:#fff;
-      transition: box-shadow .18s ease, border-color .18s ease, transform .06s ease;
+      box-sizing:border-box;
+      transition: box-shadow .15s ease, border-color .15s ease;
     }
-    .search-box:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 4px var(--accent-15);
-    }
-
-    .status {
-      max-width: 620px;
-      width: 100%;
-      margin: 2px auto 0;
-      font-size: 13px;
-      color: var(--muted);
-      min-height: 18px;
-      text-align: center;
+    .input:focus{
+      border-color:#2196f3;
+      box-shadow:0 0 0 4px var(--ring);
     }
 
-    .results {
-      max-width: 620px;
-      margin: 10px auto 0;
-    }
-    .result-item {
-      display: grid;
-      grid-template-columns: 56px 1fr;
-      align-items:center;
-      gap: 12px;
-      padding: 12px;
-      margin-bottom: 10px;
-      border-radius: var(--radius-sm);
-      background: #f8fbfb;
-      cursor: pointer;
-      transition: background .18s ease, transform .06s ease, border-color .18s ease;
-      border: 1px solid rgba(0,0,0,.04);
-    }
-    .result-item:active { transform: scale(.996); }
-    .result-item:hover { background: #f3fafa; }
-    .result-item.selected {
-      border: 2px solid var(--accent);
-      background: #f2feff;
-      box-shadow: 0 6px 18px var(--accent-10);
+    .status{
+      max-width:640px; margin:6px auto 0;
+      font-size:13px; color:var(--muted); min-height:18px;
+      text-align:left;
     }
 
-    .cover {
-      width: 56px; height:56px;
-      border-radius: 10px; object-fit: cover;
-      background: #e9eff0; color:#738487;
-      display: grid; place-items:center; font-size: 12px;
+    .results{
+      max-width:640px; margin:10px auto 0;
     }
-    .song-info { min-width: 0; }
-    .song-title {
-      font-weight: 700; font-size: 15px; margin:0 0 2px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    .item{
+      display:grid; grid-template-columns:56px 1fr; align-items:center;
+      gap:12px; padding:10px;
+      border:1px solid var(--border);
+      border-radius:var(--radius-sm);
+      background:#fafafa;
+      transition: background .15s ease, transform .06s ease, border-color .15s ease;
+      cursor:pointer; margin-bottom:10px;
     }
-    .artist-name {
-      font-size: 13px; color: var(--muted); margin:0;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    .item:hover{ background:#f5f5f5; }
+    .item:active{ transform:scale(.996); }
+    .item.selected{
+      border-color:#2196f3;
+      box-shadow:0 0 0 4px var(--ring);
+      background:#fff;
     }
+    .cover{
+      width:56px; height:56px; border-radius:8px; object-fit:cover;
+      background:#e9eef0; color:#7a8a8d; display:grid; place-items:center; font-size:12px;
+    }
+    .info{ min-width:0; }
+    .ttl{ margin:0 0 2px; font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .art{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
     /* Selected pill */
-    #selected {
-      max-width: var(--maxw);
-      margin: 10px auto 8px;
-      text-align: center;
-      font-size: 14px;
-      color: var(--ink);
+    #selected{
+      max-width:var(--maxw); margin:10px auto 0; text-align:left;
+      font-size:14px;
     }
-    #selected .pill {
-      display: inline-flex; gap:6px; align-items:center;
-      background: var(--accent-10);
-      color: var(--ink);
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--accent-20);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+    #selected .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      background:#eef9fa;
+      border:1px solid #d8f0f1;
+      border-radius:999px; padding:6px 10px;
     }
-    #selected .dot {
-      width:8px; height:8px; border-radius:999px; background: var(--accent);
-      box-shadow: 0 0 0 2px rgba(0,156,166,.22);
-    }
+    #selected .dot{ width:8px; height:8px; border-radius:999px; background:var(--accent); }
 
-    /* Iframes */
-    iframe { width:100%; border:0; display:block; }
-    .spacer { height: 12px; }
+    iframe{ width:100%; border:0; display:block; }
+    .spacer{ height:12px; }
 
-    /* Full-page thank-you overlay */
-    #thanksOverlay {
-      position: fixed; inset: 0; display: none;
-      background: rgba(246,250,251,.98);
-      backdrop-filter: blur(2px);
-      align-items: center; justify-content: center;
-      z-index: 9999; padding: 24px;
-      opacity: 0; transition: opacity .22s ease;
+    /* Full-page Thank You overlay (kept from working version) */
+    #thanksOverlay{
+      position:fixed; inset:0; display:none; opacity:0;
+      background:rgba(255,255,255,.98);
+      align-items:center; justify-content:center; z-index:9999;
+      padding:24px; transition:opacity .2s ease;
     }
-    #thanksOverlay.show { display:flex; opacity: 1; }
-
-    #thanksCard {
-      background: var(--card);
-      border-radius: 22px;
-      box-shadow: var(--shadow);
-      padding: 32px 28px;
-      max-width: 740px; width: 100%;
-      text-align: center;
-      border: 1px solid rgba(0,0,0,.04);
-      transform: translateY(8px);
-      animation: pop .24s ease forwards;
+    #thanksOverlay.show{ display:flex; opacity:1; }
+    #thanksCard{
+      background:#fff; border:1px solid var(--border); border-radius:14px;
+      padding:28px 22px; width:min(720px,100%); text-align:center;
     }
-    @keyframes pop { to { transform: translateY(0) } }
-
-    #thanksLogo { margin-bottom: 10px; }
-    #thanksLogo img { max-width: 200px; height: auto; }
-    .check {
-      width: 64px; height: 64px; border-radius: 50%;
-      margin: 10px auto 16px; display:grid; place-items:center;
-      background: var(--accent-10); color: var(--accent);
-      font-size: 34px; line-height: 1; border: 2px solid var(--accent-20);
+    #thanksLogo{ margin-bottom:10px; }
+    #thanksLogo img{ max-width:200px; height:auto; }
+    .check{ width:56px; height:56px; border-radius:50%; margin:10px auto 14px;
+      display:grid; place-items:center; background:#e6f7f8; color:var(--accent); font-size:30px; }
+    #thanksCard h1{ margin:6px 0 6px; font-size:24px; }
+    #thanksCard p{ margin:0 0 16px; color:#444; }
+    .btns{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    .btn{
+      appearance:none; text-decoration:none; cursor:pointer;
+      background:#2196f3; color:#fff; border:0; padding:10px 16px; border-radius:999px; font-weight:700;
     }
-    #thanksCard h1 { margin: 8px 0 6px; font-size: clamp(22px, 4vw, 28px); }
-    #thanksCard p  { margin: 0 0 18px; color:#3b4a4c; }
-    .btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
-    .btn {
-      appearance: none; text-decoration: none; cursor: pointer;
-      background: var(--accent); color: #fff; border: 0;
-      padding: 12px 18px; border-radius: 999px; font-weight: 700;
-      box-shadow: 0 8px 22px var(--accent-15);
-      transition: transform .06s ease, filter .12s ease;
-    }
-    .btn:hover { filter: brightness(1.06); }
-    .btn:active { transform: translateY(1px); }
-    .btn.secondary { background:#0e1a1b; box-shadow: 0 8px 22px rgba(0,0,0,.12); }
-
-    /* Small screens */
-    @media (max-width: 480px){
-      .wrap { padding: 16px var(--px) 28px; }
-      .header { grid-template-columns: 1fr; text-align:center; }
-      .event-meta { align-items:center; }
-    }
+    .btn.secondary{ background:#111; }
   </style>
 </head>
 <body>
   <div class="wrap" id="app">
 
-    <!-- Header: logo + event meta (edit text below per event) -->
+    <!-- Optional header -->
     <div class="header">
       <img class="logo" src="assets/client-logo.png" alt="Client Logo" onerror="this.style.display='none'">
-      <div class="event-meta">
-        <h1 class="event-title">Song Requests</h1>
-        <p class="event-sub">Powered by David Charles Events</p>
+      <div>
+        <h1 class="title">Song Requests</h1>
+        <p class="sub">Powered by David Charles Events</p>
       </div>
     </div>
 
-    <!-- Search card -->
-    <div class="card">
-      <h2>Find Your Song</h2>
-      <div class="search-row">
-        <input id="search" class="search-box" type="text" placeholder="Type a song or artist…" inputmode="search" autocomplete="off" />
-        <div id="status" class="status"></div>
-      </div>
-      <div id="results" class="results"></div>
+    <!-- === JOTFORM FIRST === -->
+    <div class="section" aria-label="Request Form">
+      <h2>Request Form</h2>
+      <!-- Loads fresh (ts=) and gets prefilled when a song is selected -->
+      <iframe id="jotFrame" title="Song Request Form" style="height:1400px" src=""></iframe>
     </div>
 
-    <!-- Selection confirmation -->
+    <!-- Selected confirmation pill -->
     <div id="selected"></div>
 
-    <div class="spacer"></div>
-
-    <!-- Jotform card -->
-    <div class="card">
-      <iframe id="jotFrame" title="Song Request Form" loading="lazy" style="height:1400px" src=""></iframe>
+    <!-- === SONG SEARCH SECOND === -->
+    <div class="section" aria-label="Search">
+      <h2>Find Your Song</h2>
+      <div class="field">
+        <label for="search" class="label">Song or Artist</label>
+        <input id="search" class="input" type="text" placeholder="Start typing… (e.g., ‘Uptown Funk’ or ‘Bruno Mars’)" inputmode="search" autocomplete="off" />
+      </div>
+      <div id="status" class="status"></div>
+      <div id="results" class="results"></div>
     </div>
   </div>
 
-  <!-- Full-page Thank You Overlay -->
+  <!-- Full-page Thank You overlay -->
   <div id="thanksOverlay" role="dialog" aria-labelledby="thanksTitle" aria-modal="true">
     <div id="thanksCard">
       <div id="thanksLogo"><img src="assets/client-logo.png" alt="David Charles Events" onerror="this.style.display='none'"></div>
@@ -289,22 +203,21 @@
     </div>
   </div>
 
-  <!-- ===== Logic ===== -->
   <script>
     /* -------- Config -------- */
-    const JOT_ID   = '252746100648052'; // change if you clone the form
+    const JOT_ID   = '252746100648052'; // change per form
     const JOT_BASE = `https://form.jotform.com/${JOT_ID}`;
 
-    /* -------- Init: blank, fresh form -------- */
+    /* -------- Init: fresh, blank form (prevents cached Thank-You) -------- */
     (function initForm() { setFormSrc({}); })();
 
     function setFormSrc(prefill) {
       const params = new URLSearchParams(prefill || {});
-      params.set('ts', Date.now().toString()); // cache-buster prevents stale Thank-You
+      params.set('ts', Date.now().toString()); // cache-buster
       document.getElementById('jotFrame').src = `${JOT_BASE}?${params.toString()}`;
     }
 
-    /* -------- Search (inline) -------- */
+    /* -------- Search (iTunes → Deezer → MusicBrainz) -------- */
     const $ = (sel) => document.querySelector(sel);
     const searchInput = $('#search');
     const statusEl = $('#status');
@@ -368,21 +281,20 @@
       clearResults();
       list.forEach(({title, artist, cover, link}) => {
         const item = document.createElement('div');
-        item.className = 'result-item';
-        item.setAttribute('role', 'button');
-        item.setAttribute('tabindex', '0');
+        item.className = 'item';
+        item.setAttribute('role','button');
+        item.setAttribute('tabindex','0');
 
         const img = cover
           ? `<img class="cover" src="${cover}" alt="Album cover">`
           : `<div class="cover" aria-hidden="true">♪</div>`;
 
         item.innerHTML = `${img}
-          <div class="song-info">
-            <p class="song-title">${title || 'Unknown Title'}</p>
-            <p class="artist-name">${artist || 'Unknown Artist'}</p>
+          <div class="info">
+            <p class="ttl">${title || 'Unknown Title'}</p>
+            <p class="art">${artist || 'Unknown Artist'}</p>
           </div>`;
 
-        // click or Enter to select
         const select = () => selectTrack({title, artist, link}, item);
         item.onclick = select;
         item.onkeyup = (e) => { if (e.key === 'Enter' || e.key === ' ') select(); };
@@ -413,18 +325,21 @@
     }
 
     function selectTrack({title, artist, link}, itemEl){
-      document.querySelectorAll('.result-item').forEach(x => x.classList.remove('selected'));
+      document.querySelectorAll('.item').forEach(x => x.classList.remove('selected'));
       if (itemEl) itemEl.classList.add('selected');
 
       selectedEl.innerHTML =
-        `<span class="pill"><span class="dot"></span><strong>${title || 'Unknown Title'}</strong> — ${artist || 'Unknown Artist'}</span>`;
+        `<div class="pill"><span class="dot"></span><strong>${title || 'Unknown Title'}</strong> — ${artist || 'Unknown Artist'}</div>`;
 
-      // Prefill Jotform using your unique names + cache-buster
+      // Prefill Jotform using YOUR Unique Names + cache-buster
       setFormSrc({
         song_title: title || '',
         artist: artist || '',
         link: link || ''
       });
+
+      // Scroll user back to the top/form (mobile-friendly)
+      document.getElementById('app').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     // type-to-search
@@ -439,7 +354,7 @@
       if (e.key === 'Enter') { e.preventDefault(); doSearch(searchInput.value.trim()); }
     });
 
-    /* -------- Full-page Thank You overlay trigger -------- */
+    /* -------- Full-page Thank You overlay (no JF setting changes) -------- */
     const JF_ORIGINS = [
       'https://form.jotform.com','https://www.jotform.com',
       'https://submit.jotform.com','https://eu.jotform.com','https://www.jotformeu.com'
@@ -482,7 +397,6 @@
         showThanksOverlay();
         return;
       }
-
       if (d && typeof d === 'object') {
         const t = (d.type || d.event || '').toString().toLowerCase();
         const h = Number(d.height || d.newHeight || d.h || 0);
@@ -500,8 +414,8 @@
       document.body.style.overflow = 'hidden';
     }
 
-    // Submit another request
-    document.getElementById('againBtn').addEventListener('click', () => {
+    // “Submit another request”
+    document.getElementById('againBtn')?.addEventListener('click', () => {
       document.getElementById('thanksOverlay').classList.remove('show');
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
@@ -509,7 +423,8 @@
       setFormSrc({});
       searchInput.value = '';
       clearResults();
-      searchInput.focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      searchInput.focus({ preventScroll:true });
     });
   </script>
 </body>
