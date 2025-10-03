@@ -5,14 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=1" />
   <title>Song Request • David Charles Events</title>
 
-  <!-- Jotform CSS -->
   <link rel="stylesheet" href="https://cdn.jotfor.ms/stylebuilder/static/form-common.css"/>
   <link id="custom-font" rel="stylesheet" href="//cdn.jotfor.ms/fonts/?family=Inter" />
   <link rel="stylesheet" href="https://cdn.jotfor.ms/themes/CSS/5e6b428acc8c4e222d1beb91.css"/>
   <link rel="stylesheet" href="https://cdn.jotfor.ms/css/styles/payment/payment_styles.css" />
   <link rel="stylesheet" href="https://cdn.jotfor.ms/css/styles/payment/payment_feature.css" />
 
-  <!-- Jotform JS -->
   <script>window.enableEventObserver=true</script>
   <script src="https://cdn.jotfor.ms/s/static/70873410d56/static/prototype.forms.js"></script>
   <script src="https://cdn.jotfor.ms/s/static/70873410d56/static/jotform.forms.js"></script>
@@ -28,10 +26,14 @@
     #id_12, #id_8, #id_9 { display:none; }
 
     /* Widget iframe auto-resizes */
-    #searchWidget { width:100%; border:0; height:420px; transition:height .2s ease; }
+    #searchWidget { width:100%; border:0; height:380px; transition:height .2s ease; }
 
-    /* Selected row is hidden until a pick */
-    #id_disp_selected { display:none; }
+    /* Tighter vertical rhythm just for these two rows */
+    #id_widget { margin-bottom: 6px; }
+    #id_disp_selected { margin-top: 6px; display:none; }
+
+    /* Optional: overall row spacing slightly tighter */
+    /* .form-line { margin-top: 10px; margin-bottom: 10px; } */
   </style>
 
   <script>
@@ -39,7 +41,6 @@
     JotForm.singleProduct = false;
     JotForm.init(function(){});
 
-    /* Field map (IDs + unique names) */
     const MAP = {
       yourName:   { id: 'input_7',  q: 7,  uname: 'q7_yourName' },
       song_title: { id: 'input_12', q: 12, uname: 'song_title' },
@@ -56,14 +57,13 @@
       return true;
     }
 
-    // 👉 Force the Selected row visible and update its value
     function showSelectedField(text) {
       const li    = document.getElementById('id_disp_selected');
       const input = document.getElementById('input_disp_selected');
       if (!li || !input) return;
       if (text && text.trim()) {
         input.value = text;
-        li.style.display = 'block';            // force visible (li default in JF theme)
+        li.style.display = 'block';
         li.setAttribute('aria-hidden','false');
       } else {
         input.value = '';
@@ -72,7 +72,6 @@
       }
     }
 
-    // Submit to Jotform (send both unique names & qIDs)
     function submitToJotform(ev){
       ev.preventDefault();
 
@@ -107,7 +106,6 @@
       tmp.submit();
     }
 
-    // Messages from widget
     window.addEventListener('message', (e) => {
       const msg = e.data;
       if (!msg || !msg.action) return;
@@ -119,14 +117,16 @@
         if (artist     !== undefined) setHiddenField('artist',     artist);
         if (link       !== undefined) setHiddenField('link',       link);
 
-        const label = [song_title, artist].filter(Boolean).join(' — ');
-        showSelectedField(label);                 // ensure it appears
+        const label = [song_title, artist].filter(Boolean).join(' - ');
+        showSelectedField(label);
       }
 
+      /* Auto-resize the iframe (smaller min to reduce gap) */
       if (msg.action === 'resize' && typeof msg.height === 'number') {
         const iframe = document.getElementById('searchWidget');
         if (iframe) {
-          const minH = 240, maxH = 640;
+          const minH = 140;   // ↓ was 240; shrink to reduce space after selection
+          const maxH = 640;
           iframe.style.height = Math.max(minH, Math.min(msg.height, maxH)) + 'px';
         }
       }
@@ -144,7 +144,6 @@
     </div>
 
     <ul class="form-section page-section" role="presentation">
-      <!-- Your Name -->
       <li class="form-line jf-required" data-type="control_textbox" id="id_7">
         <label class="form-label form-label-top form-label-auto" id="label_7" for="input_7">
           Your Name<span class="form-required">*</span>
@@ -154,7 +153,6 @@
         </div>
       </li>
 
-      <!-- Live search (widget) -->
       <li class="form-line" data-type="control_widget" id="id_widget">
         <label class="form-label form-label-top form-label-auto" id="label_widget" for="searchWidget">Song or Artist</label>
         <div id="cid_widget" class="form-input-wide" data-layout="half">
@@ -162,9 +160,9 @@
         </div>
       </li>
 
-      <!-- Read-only "Song — Artist" (hidden until a pick) -->
+      <!-- Read-only "Selected Song - Artist" -->
       <li class="form-line" data-type="control_textbox" id="id_disp_selected">
-        <label class="form-label form-label-top form-label-auto" for="input_disp_selected">Selected</label>
+        <label class="form-label form-label-top form-label-auto" for="input_disp_selected">Selected Song - Artist</label>
         <div class="form-input-wide" data-layout="half">
           <input type="text" id="input_disp_selected" class="form-textbox"
                  style="width:310px;background:#f7f7f7;border-color:#e5e7eb" readonly aria-readonly="true" />
@@ -191,7 +189,6 @@
         </div>
       </li>
 
-      <!-- Submit -->
       <li class="form-line" data-type="control_button" id="id_2">
         <div id="cid_2" class="form-input-wide" data-layout="full">
           <div data-align="auto" class="form-buttons-wrapper form-buttons-auto">
@@ -202,7 +199,6 @@
     </ul>
   </div>
 
-  <!-- SPC token Jotform expects -->
   <input type="hidden" class="simple_spc" id="simple_spc" name="simple_spc" value="252746100648052" />
   <script>
     var all_spc = document.querySelectorAll("#simple_spc");
