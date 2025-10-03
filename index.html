@@ -72,26 +72,23 @@
       box-shadow: none;
     }
 
-    /* Force name field container to the same width & centering as the widget */
-    #cid_7,
-    #cid_widget {
-      max-width: var(--field-w);
-      width: 100%;
-      margin: 0 auto;       /* center in the page */
-    }
+    /* Same width & centering for name and widget */
+    #cid_7, #cid_widget { max-width: var(--field-w); width: 100%; margin: 0 auto; }
 
-    /* Name field focus (no hover highlight) */
+    /* Name focus (no hover highlight) */
     #input_7:hover{ border-color: var(--border) !important; box-shadow:none !important; }
     #input_7:focus{ border-color: var(--teal) !important; box-shadow: 0 0 0 4px var(--ring) !important; outline:none; }
 
-    /* Widget iframe + ultra-tight spacing to Submit */
-    #searchWidget { width:100%; border:0; height:320px; transition:height .2s ease; display:block; }
-    #id_widget { margin-bottom: 0; padding-bottom: 0; }
-    #cid_widget { padding-bottom: 0; }
-    /* Submit hugs the iframe */
-    #id_2 { margin-top: 4px; }
+    /* Widget iframe — start tiny so Submit sits right under it, JS will resize */
+    #searchWidget { width:100%; border:0; height:70px; display:block; transition:height .2s ease; }
 
-    /* Submit button: black, white, all caps */
+    /* Tighten spacing so Submit hugs the iframe */
+    #id_7       { margin-bottom: 8px; }
+    #id_widget  { margin-top: 0; margin-bottom: 0; padding-bottom: 0; }
+    #cid_widget { padding-bottom: 0; }
+    #id_2       { margin-top: 6px; }
+
+    /* Submit button: black, white, caps */
     #input_2.form-submit-button{
       background:#111 !important;
       color:#fff !important;
@@ -106,7 +103,7 @@
     #input_2.form-submit-button:hover{ filter:brightness(0.92); }
     #input_2.form-submit-button:active{ transform: translateY(1px); }
 
-    /* Full-screen Thank You overlay */
+    /* Full-screen TY overlay */
     .ty-overlay{
       position:fixed; inset:0; background:#fff; display:none;
       align-items:center; justify-content:center; z-index:9999;
@@ -181,7 +178,6 @@
       const artistVal= (document.getElementById(MAP.artist.id)?.value     || '');
       const linkVal  = (document.getElementById(MAP.link.id)?.value       || '');
 
-      // Hidden iframe target to avoid cross-site navigation
       let targetFrame = document.getElementById('jf_target');
       if (!targetFrame) {
         targetFrame = document.createElement('iframe');
@@ -190,8 +186,6 @@
         targetFrame.style.display = 'none';
         document.body.appendChild(targetFrame);
       }
-
-      // When Jotform responds, show TY and schedule redirect
       targetFrame.onload = function(){
         openThankYou();
         redirectAfterDelay();
@@ -206,7 +200,6 @@
       tmp.appendChild( buildHiddenInput('formID','252746100648052') );
       tmp.appendChild( buildHiddenInput('simple_spc','252746100648052-252746100648052') );
 
-      // send both unique and q# names
       tmp.appendChild( buildHiddenInput(MAP.yourName.uname, nameVal) );
       tmp.appendChild( buildHiddenInput(`q${MAP.yourName.q}_yourName`, nameVal) );
 
@@ -222,12 +215,12 @@
       document.body.appendChild(tmp);
       tmp.submit();
 
-      // show TY immediately for snappy UX + fallback timer
+      // instant TY as UX fallback
       openThankYou();
       redirectAfterDelay();
     }
 
-    /* Messages from widget (fills hidden fields only) */
+    /* Messages from widget */
     window.addEventListener('message', (e) => {
       const msg = e.data;
       if (!msg || !msg.action) return;
@@ -240,11 +233,11 @@
       }
 
       if (msg.action === 'resize' && typeof msg.height === 'number') {
-        const iframe = document.getElementById('searchWidget');
-        if (iframe) {
-          // clamp for safety, but keep it tight
-          const minH = 70, maxH = 640;
-          iframe.style.height = Math.max(minH, Math.min(msg.height, maxH)) + 'px';
+        const ifr = document.getElementById('searchWidget');
+        if (ifr) {
+          // add a small safety buffer and set exactly; no clamping
+          const h = Math.max(60, Math.ceil(msg.height + 2));
+          ifr.style.height = h + 'px';
         }
       }
 
@@ -268,45 +261,29 @@
 
     <ul class="form-section page-section" role="presentation">
       <!-- Name (not required) -->
-      <li class="form-line" data-type="control_textbox" id="id_7" style="margin-bottom:8px;">
-        <label class="form-label form-label-top form-label-auto" id="label_7" for="input_7">
-          What's your name?
-        </label>
+      <li class="form-line" data-type="control_textbox" id="id_7">
+        <label class="form-label form-label-top form-label-auto" id="label_7" for="input_7">What's your name?</label>
         <div id="cid_7" class="form-input-wide" data-layout="half">
           <input type="text" id="input_7" name="q7_yourName" class="form-textbox" />
         </div>
       </li>
 
       <!-- Live search (widget) -->
-      <li class="form-line" data-type="control_widget" id="id_widget" style="margin-top:0;margin-bottom:0;">
+      <li class="form-line" data-type="control_widget" id="id_widget">
         <label class="form-label form-label-top form-label-auto" id="label_widget" for="searchWidget" style="margin-bottom:6px;">Search Song, Artist or Lyrics</label>
         <div id="cid_widget" class="form-input-wide" data-layout="half">
-          <iframe id="searchWidget" src="widget.html" title="Song Search"></iframe>
+          <!-- add ?v=3 to bust cache if needed -->
+          <iframe id="searchWidget" src="widget.html?v=3" title="Song Search"></iframe>
         </div>
       </li>
 
-      <!-- Hidden fields (still posted to Jotform/Sheets) -->
-      <li class="form-line" id="id_12" style="display:none">
-        <label class="form-label form-label-top form-label-auto" for="input_12">song_title</label>
-        <div id="cid_12" class="form-input-wide" data-layout="half">
-          <input type="text" id="input_12" name="song_title" class="form-textbox" />
-        </div>
-      </li>
-      <li class="form-line" id="id_8" style="display:none">
-        <label class="form-label form-label-top form-label-auto" for="input_8">artist</label>
-        <div id="cid_8" class="form-input-wide" data-layout="half">
-          <input type="text" id="input_8" name="artist" class="form-textbox" />
-        </div>
-      </li>
-      <li class="form-line" id="id_9" style="display:none">
-        <label class="form-label form-label-top form-label-auto" for="input_9">link</label>
-        <div id="cid_9" class="form-input-wide" data-layout="half">
-          <input type="text" id="input_9" name="link" class="form-textbox" />
-        </div>
-      </li>
+      <!-- Hidden fields (posted to Jotform/Sheets) -->
+      <li class="form-line" id="id_12" style="display:none"><div id="cid_12"><input type="text" id="input_12" name="song_title" class="form-textbox" /></div></li>
+      <li class="form-line" id="id_8"  style="display:none"><div id="cid_8"><input  type="text" id="input_8"  name="artist"     class="form-textbox" /></div></li>
+      <li class="form-line" id="id_9"  style="display:none"><div id="cid_9"><input  type="text" id="input_9"  name="link"       class="form-textbox" /></div></li>
 
       <!-- Submit (hugs the iframe) -->
-      <li class="form-line" data-type="control_button" id="id_2" style="margin-top:4px;">
+      <li class="form-line" data-type="control_button" id="id_2" style="margin-top:6px;">
         <div id="cid_2" class="form-input-wide" data-layout="full">
           <div data-align="auto" class="form-buttons-wrapper form-buttons-auto">
             <button id="input_2" type="submit" class="form-submit-button submit-button jf-form-buttons">Submit</button>
@@ -320,7 +297,6 @@
   <div class="ty-overlay" id="tyOverlay" role="dialog" aria-live="polite" aria-modal="true">
     <div class="ty-wrap">
       <div class="ty-icon" aria-hidden="true">
-        <!-- checkmark -->
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <path d="M20 6L9 17l-5-5"></path>
         </svg>
@@ -330,7 +306,6 @@
     </div>
   </div>
 
-  <!-- SPC token Jotform expects -->
   <input type="hidden" class="simple_spc" id="simple_spc" name="simple_spc" value="252746100648052" />
   <script>
     var all_spc = document.querySelectorAll("#simple_spc");
