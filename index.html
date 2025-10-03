@@ -151,4 +151,76 @@
       const el = document.getElementById(MAP[key]?.id);
       if (!el) return false;
       el.value = value || '';
-      el.dispatc
+      el.dispatchEvent(new Event('input', { bubbles:true }));
+      el.dispatchEvent(new Event('change', { bubbles:true }));
+      return true;
+    }
+
+    function buildHiddenInput(name, val){
+      const i=document.createElement('input');
+      i.type='hidden'; i.name=name; i.value=val||'';
+      return i;
+    }
+
+    function openThankYou(){
+      const ov = document.getElementById('tyOverlay');
+      if (ov) ov.style.display = 'flex';
+    }
+    function redirectAfterDelay(){
+      setTimeout(()=>{ window.location.href = REDIRECT_URL; }, REDIRECT_DELAY_MS);
+    }
+
+    function submitToJotform(ev){
+      ev.preventDefault();
+
+      const nameVal  = (document.getElementById(MAP.yourName.id)?.value   || '');
+      const titleVal = (document.getElementById(MAP.song_title.id)?.value || '');
+      const artistVal= (document.getElementById(MAP.artist.id)?.value     || '');
+      const linkVal  = (document.getElementById(MAP.link.id)?.value       || '');
+
+      let targetFrame = document.getElementById('jf_target');
+      if (!targetFrame) {
+        targetFrame = document.createElement('iframe');
+        targetFrame.name = 'jf_target';
+        targetFrame.id = 'jf_target';
+        targetFrame.style.display = 'none';
+        document.body.appendChild(targetFrame);
+      }
+      targetFrame.onload = function(){
+        openThankYou();
+        redirectAfterDelay();
+      };
+
+      const tmp = document.createElement('form');
+      tmp.action = 'https://submit.jotform.com/submit/252746100648052';
+      tmp.method = 'POST';
+      tmp.target = 'jf_target';
+      tmp.style.display = 'none';
+
+      tmp.appendChild( buildHiddenInput('formID','252746100648052') );
+      tmp.appendChild( buildHiddenInput('simple_spc','252746100648052-252746100648052') );
+
+      tmp.appendChild( buildHiddenInput(MAP.yourName.uname, nameVal) );
+      tmp.appendChild( buildHiddenInput(`q${MAP.yourName.q}_yourName`, nameVal) );
+
+      tmp.appendChild( buildHiddenInput(MAP.song_title.uname, titleVal) );
+      tmp.appendChild( buildHiddenInput(`q${MAP.song_title.q}_song_title`, titleVal) );
+
+      tmp.appendChild( buildHiddenInput(MAP.artist.uname, artistVal) );
+      tmp.appendChild( buildHiddenInput(`q${MAP.artist.q}_artist`, artistVal) );
+
+      tmp.appendChild( buildHiddenInput(MAP.link.uname, linkVal) );
+      tmp.appendChild( buildHiddenInput(`q${MAP.link.q}_link`, linkVal) );
+
+      document.body.appendChild(tmp);
+      tmp.submit();
+
+      // instant TY as UX fallback
+      openThankYou();
+      redirectAfterDelay();
+    }
+
+    /* Messages from widget */
+    window.addEventListener('message', (e) => {
+      const msg = e.data;
+      if (!msg ||
