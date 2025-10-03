@@ -51,7 +51,7 @@
 
     <div class="spacer"></div>
 
-    <!-- Jotform (will be prefilled via URL; we add ts= to force a fresh load) -->
+    <!-- Jotform (prefilled via URL; we add ts= to force a fresh load) -->
     <div class="card">
       <iframe id="jotFrame"
         title="Song Request Form"
@@ -176,12 +176,12 @@
       // visual confirmation
       selected.innerHTML = `Selected: <strong>${title || 'Unknown Title'} — ${artist || 'Unknown Artist'}</strong>`;
 
-      // prefill Jotform via URL params AND force a fresh load with ts=
+      // Prefill Jotform using YOUR Unique Names, plus ts= to avoid cached Thank-You
       const params = new URLSearchParams({
-        q12_song_title: title || '',
-        q8_artist: artist || '',
-        q9_link: link || '',
-        ts: Date.now().toString()   // cache-buster so it doesn't reuse a Thank You session
+        song_title: title || '',
+        artist: artist || '',
+        link: link || '',
+        ts: Date.now().toString()
       });
       document.getElementById('jotFrame').src = `${JOT_BASE}?${params.toString()}`;
     }
