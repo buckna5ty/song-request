@@ -10,11 +10,14 @@
     --ring:rgba(14,165,166,.25); --radius:8px;
     --teal:#0ea5a6; --field-w:640px; --bg:#fff;
   }
-  html,body{margin:0;padding:0;background:#fff;color:var(--ink);
-    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;}
+  html,body{
+    margin:0;padding:0;background:#fff;color:var(--ink);
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;
+  }
   .wrap{padding:12px;}
   .field{display:flex;flex-direction:column;gap:6px;max-width:var(--field-w);margin:0 auto;}
 
+  /* Input matches parent form field */
   .input{
     width:100%; height:48px; padding:0 14px;
     border:1px solid var(--border); border-radius:var(--radius);
@@ -27,12 +30,34 @@
 
   .status{max-width:var(--field-w);margin:6px auto 0;font-size:13px;color:var(--muted);min-height:18px;text-align:left;}
   .status:empty{margin:0;min-height:0;}
+
+  /* Selected card stays pinned below the search box */
+  .selected{
+    max-width:var(--field-w); margin:10px auto 0;
+    border:1px solid var(--border); border-radius:var(--radius);
+    background:#fff;
+    display:none; /* hidden until a selection is made */
+  }
+  .sel-inner{
+    display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center;
+    padding:12px;
+  }
+  .sel-cover{
+    width:72px;height:72px;border-radius:10px;object-fit:cover;background:#e9eef0;
+    color:#7a8a8d;display:grid;place-items:center;font-size:14px;
+  }
+  .sel-title{ margin:0 0 2px; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sel-artist{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* Results list appears while typing; hides on selection */
   .results{max-width:var(--field-w);margin:10px auto 0;}
   .hidden{display:none !important;}
-  .item{display:grid;grid-template-columns:56px 1fr;align-items:center;gap:12px;
-    padding:10px;border:1px solid var(--border);border-radius:var(--radius);
-    background:#fafafa;transition:background .15s,transform .06s,border-color .15s;
-    cursor:pointer;margin-bottom:10px;}
+  .item{
+    display:grid; grid-template-columns:56px 1fr; align-items:center; gap:12px;
+    padding:10px; border:1px solid var(--border); border-radius:var(--radius);
+    background:#fafafa; transition:background .15s,transform .06s,border-color .15s;
+    cursor:pointer; margin-bottom:10px;
+  }
   .item:hover{background:#f5f5f5;} .item:active{transform:scale(.996);}
   .item.selected{border-color:var(--teal);box-shadow:0 0 0 4px var(--ring);background:#fff;}
   .cover{width:56px;height:56px;border-radius:8px;object-fit:cover;background:#e9eef0;
@@ -40,23 +65,51 @@
   .info{min-width:0;}
   .ttl{margin:0 0 2px;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .art{margin:0;color:#555;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  /* Tiny helper row under selected (optional link, stays subtle) */
+  .sel-meta{
+    border-top:1px dashed #edf2f7; padding:10px 12px; font-size:12px; color:#6b7280;
+    display:none; /* we keep link internal, so hidden by default */
+  }
+  .sel-link{ color:#0ea5a6; text-decoration:none; }
+  .sel-link:hover{ text-decoration:underline; }
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="field">
-      <!-- Parent provides the label; this is only the input -->
+      <!-- Parent page provides the label; this is only the input -->
       <input id="q" class="input" type="text"
              placeholder="start typing..."
              autocomplete="off" inputmode="search" />
     </div>
+
     <div id="status" class="status"></div>
+
+    <!-- Pinned selection lives here -->
+    <div id="selected" class="selected" aria-live="polite" aria-atomic="true">
+      <div class="sel-inner">
+        <div id="selCover" class="sel-cover" aria-hidden="true">♪</div>
+        <div class="sel-text">
+          <p id="selTitle" class="sel-title"></p>
+          <p id="selArtist" class="sel-artist"></p>
+        </div>
+      </div>
+      <div id="selMeta" class="sel-meta">
+        <!-- If you later want to show a link for staff only, toggle this on -->
+        <a id="selLink" class="sel-link" href="#" target="_blank" rel="noopener">Open</a>
+      </div>
+    </div>
+
+    <!-- Live results while typing -->
     <div id="results" class="results"></div>
   </div>
 
 <script>
   const $ = (s)=>document.querySelector(s);
   const q=$('#q'), statusEl=$('#status'), resultsEl=$('#results');
+  const selectedBox=$('#selected'), selCover=$('#selCover'), selTitle=$('#selTitle'), selArtist=$('#selArtist'), selMeta=$('#selMeta'), selLink=$('#selLink');
+
   let debounce=null,lastTerm='',lastTag=null;
 
   function setStatus(m='',err=false){
@@ -65,6 +118,7 @@
   }
   function clearResults(){ resultsEl.innerHTML=''; }
 
+  /* Resize helpers so the parent iframe hugs the content */
   function resizeTo(h){
     try { window.parent.postMessage({action:'resize', height:h}, '*'); } catch(_) {}
     try { window.top.postMessage({action:'resize', height:h}, '*'); } catch(_) {}
@@ -76,9 +130,14 @@
   function hideResults(){
     clearResults();
     resultsEl.classList.add('hidden');
-    resizeTo(88);
+    reportHeight();
+  }
+  function showResults(){
+    resultsEl.classList.remove('hidden');
+    reportHeight();
   }
 
+  /* JSONP for iTunes/Deezer (CORSless) */
   function jsonp(url, cbParam='callback'){
     return new Promise((resolve, reject) => {
       const cb='cb_'+Math.random().toString(36).slice(2);
@@ -97,7 +156,7 @@
   async function searchITunes(term){
     const data = await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=8`, 'callback');
     return (data?.results || []).map(t => ({
-      title:t.trackName, artist:t.artistName, cover:t.artworkUrl60, link:t.trackViewUrl
+      title:t.trackName, artist:t.artistName, cover:t.artworkUrl100 || t.artworkUrl60, link:t.trackViewUrl
     }));
   }
   async function searchDeezer(term){
@@ -123,14 +182,14 @@
 
   function render(list){
     clearResults();
-    resultsEl.classList.remove('hidden');
+    showResults();
     list.forEach(({title, artist, cover, link})=>{
       const div=document.createElement('div');
       div.className='item'; div.setAttribute('role','button'); div.setAttribute('tabindex','0');
       const img = cover ? `<img class="cover" src="${cover}" alt="Album cover">`
                         : `<div class="cover" aria-hidden="true">♪</div>`;
-      div.innerHTML = `${img}<div class="info"><p class="ttl">${title||'Unknown Title'}</p><p class="art">${artist||'Unknown Artist'}</p></div>`;
-      const select=()=>useSong({title,artist,link}, div);
+      div.innerHTML = `${img}<div class="info"><p class="ttl">${title||'Unknown Title'}</p><p class="art">${artist||('Unknown Artist')}</p></div>`;
+      const select=()=>useSong({title,artist,cover,link}, div);
       div.onclick=select;
       div.onkeyup=(e)=>{ if(e.key==='Enter'||e.key===' ') select(); };
       resultsEl.appendChild(div);
@@ -138,14 +197,47 @@
     reportHeight();
   }
 
-  function useSong({title,artist,link}, el){
+  function showSelectedCard({title, artist, cover, link}){
+    // artwork
+    if (cover) {
+      selCover.innerHTML = '';
+      selCover.style.background = 'transparent';
+      selCover.classList.remove('noimg');
+      const img = document.createElement('img');
+      img.src = cover; img.alt = 'Album cover'; img.className = 'sel-cover';
+      selCover.replaceWith(img);
+      // reselect element reference
+      selCover.id = '';
+      img.id = 'selCover';
+      // update reference variable
+      window.selCover = img;
+    } else {
+      // revert to note icon box
+      selCover.outerHTML = `<div id="selCover" class="sel-cover" aria-hidden="true">♪</div>`;
+      window.selCover = document.getElementById('selCover');
+    }
+
+    selTitle.textContent  = title || 'Unknown Title';
+    selArtist.textContent = artist || 'Unknown Artist';
+
+    // we keep link hidden for guests, but you can toggle if desired
+    if (link) { selLink.href = link; /* selMeta.style.display='block'; */ }
+
+    selectedBox.style.display = 'block';
+    reportHeight();
+  }
+
+  function useSong({title,artist,cover,link}, el){
     document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected'));
     el?.classList.add('selected');
 
+    // Send selection to the parent page (fills hidden fields + selected label)
     const msg = { action:'setFields', fields:{ song_title:title||'', artist:artist||'', link:link||'' } };
     try { window.parent.postMessage(msg, '*'); } catch(_) {}
     try { window.top.postMessage(msg, '*'); } catch(_) {}
 
+    // Pin the selected card and hide the live results
+    showSelectedCard({title,artist,cover,link});
     hideResults();
   }
 
@@ -158,14 +250,18 @@
     catch(e){ setStatus('Search failed.', true); hideResults(); }
   }
 
+  // Typing shows results (selection card remains visible)
   q.addEventListener('input', ()=>{
     const t=q.value.trim(); if(t===lastTerm) return; lastTerm=t;
     clearTimeout(debounce); debounce=setTimeout(()=>doSearch(t), 260);
   });
+
+  // Enter triggers a search (don’t submit forms accidentally)
   q.addEventListener('keydown',(e)=>{
     if(e.key==='Enter'){ e.preventDefault(); doSearch(q.value.trim()); }
   });
 
+  // Tell parent we're ready and start small
   window.addEventListener('load', ()=>{
     try { window.parent.postMessage({action:'ready'}, '*'); } catch(_) {}
     try { window.top.postMessage({action:'ready'}, '*'); } catch(_) {}
