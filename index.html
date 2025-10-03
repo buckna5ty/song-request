@@ -52,11 +52,12 @@
       color:#111;
     }
 
+    /* Hide submission fields from guests */
     #id_12, #id_8, #id_9 { display:none; }
 
+    /* Normalize visible inputs */
     .form-textbox{
-      width: var(--field-w);
-      max-width: 100%;
+      width: 100%;
       height: 48px;
       padding: 0 14px;
       border: 1px solid var(--border);
@@ -71,20 +72,25 @@
       box-shadow: none;
     }
 
+    /* Force name field container to the same width & centering as the widget */
+    #cid_7,
+    #cid_widget {
+      max-width: var(--field-w);
+      width: 100%;
+      margin: 0 auto;       /* center in the page */
+    }
+
+    /* Name field focus (no hover highlight) */
     #input_7:hover{ border-color: var(--border) !important; box-shadow:none !important; }
     #input_7:focus{ border-color: var(--teal) !important; box-shadow: 0 0 0 4px var(--ring) !important; outline:none; }
 
-    .selected-ring{
-      border-color: var(--teal) !important;
-      box-shadow: 0 0 0 4px var(--ring) !important;
-      transition: box-shadow .2s ease, border-color .2s ease;
-    }
-
-    #searchWidget { width:100%; border:0; height:320px; transition:height .2s ease; }
-    #id_widget { margin-bottom: 0; }
-    #id_disp_selected { margin-top: 4px; display:none; }
+    /* Widget iframe + tight spacing */
+    #searchWidget { width:100%; border:0; height:320px; transition:height .2s ease; display:block; }
+    #id_widget { margin-bottom: 4px; }
+    /* Removed the Selected field; pull submit up a bit */
     #id_2 { margin-top: 8px; }
 
+    /* Submit button: black, white, all caps */
     #input_2.form-submit-button{
       background:#111 !important;
       color:#fff !important;
@@ -99,6 +105,7 @@
     #input_2.form-submit-button:hover{ filter:brightness(0.92); }
     #input_2.form-submit-button:active{ transform: translateY(1px); }
 
+    /* Full-screen Thank You overlay */
     .ty-overlay{
       position:fixed; inset:0; background:#fff; display:none;
       align-items:center; justify-content:center; z-index:9999;
@@ -127,6 +134,7 @@
   </style>
 
   <script>
+    /* ====== CONFIG ====== */
     const REDIRECT_URL      = "https://www.davidcharlesevents.com/song-request";
     const REDIRECT_DELAY_MS = 4000; // 4 seconds
 
@@ -148,23 +156,6 @@
       el.dispatchEvent(new Event('input', { bubbles:true }));
       el.dispatchEvent(new Event('change', { bubbles:true }));
       return true;
-    }
-
-    function showSelectedField(text) {
-      const li    = document.getElementById('id_disp_selected');
-      const input = document.getElementById('input_disp_selected');
-      if (!li || !input) return;
-      if (text && text.trim()) {
-        input.value = text;
-        li.style.display = 'block';
-        li.setAttribute('aria-hidden','false');
-        input.classList.add('selected-ring');
-      } else {
-        input.value = '';
-        li.style.display = 'none';
-        li.setAttribute('aria-hidden','true');
-        input.classList.remove('selected-ring');
-      }
     }
 
     function buildHiddenInput(name, val){
@@ -189,6 +180,7 @@
       const artistVal= (document.getElementById(MAP.artist.id)?.value     || '');
       const linkVal  = (document.getElementById(MAP.link.id)?.value       || '');
 
+      // Hidden iframe target to avoid cross-site navigation
       let targetFrame = document.getElementById('jf_target');
       if (!targetFrame) {
         targetFrame = document.createElement('iframe');
@@ -198,6 +190,7 @@
         document.body.appendChild(targetFrame);
       }
 
+      // When Jotform responds, show TY and schedule redirect
       targetFrame.onload = function(){
         openThankYou();
         redirectAfterDelay();
@@ -212,6 +205,7 @@
       tmp.appendChild( buildHiddenInput('formID','252746100648052') );
       tmp.appendChild( buildHiddenInput('simple_spc','252746100648052-252746100648052') );
 
+      // send both unique and q# names
       tmp.appendChild( buildHiddenInput(MAP.yourName.uname, nameVal) );
       tmp.appendChild( buildHiddenInput(`q${MAP.yourName.q}_yourName`, nameVal) );
 
@@ -227,10 +221,12 @@
       document.body.appendChild(tmp);
       tmp.submit();
 
+      // show TY immediately for snappy UX + fallback timer
       openThankYou();
       redirectAfterDelay();
     }
 
+    /* Messages from widget (fills hidden fields only) */
     window.addEventListener('message', (e) => {
       const msg = e.data;
       if (!msg || !msg.action) return;
@@ -240,8 +236,6 @@
         if (song_title !== undefined) setHiddenField('song_title', song_title);
         if (artist     !== undefined) setHiddenField('artist',     artist);
         if (link       !== undefined) setHiddenField('link',       link);
-        const label = [song_title, artist].filter(Boolean).join(' - ');
-        showSelectedField(label);
       }
 
       if (msg.action === 'resize' && typeof msg.height === 'number') {
@@ -268,7 +262,7 @@
     <div class="dce-logo">
       <img src="assets/client-logo.png" alt="David Charles Events" onerror="this.style.display='none'">
     </div>
-    <div class="app-title">SONG REQUESTS</div>
+    <div class="app-title">SONG REQUEST</div>
 
     <ul class="form-section page-section" role="presentation">
       <!-- Name (not required) -->
@@ -284,20 +278,12 @@
       <!-- Live search (widget) -->
       <li class="form-line" data-type="control_widget" id="id_widget">
         <label class="form-label form-label-top form-label-auto" id="label_widget" for="searchWidget">Search Song, Artist or Lyrics</label>
-        <div id="cid_widget" class="form-input-wide" data-layout="half" style="max-width:var(--field-w);">
+        <div id="cid_widget" class="form-input-wide" data-layout="half">
           <iframe id="searchWidget" src="widget.html" title="Song Search"></iframe>
         </div>
       </li>
 
-      <!-- Read-only "Selected Song - Artist" -->
-      <li class="form-line" data-type="control_textbox" id="id_disp_selected">
-        <label class="form-label form-label-top form-label-auto" for="input_disp_selected">Selected Song - Artist</label>
-        <div class="form-input-wide" data-layout="half">
-          <input type="text" id="input_disp_selected" class="form-textbox" readonly aria-readonly="true" />
-        </div>
-      </li>
-
-      <!-- Hidden fields -->
+      <!-- Hidden fields (still posted to Jotform/Sheets) -->
       <li class="form-line" id="id_12" style="display:none">
         <label class="form-label form-label-top form-label-auto" for="input_12">song_title</label>
         <div id="cid_12" class="form-input-wide" data-layout="half">
@@ -342,6 +328,7 @@
     </div>
   </div>
 
+  <!-- SPC token Jotform expects -->
   <input type="hidden" class="simple_spc" id="simple_spc" name="simple_spc" value="252746100648052" />
   <script>
     var all_spc = document.querySelectorAll("#simple_spc");
