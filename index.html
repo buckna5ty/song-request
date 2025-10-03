@@ -22,12 +22,21 @@
   </style>
 </head>
 <body>
-  <h2>Search for a Song</h2>
+  <h2 id="widgetTitle">Search for a Song</h2>
   <input id="search" class="search-box" type="text" placeholder="Type a song or artist…" inputmode="search" autocomplete="off" />
   <div id="status" class="status"></div>
   <div id="results" class="results"></div>
 
   <script>
+    // Hide title if ?title=0
+    (function () {
+      const params = new URLSearchParams(location.search);
+      if (params.get('title') === '0') {
+        const t = document.getElementById('widgetTitle');
+        if (t) t.style.display = 'none';
+      }
+    })();
+
     const searchInput = document.getElementById('search');
     const statusEl = document.getElementById('status');
     const resultsEl = document.getElementById('results');
@@ -39,6 +48,7 @@
     };
     const clearResults = () => { resultsEl.innerHTML = ''; };
 
+    // --- JSONP helper (for iTunes & Deezer) ---
     function jsonp(url, cbParam='callback'){
       return new Promise((resolve, reject) => {
         const cb = 'cb_' + Math.random().toString(36).slice(2);
@@ -56,6 +66,7 @@
       });
     }
 
+    // --- Providers (client-side) ---
     async function searchITunes(term){
       const data = await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=8`, 'callback');
       return (data?.results || []).map(t => ({
