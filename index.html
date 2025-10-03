@@ -24,20 +24,106 @@
     body { background:#f3f2ff; margin:0; }
     .dce-logo { text-align:center; margin: 18px 0 8px; }
     .dce-logo img { max-width:220px; height:auto; }
-    /* Hide the real submission fields to guests */
+    /* Hide the real submission fields from guests */
     #id_12, #id_8, #id_9 { display:none !important; }
-    /* Make the widget container height fluid but nice on mobile */
-    #searchWidget { width:100%; border:0; height:420px; }
-    @media (max-width:520px){ #searchWidget{ height:460px; } }
+    /* Widget iframe will auto-resize via postMessage; set a sensible min/max */
+    #searchWidget { width:100%; border:0; height:420px; transition:height .2s ease; }
     .form-subLabel { color:#6b7280; font-size:12px; }
+    /* Selected field is hidden until a song is picked */
+    #id_disp_selected { display:none; }
   </style>
 
   <script>
     JotForm.newDefaultTheme = true;
     JotForm.singleProduct = false;
     JotForm.init(function(){});
-    /* Map the hidden field IDs from your Jotform export */
+
+    /* IDs of the hidden fields (from your Jotform export) */
     const FIELD_IDS = { song_title: 'input_12', artist: 'input_8', link: 'input_9' };
+
+    /* Helpers to set hidden fields + update the "Song – Artist" display */
+    function setHiddenField(key, value) {
+      const id = FIELD_IDS[key];
+      const el = id ? document.getElementById(id) : null;
+      if (el) {
+        el.value = value || '';
+        el.dispatchEvent(new Event('input', { bubbles:true }));
+        el.dispatchEvent(new Event('change', { bubbles:true }));
+        return true;
+      }
+      return false;
+    }
+    function showSelectedField(text) {
+      const li = document.getElementById('id_disp_selected');
+      const input = document.getElementById('input_disp_selected');
+      if (!li || !input) return;
+      if (!text) {
+        li.style.display = 'none';
+        input.value = '';
+      } else {
+        input.value = text;
+        li.style.display = '';
+      }
+    }
+
+    /* Submission: build a real POST back to Jotform */
+    function submitToJotform(ev){
+      ev.preventDefault();
+      const nameVal  = (document.getElementById('input_7') || {}).value || '';
+      const titleVal = (document.getElementById(FIELD_IDS.song_title) || {}).value || '';
+      const artistVal= (document.getElementById(FIELD_IDS.artist) || {}).value || '';
+      const linkVal  = (document.getElementById(FIELD_IDS.link) || {}).value || '';
+
+      const tmp = document.createElement('form');
+      tmp.action = 'https://submit.jotform.com/submit/252746100648052';
+      tmp.method = 'POST';
+      tmp.style.display = 'none';
+
+      function add(name, value){
+        const i=document.createElement('input');
+        i.type='hidden'; i.name=name; i.value=value||''; tmp.appendChild(i);
+      }
+      add('formID','252746100648052');
+      add('q7_yourName', nameVal);
+      add('song_title',  titleVal);
+      add('artist',      artistVal);
+      add('link',        linkVal);
+      add('simple_spc','252746100648052-252746100648052');
+
+      document.body.appendChild(tmp);
+      tmp.submit();
+    }
+
+    /* Listen for messages from the widget */
+    window.addEventListener('message', (e) => {
+      const msg = e.data;
+      if (!msg || !msg.action) return;
+
+      if (msg.action === 'setFields' && msg.fields) {
+        const { song_title, artist, link } = msg.fields;
+        if (song_title !== undefined) setHiddenField('song_title', song_title);
+        if (artist     !== undefined) setHiddenField('artist',     artist);
+        if (link       !== undefined) setHiddenField('link',       link);
+
+        const label = [song_title, artist].filter(Boolean).join(' — ');
+        showSelectedField(label);
+      }
+
+      if (msg.action === 'resize' && typeof msg.height === 'number') {
+        const iframe = document.getElementById('searchWidget');
+        if (iframe) {
+          const minH = 240, maxH = 640;
+          const h = Math.max(minH, Math.min(msg.height, maxH));
+          iframe.style.height = h + 'px';
+        }
+      }
+    });
+
+    /* Wire submit button after DOM ready */
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('input_2');
+      if (btn) btn.addEventListener('click', submitToJotform);
+    });
   </script>
 </head>
 <body>
@@ -47,7 +133,7 @@
     </div>
 
     <ul class="form-section page-section" role="presentation">
-      <!-- Your Name (visible; matches Jotform style) -->
+      <!-- Your Name (visible; Jotform style) -->
       <li class="form-line jf-required" data-type="control_textbox" id="id_7">
         <label class="form-label form-label-top form-label-auto" id="label_7" for="input_7">
           Your Name<span class="form-required">*</span>
@@ -57,7 +143,7 @@
         </div>
       </li>
 
-      <!-- Jotform-styled "Song or Artist" field that *is* your live widget -->
+      <!-- Live search as a Jotform-styled field -->
       <li class="form-line" data-type="control_widget" id="id_widget">
         <label class="form-label form-label-top form-label-auto" id="label_widget" for="searchWidget">Song or Artist</label>
         <div id="cid_widget" class="form-input-wide" data-layout="half">
@@ -66,21 +152,15 @@
         </div>
       </li>
 
-      <!-- Optional read-only displays so the guest sees their pick inside the form -->
-      <li class="form-line" data-type="control_textbox" id="id_disp_title">
-        <label class="form-label form-label-top form-label-auto" for="input_disp_title">Selected Song</label>
+      <!-- Single read-only field: "Song – Artist" (hidden until a pick) -->
+      <li class="form-line" data-type="control_textbox" id="id_disp_selected">
+        <label class="form-label form-label-top form-label-auto" for="input_disp_selected">Selected</label>
         <div class="form-input-wide" data-layout="half">
-          <input type="text" id="input_disp_title" class="form-textbox" style="width:310px;background:#f7f7f7;border-color:#e5e7eb" readonly aria-readonly="true" placeholder="(choose above)" />
-        </div>
-      </li>
-      <li class="form-line" data-type="control_textbox" id="id_disp_artist">
-        <label class="form-label form-label-top form-label-auto" for="input_disp_artist">Artist</label>
-        <div class="form-input-wide" data-layout="half">
-          <input type="text" id="input_disp_artist" class="form-textbox" style="width:310px;background:#f7f7f7;border-color:#e5e7eb" readonly aria-readonly="true" placeholder="(choose above)" />
+          <input type="text" id="input_disp_selected" class="form-textbox" style="width:310px;background:#f7f7f7;border-color:#e5e7eb" readonly aria-readonly="true" />
         </div>
       </li>
 
-      <!-- Hidden submission fields (actually go to Google Sheets) -->
+      <!-- Hidden submission fields (sent to Sheets) -->
       <li class="form-line" id="id_12" style="display:none">
         <label class="form-label form-label-top form-label-auto" for="input_12">song_title</label>
         <div id="cid_12" class="form-input-wide" data-layout="half">
@@ -100,7 +180,7 @@
         </div>
       </li>
 
-      <!-- Submit button (identical style) -->
+      <!-- Submit -->
       <li class="form-line" data-type="control_button" id="id_2">
         <div id="cid_2" class="form-input-wide" data-layout="full">
           <div data-align="auto" class="form-buttons-wrapper form-buttons-auto">
@@ -109,80 +189,13 @@
         </div>
       </li>
     </ul>
-
-    <!-- The real Jotform form wrapper to keep their submission pipeline intact -->
-    <form class="jotform-form"
-          action="https://submit.jotform.com/submit/252746100648052"
-          method="post"
-          name="form_252746100648052"
-          id="252746100648052"
-          accept-charset="utf-8"
-          autocomplete="on"
-          style="display:none;"></form>
   </div>
 
-  <!-- Minimal tokens Jotform expects (kept invisible) -->
+  <!-- SPC token Jotform expects -->
   <input type="hidden" class="simple_spc" id="simple_spc" name="simple_spc" value="252746100648052" />
   <script>
-    // keep Jotform happy about SPC (safe to leave as-is)
-    var all_spc = document.querySelectorAll("#" + "simple_spc");
+    var all_spc = document.querySelectorAll("#simple_spc");
     for (var i = 0; i < all_spc.length; i++) { all_spc[i].value = "252746100648052-252746100648052"; }
-  </script>
-
-  <!-- Instant-fill listener (no reload) -->
-  <script>
-    const FIELD_NAMES = { song_title: 'song_title', artist: 'artist', link: 'link' };
-
-    function setHiddenField(key, value) {
-      // 1) by ID (exported IDs)
-      const byId = document.getElementById(FIELD_IDS[key]);
-      if (byId) { byId.value = value || ''; byId.dispatchEvent(new Event('change', {bubbles:true})); return true; }
-      // 2) by name (fallback)
-      let byName = document.querySelector(`[name="${FIELD_NAMES[key]}"]`);
-      if (byName) { byName.value = value || ''; byName.dispatchEvent(new Event('change', {bubbles:true})); return true; }
-      return false;
-    }
-    function setDisplayFields(title, artist) {
-      const t = document.getElementById('input_disp_title');
-      const a = document.getElementById('input_disp_artist');
-      if (t) t.value = title || '';
-      if (a) a.value = artist || '';
-    }
-    window.addEventListener('message', (e) => {
-      // If you want to restrict to same-origin only, uncomment:
-      // if (e.origin !== window.location.origin) return;
-      const msg = e.data;
-      if (!msg || msg.action !== 'setFields' || !msg.fields) return;
-      const { song_title, artist, link } = msg.fields;
-      if (song_title !== undefined) setHiddenField('song_title', song_title);
-      if (artist     !== undefined) setHiddenField('artist',     artist);
-      if (link       !== undefined) setHiddenField('link',       link);
-      setDisplayFields(song_title, artist);
-    });
-
-    // Submit handler: build and submit a real Jotform POST using a temporary form
-    document.getElementById('input_2').addEventListener('click', function(ev){
-      ev.preventDefault();
-      const tmp = document.createElement('form');
-      tmp.action = 'https://submit.jotform.com/submit/252746100648052';
-      tmp.method = 'POST';
-      tmp.style.display = 'none';
-
-      function add(name, value){
-        const i=document.createElement('input');
-        i.name=name; i.value=value||''; tmp.appendChild(i);
-      }
-      add('formID','252746100648052');
-      add('q7_yourName', document.getElementById('input_7').value || '');
-      add('song_title',  document.getElementById('input_12').value || '');
-      add('artist',      document.getElementById('input_8').value || '');
-      add('link',        document.getElementById('input_9').value || '');
-      // SPC token
-      add('simple_spc','252746100648052-252746100648052');
-
-      document.body.appendChild(tmp);
-      tmp.submit();
-    });
   </script>
 </body>
 </html>
