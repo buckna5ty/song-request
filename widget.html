@@ -14,8 +14,7 @@
     margin:0;padding:0;background:#fff;color:var(--ink);
     font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;
   }
-  /* Reduce bottom padding so submit can hug the iframe */
-  .wrap{padding:12px 12px 6px;}
+  .wrap{padding:12px;}
   .field{display:flex;flex-direction:column;gap:6px;max-width:var(--field-w);margin:0 auto;position:relative;}
 
   /* Input matches parent form field */
@@ -45,7 +44,7 @@
 
   /* Selected card stays pinned below the search box */
   .selected{
-    max-width:var(--field-w); margin:6px auto 0; /* tighter */
+    max-width:var(--field-w); margin:10px auto 0;
     border:1px solid var(--border); border-radius:var(--radius);
     background:#fff; display:none;
     transition: box-shadow .15s ease, border-color .15s ease, background .15s ease;
@@ -58,7 +57,7 @@
   }
   .sel-inner{
     display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center;
-    padding:10px; /* a bit tighter */
+    padding:12px;
   }
   .sel-cover{
     width:72px;height:72px;border-radius:10px;object-fit:cover;background:#e9eef0;
@@ -68,15 +67,14 @@
   .sel-artist{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
   /* Results list appears while typing; hides on selection */
-  .results{max-width:var(--field-w);margin:6px auto 0;} /* tighter */
+  .results{max-width:var(--field-w);margin:10px auto 0;}
   .hidden{display:none !important;}
   .item{
     display:grid; grid-template-columns:56px 1fr; align-items:center; gap:12px;
     padding:10px; border:1px solid var(--border); border-radius:var(--radius);
     background:#fafafa; transition:background .15s,transform .06s,border-color .15s;
-    cursor:pointer; margin-bottom:8px; /* tighter */
+    cursor:pointer; margin-bottom:10px;
   }
-  .item:last-child{ margin-bottom:6px; } /* minimal tail space */
   .item:hover{background:#f5f5f5;} .item:active{transform:scale(.996);}
   .item.selected{border-color:var(--teal);box-shadow:0 0 0 4px var(--ring);background:#fff;}
   .cover{width:56px;height:56px;border-radius:8px;object-fit:cover;background:#e9eef0;
@@ -85,12 +83,16 @@
   .ttl{margin:0 0 2px;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .art{margin:0;color:#555;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-  .sel-meta{display:none;}
+  /* Tiny (hidden) helper row under selected for future use */
+  .sel-meta{border-top:1px dashed #edf2f7; padding:10px 12px; font-size:12px; color:#6b7280; display:none;}
+  .sel-link{ color:#0ea5a6; text-decoration:none; }
+  .sel-link:hover{ text-decoration:underline; }
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="field">
+      <!-- Parent provides the label; this is only the input -->
       <input id="q" class="input" type="text"
              placeholder="start typing..."
              autocomplete="off" inputmode="search" />
@@ -288,7 +290,6 @@
   });
 
   // Clear button behavior
-  const clearBtn = document.getElementById('clearBtn');
   clearBtn.addEventListener('click', ()=>{
     q.value=''; lastTerm=''; q.focus({preventScroll:true});
     clearBtn.style.display='none';
@@ -301,8 +302,7 @@
   window.addEventListener('load', ()=>{
     try { window.parent.postMessage({action:'ready'}, '*'); } catch(_) {}
     try { window.top.postMessage({action:'ready'}, '*'); } catch(_) {}
-    // Start small so submit button sits right below
-    resizeTo(70);
+    resizeTo(88);
   });
 </script>
 </body>
