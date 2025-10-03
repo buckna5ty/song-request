@@ -42,7 +42,7 @@
     .dce-logo { text-align:center; margin: 18px 0 4px; }
     .dce-logo img { max-width:220px; height:auto; }
 
-    /* SONG REQUEST APP heading (scales & ~2/3 width on mobile) */
+    /* SONG REQUEST APP heading */
     .app-title{
       text-align:center;
       margin: 0 auto 10px;
@@ -50,14 +50,14 @@
       letter-spacing: .06em;
       line-height: 1.05;
       font-size: clamp(20px, 6.2vw, 36px);
-      max-width: 66vw;
+      max-width: 66vw; /* ~2/3 of mobile width */
       color:#111;
     }
 
     /* Hide submission fields from guests */
     #id_12, #id_8, #id_9 { display:none; }
 
-    /* Normalize visible inputs (width/height/padding/border/radius/look) */
+    /* Normalize visible inputs (Name + Selected display) to a single spec */
     .form-textbox{
       width: var(--field-w);
       max-width: 100%;
@@ -86,7 +86,7 @@
       outline: none;
     }
 
-    /* Selected field highlight class (applied when a choice is made) */
+    /* Selected field highlight (applied when a choice is made) */
     .selected-ring{
       border-color: var(--teal) !important;
       box-shadow: 0 0 0 4px var(--ring) !important;
@@ -94,11 +94,12 @@
     }
 
     /* Widget iframe auto-resizes */
-    #searchWidget { width:100%; border:0; height:360px; transition:height .2s ease; }
+    #searchWidget { width:100%; border:0; height:320px; transition:height .2s ease; }
 
-    /* Tighter spacing between widget and Selected row */
+    /* Tighter spacing: bring Selected & Submit up when Selected is hidden */
     #id_widget { margin-bottom: 0; }
-    #id_disp_selected { margin-top: 2px; display:none; }
+    #id_disp_selected { margin-top: 4px; display:none; }
+    #id_2 { margin-top: 8px; } /* submit row */
 
     /* Submit button: black, white, all caps, custom font */
     #input_2.form-submit-button{
@@ -188,33 +189,40 @@
       tmp.submit();
     }
 
+    /* Receive messages from widget */
     window.addEventListener('message', (e) => {
       const msg = e.data;
       if (!msg || !msg.action) return;
 
       if (msg.action === 'setFields' && msg.fields) {
         const { song_title, artist, link } = msg.fields;
-
         if (song_title !== undefined) setHiddenField('song_title', song_title);
         if (artist     !== undefined) setHiddenField('artist',     artist);
         if (link       !== undefined) setHiddenField('link',       link);
-
         const label = [song_title, artist].filter(Boolean).join(' - ');
         showSelectedField(label);
       }
 
-      /* Auto-resize the iframe (smaller min to reduce space) */
+      /* Auto-resize the iframe */
       if (msg.action === 'resize' && typeof msg.height === 'number') {
         const iframe = document.getElementById('searchWidget');
         if (iframe) {
-          const minH = 100;
+          const minH = 88;   // very compact when widget asks for small height
           const maxH = 640;
           iframe.style.height = Math.max(minH, Math.min(msg.height, maxH)) + 'px';
         }
       }
+
+      /* Widget signals it's ready -> focus the Name field (not the widget) */
+      if (msg.action === 'ready') {
+        const name = document.getElementById('input_7');
+        if (name) { name.focus({preventScroll:true}); }
+      }
     });
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Ensure the Name field gets first focus on initial load
+      document.getElementById('input_7')?.focus({preventScroll:true});
       document.getElementById('input_2')?.addEventListener('click', submitToJotform);
     });
   </script>
