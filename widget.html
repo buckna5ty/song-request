@@ -5,20 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DCE • Song Search Widget</title>
 <style>
-  :root{ --ink:#111; --muted:#616161; --border:#e5e7eb; --ring:rgba(33,150,243,.25); --radius:10px; --radius-sm:8px; }
-  html,body{margin:0;padding:0;background:#fff;color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;}
+  :root{
+    --ink:#111; --muted:#616161; --border:#e5e7eb;
+    --ring:rgba(33,150,243,.25); --radius:10px; --radius-sm:8px;
+  }
+  html,body{margin:0;padding:0;background:#fff;color:var(--ink);
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;}
   .wrap{padding:12px;}
   .field{display:flex;flex-direction:column;gap:6px;max-width:640px;margin:0 auto;}
   .label{font-size:14px;font-weight:600;color:#333;}
-  .input{height:48px;padding:0 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:16px;outline:none;background:#fff;box-sizing:border-box;transition:box-shadow .15s,border-color .15s;}
+  .input{height:48px;padding:0 14px;border:1px solid var(--border);
+    border-radius:var(--radius-sm);font-size:16px;outline:none;background:#fff;
+    box-sizing:border-box;transition:box-shadow .15s,border-color .15s;}
   .input:focus{border-color:#2196f3;box-shadow:0 0 0 4px var(--ring);}
   .status{max-width:640px;margin:6px auto 0;font-size:13px;color:var(--muted);min-height:18px;text-align:left;}
   .results{max-width:640px;margin:10px auto 0;}
   .hidden{display:none !important;}
-  .item{display:grid;grid-template-columns:56px 1fr;align-items:center;gap:12px;padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fafafa;transition:background .15s,transform .06s,border-color .15s;cursor:pointer;margin-bottom:10px;}
+  .item{display:grid;grid-template-columns:56px 1fr;align-items:center;gap:12px;
+    padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm);
+    background:#fafafa;transition:background .15s,transform .06s,border-color .15s;
+    cursor:pointer;margin-bottom:10px;}
   .item:hover{background:#f5f5f5;} .item:active{transform:scale(.996);}
   .item.selected{border-color:#2196f3;box-shadow:0 0 0 4px var(--ring);background:#fff;}
-  .cover{width:56px;height:56px;border-radius:8px;object-fit:cover;background:#e9eef0;color:#7a8a8d;display:grid;place-items:center;font-size:12px;}
+  .cover{width:56px;height:56px;border-radius:8px;object-fit:cover;background:#e9eef0;
+    color:#7a8a8d;display:grid;place-items:center;font-size:12px;}
   .info{min-width:0;}
   .ttl{margin:0 0 2px;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .art{margin:0;color:#555;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -28,7 +38,9 @@
   <div class="wrap">
     <div class="field">
       <label class="label" for="q">Song or Artist</label>
-      <input id="q" class="input" type="text" placeholder="Start typing… (e.g., ‘Uptown Funk’ or ‘Bruno Mars’)" autocomplete="off" inputmode="search" />
+      <input id="q" class="input" type="text"
+             placeholder="Start typing… (e.g., ‘Uptown Funk’ or ‘Bruno Mars’)"
+             autocomplete="off" inputmode="search" />
     </div>
     <div id="status" class="status"></div>
     <div id="results" class="results"></div>
@@ -39,23 +51,29 @@
   const q=$('#q'), statusEl=$('#status'), resultsEl=$('#results');
   let debounce=null,lastTerm='',lastTag=null;
 
-  function setStatus(m='',err=false){ statusEl.textContent=m; statusEl.style.color=err?'#b00020':'#616161'; }
+  function setStatus(m='',err=false){
+    statusEl.textContent=m;
+    statusEl.style.color=err?'#b00020':'#616161';
+  }
   function clearResults(){ resultsEl.innerHTML=''; }
 
-  /* Report height to parent so iframe auto-resizes */
-  function reportHeight(){
-    const h = document.documentElement.scrollHeight;
+  /* === IFRAME RESIZE HELPERS === */
+  function resizeTo(h){
     try { window.parent.postMessage({action:'resize', height:h}, '*'); } catch(_) {}
     try { window.top.postMessage({action:'resize', height:h}, '*'); } catch(_) {}
+  }
+  function reportHeight(){
+    const h = document.documentElement.scrollHeight;
+    resizeTo(h);
   }
 
   function hideResults(){
     clearResults();
     resultsEl.classList.add('hidden');
-    reportHeight();
+    resizeTo(120); // compact height after a selection (collapses gap)
   }
 
-  // JSONP helper for iTunes & Deezer
+  /* === JSONP helper for iTunes & Deezer (no CORS issues) === */
   function jsonp(url, cbParam='callback'){
     return new Promise((resolve, reject) => {
       const cb='cb_'+Math.random().toString(36).slice(2);
@@ -73,21 +91,27 @@
 
   async function searchITunes(term){
     const data = await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=8`, 'callback');
-    return (data?.results || []).map(t => ({ title:t.trackName, artist:t.artistName, cover:t.artworkUrl60, link:t.trackViewUrl }));
+    return (data?.results || []).map(t => ({
+      title:t.trackName, artist:t.artistName, cover:t.artworkUrl60, link:t.trackViewUrl
+    }));
   }
   async function searchDeezer(term){
     const data = await jsonp(`https://api.deezer.com/search?q=${encodeURIComponent(term)}&limit=8&output=jsonp`, 'callback');
-    return (data?.data || []).map(d => ({ title:d.title, artist:d?.artist?.name||'', cover:d?.album?.cover_medium||d?.album?.cover||'', link:d.link||'' }));
+    return (data?.data || []).map(d => ({
+      title:d.title, artist:d?.artist?.name||'', cover:d?.album?.cover_medium||d?.album?.cover||'', link:d.link||''
+    }));
   }
   async function searchMB(term){
     const r = await fetch(`https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(term)}&fmt=json&limit=8`, {
-      headers:{'User-Agent':'DCE-SongRequest/1.0 (https://www.davidcharlesevents.com)'}, cache:'no-store'
+      headers:{'User-Agent':'DCE-SongRequest/1.0 (https://www.davidcharlesevents.com)'},
+      cache:'no-store'
     });
     if (!r.ok) throw new Error('mb http '+r.status);
     const data = await r.json();
     reportHeight();
     return (data.recordings || []).map(rec => {
-      const ac = rec['artist-credit']; const artist = ac && ac[0] && ac[0].name ? ac[0].name : '';
+      const ac = rec['artist-credit'];
+      const artist = ac && ac[0] && ac[0].name ? ac[0].name : '';
       return { title: rec.title, artist, cover:'', link:`https://musicbrainz.org/recording/${rec.id}` };
     });
   }
@@ -98,10 +122,12 @@
     list.forEach(({title, artist, cover, link})=>{
       const div=document.createElement('div');
       div.className='item'; div.setAttribute('role','button'); div.setAttribute('tabindex','0');
-      const img = cover ? `<img class="cover" src="${cover}" alt="Album cover">` : `<div class="cover" aria-hidden="true">♪</div>`;
+      const img = cover ? `<img class="cover" src="${cover}" alt="Album cover">`
+                        : `<div class="cover" aria-hidden="true">♪</div>`;
       div.innerHTML = `${img}<div class="info"><p class="ttl">${title||'Unknown Title'}</p><p class="art">${artist||'Unknown Artist'}</p></div>`;
       const select=()=>useSong({title,artist,link}, div);
-      div.onclick=select; div.onkeyup=(e)=>{ if(e.key==='Enter'||e.key===' ') select(); };
+      div.onclick=select;
+      div.onkeyup=(e)=>{ if(e.key==='Enter'||e.key===' ') select(); };
       resultsEl.appendChild(div);
     });
     reportHeight();
@@ -125,14 +151,17 @@
     setStatus('Searching…');
     try{ const a=await searchITunes(term); if(a.length){ setStatus(''); render(a); return; } }catch(e){}
     try{ const b=await searchDeezer(term); if(b.length){ setStatus(''); render(b); return; } }catch(e){}
-    try{ const c=await searchMB(term); setStatus(c.length?'':'No results'); render(c); }catch(e){ setStatus('Search failed.', true); hideResults(); }
+    try{ const c=await searchMB(term); setStatus(c.length?'':'No results'); render(c); }
+    catch(e){ setStatus('Search failed.', true); hideResults(); }
   }
 
   q.addEventListener('input', ()=>{
     const t=q.value.trim(); if(t===lastTerm) return; lastTerm=t;
     clearTimeout(debounce); debounce=setTimeout(()=>doSearch(t), 260);
   });
-  q.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); doSearch(q.value.trim()); } });
+  q.addEventListener('keydown',(e)=>{
+    if(e.key==='Enter'){ e.preventDefault(); doSearch(q.value.trim()); }
+  });
 
   window.addEventListener('load', ()=>{ q.focus({preventScroll:true}); reportHeight(); });
 </script>
