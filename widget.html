@@ -108,25 +108,43 @@
     const data=await r.json(); sendHeight();
     return (data.recordings||[]).map(rec=>{
       const ac=rec['artist-credit']; const artist=ac&&ac[0]&&ac[0].name?ac[0].name:'';
-      return {title:rec.title, artist, cover:'', link:''}; // MB has no provider link
+      return {title:rec.title, artist, cover:'', link:''};
     });
   }
 
-  /* ---------- Spotify resolver with Apple/Deezer fallback ---------- */
+  /* ---------- Helpers for link resolution ---------- */
+  function normalizeAppleUrl(url){
+    if(!url || !/itunes\.apple\.com/i.test(url)) return url;
+    try{
+      const u=new URL(url);
+      const country = (u.pathname.split('/')[1] || 'us').toLowerCase();
+      const albumId = (u.pathname.match(/id(\d+)/)||[])[1] || '';
+      const trackId = u.searchParams.get('i') || '';
+      // If we have album & track IDs, build a music.apple.com canonical link
+      if(albumId && trackId){
+        return `https://music.apple.com/${country}/album/${albumId}?i=${trackId}`;
+      }
+    }catch(e){}
+    return url;
+  }
+
   async function resolveBestLink(originalUrl, title, artist){
-    // 1) Try to convert the provider URL to Spotify via Odesli (Song.link)
-    if (originalUrl) {
+    // Normalize old itunes.apple.com to music.apple.com to improve match rate
+    const sourceUrl = normalizeAppleUrl(originalUrl);
+    // 1) Try to convert to Spotify via Odesli (Song.link)
+    if (sourceUrl) {
       try{
-        const resp = await fetch(`https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(originalUrl)}`, {cache:'no-store'});
+        const resp = await fetch(`https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(sourceUrl)}`, {cache:'no-store'});
         if (resp.ok) {
           const data = await resp.json();
           const sp = data?.linksByPlatform?.spotify?.url;
-          if (sp) return sp;           // success → Spotify
+          if (sp) return sp;   // success → Spotify
         }
       }catch(e){}
-      return originalUrl;              // 2) fallback → original (Apple/Deezer)
+      // 2) Fallback → original provider link (Apple/Deezer)
+      return sourceUrl;
     }
-    // 3) last resort if we have no provider URL (e.g., MusicBrainz)
+    // 3) No provider URL (e.g., MusicBrainz) → last resort Spotify search URL
     const search = `${title||''} ${artist||''}`.trim();
     return search ? `https://open.spotify.com/search/${encodeURIComponent(search)}` : '';
   }
@@ -172,11 +190,9 @@
   async function useSong({title,artist,cover,link}, el){
     document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected')); el?.classList.add('selected');
 
-    // Prefer Spotify; else fall back to original provider; else Spotify search for MB
     let outURL = '';
     try { outURL = await resolveBestLink(link, title, artist); } catch(e){ outURL=''; }
 
-    // Send values up
     try{
       parent.postMessage({action:'setFields', fields:{
         song_title: title || '',
