@@ -108,8 +108,55 @@
     const data=await r.json(); sendHeight();
     return (data.recordings||[]).map(rec=>{
       const ac=rec['artist-credit']; const artist=ac&&ac[0]&&ac[0].name?ac[0].name:'';
-      return {title:rec.title, artist, cover:'', link:`https://musicbrainz.org/recording/${rec.id}`};
+      return {title:rec.title, artist, cover:'', link:'' /* MB has no direct platform link */};
     });
+  }
+
+  /* -------- Odesli (song.link) resolver for Spotify-first -------- */
+  async function resolvePreferredLink({link, title, artist}){
+    // If it’s already a Spotify track, keep it.
+    if(link && link.includes('open.spotify.com/track')) return link;
+
+    // Helper: try Odesli with a source URL
+    async function odesliFromUrl(srcUrl){
+      try{
+        const r=await fetch(`https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(srcUrl)}&userCountry=US`, {cache:'no-store'});
+        if(!r.ok) return null;
+        const data=await r.json();
+        const byId=data?.entitiesByUniqueId||{};
+        const spotifyId=data?.linksByPlatform?.spotify?.entityUniqueId;
+        if(spotifyId && byId[spotifyId]?.url) return byId[spotifyId].url; // Spotify direct
+        // Fallback to Apple Music if available
+        const appleId=data?.linksByPlatform?.appleMusic?.entityUniqueId;
+        if(appleId && byId[appleId]?.url) return byId[appleId].url;
+        // Last resort: Deezer if available
+        const dzId=data?.linksByPlatform?.deezer?.entityUniqueId;
+        if(dzId && byId[dzId]?.url) return byId[dzId].url;
+        return null;
+      }catch{ return null; }
+    }
+
+    // 1) If we have a source link (Apple/Deezer/etc), try Odesli
+    if(link){
+      const out=await odesliFromUrl(link);
+      if(out) return out;
+      // Couldn’t enrich—just return original
+      return link;
+    }
+
+    // 2) No link (e.g., MusicBrainz result): try to fetch one quickly from iTunes, then resolve
+    if(title){
+      const it=await searchITunes(`${title} ${artist||''}`.trim());
+      if(it.length && it[0].link){
+        const out=await odesliFromUrl(it[0].link);
+        if(out) return out;
+        return it[0].link;
+      }
+    }
+
+    // 3) Absolute last resort: Spotify search URL (not a track URL, but good UX)
+    if(title) return `https://open.spotify.com/search/${encodeURIComponent(`${title} ${artist||''}`.trim())}`;
+    return '';
   }
 
   /* -------- UI helpers -------- */
@@ -150,11 +197,19 @@
     selectedBox.style.display='block'; selectedBox.classList.add('active'); sendHeight();
   }
 
-  function useSong({title,artist,cover,link}, el){
+  async function useSong({title,artist,cover,link}, el){
     document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected')); el?.classList.add('selected');
-    try{ parent.postMessage({action:'setFields', fields:{song_title:title||'', artist:artist||'', link:link||''}}, '*'); }catch{}
-    try{ top.postMessage({action:'setFields', fields:{song_title:title||'', artist:artist||'', link:link||''}}, '*'); }catch{}
-    showSelectedCard({title,artist,cover,link}); hideResults(); sendHeight();
+    showSelectedCard({title,artist,cover,link});
+    hideResults(); sendHeight();
+
+    setStatus('Resolving link…');
+    const bestLink = await resolvePreferredLink({link, title, artist});
+    setStatus('');
+
+    // Push fields back up to the parent (index.html → Jotform)
+    const payload={action:'setFields', fields:{song_title:title||'', artist:artist||'', link:bestLink||''}};
+    try{ parent.postMessage(payload, '*'); }catch{}
+    try{ top.postMessage(payload, '*'); }catch{}
   }
 
   async function doSearch(term){
@@ -176,5 +231,6 @@
 
   window.addEventListener('load', ()=>{ try{ parent.postMessage({action:'ready'},'*'); }catch{} try{ top.postMessage({action:'ready'},'*'); }catch{} sendHeight(); });
 </script>
+
 </body>
 </html>
