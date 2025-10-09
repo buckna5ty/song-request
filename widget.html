@@ -108,66 +108,43 @@
     const data=await r.json(); sendHeight();
     return (data.recordings||[]).map(rec=>{
       const ac=rec['artist-credit']; const artist=ac&&ac[0]&&ac[0].name?ac[0].name:'';
-      return {title:rec.title, artist, cover:'', link:''}; // MB has no provider link
+      return {title:rec.title, artist, cover:'', link:''};
     });
   }
 
   /* ---------- Helpers for link resolution ---------- */
   function normalizeAppleUrl(url){
-    if(!url) return url;
-    // Handle old iTunes links: https://itunes.apple.com/<cc>/album/...id<albumId>?i=<trackId>
-    if(/itunes\.apple\.com/i.test(url)){
-      try{
-        const u=new URL(url);
-        const cc = (u.pathname.split('/')[1] || 'us').toLowerCase();
-        const albumId = (u.pathname.match(/id(\d+)/)||[])[1] || '';
-        const trackId = u.searchParams.get('i') || '';
-        if(albumId && trackId){
-          return `https://music.apple.com/${cc}/album/${albumId}?i=${trackId}`;
-        }
-      }catch(e){}
-    }
+    if(!url || !/itunes\.apple\.com/i.test(url)) return url;
+    try{
+      const u=new URL(url);
+      const country = (u.pathname.split('/')[1] || 'us').toLowerCase();
+      const albumId = (u.pathname.match(/id(\d+)/)||[])[1] || '';
+      const trackId = u.searchParams.get('i') || '';
+      // If we have album & track IDs, build a music.apple.com canonical link
+      if(albumId && trackId){
+        return `https://music.apple.com/${country}/album/${albumId}?i=${trackId}`;
+      }
+    }catch(e){}
     return url;
   }
 
-  async function odesliFromUrl(sourceUrl){
-    const resp = await fetch(`https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(sourceUrl)}&userCountryCode=US`, {cache:'no-store'});
-    if(!resp.ok) return null;
-    const data = await resp.json();
-    return data?.linksByPlatform?.spotify?.url || null;
-  }
-
-  async function deezerSearchUrl(term){
-    try{
-      const data = await jsonp(`https://api.deezer.com/search?q=${encodeURIComponent(term)}&limit=1&output=jsonp`,'callback');
-      const first = (data?.data||[])[0];
-      return first?.link || null;
-    }catch(e){ return null; }
-  }
-
   async function resolveBestLink(originalUrl, title, artist){
+    // Normalize old itunes.apple.com to music.apple.com to improve match rate
     const sourceUrl = normalizeAppleUrl(originalUrl);
-    // 1) Try Odesli with the source URL (Apple/Deezer), US storefront
-    if (sourceUrl){
+    // 1) Try to convert to Spotify via Odesli (Song.link)
+    if (sourceUrl) {
       try{
-        const sp = await odesliFromUrl(sourceUrl);
-        if (sp) return sp;
+        const resp = await fetch(`https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(sourceUrl)}`, {cache:'no-store'});
+        if (resp.ok) {
+          const data = await resp.json();
+          const sp = data?.linksByPlatform?.spotify?.url;
+          if (sp) return sp;   // success → Spotify
+        }
       }catch(e){}
-      // 2) If Apple failed, try: Deezer search → Odesli again
-      const term = `${title||''} ${artist||''}`.trim();
-      if (term){
-        try{
-          const dz = await deezerSearchUrl(term);
-          if (dz){
-            const sp2 = await odesliFromUrl(dz);
-            if (sp2) return sp2;
-          }
-        }catch(e){}
-      }
-      // 3) Fall back to the original provider link (Apple/Deezer)
+      // 2) Fallback → original provider link (Apple/Deezer)
       return sourceUrl;
     }
-    // 4) No provider link (MusicBrainz) → last resort: Spotify search URL
+    // 3) No provider URL (e.g., MusicBrainz) → last resort Spotify search URL
     const search = `${title||''} ${artist||''}`.trim();
     return search ? `https://open.spotify.com/search/${encodeURIComponent(search)}` : '';
   }
