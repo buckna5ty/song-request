@@ -1,74 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>DCE • Song Search Widget</title>
-<style>
-  :root{ --ink:#111; --muted:#616161; --border:#e5e7eb; --ring:rgba(14,165,166,.25); --radius:8px; --teal:#0ea5a6; --bg:#fff; --field-w:640px; }
-  html,body{ margin:0; padding:0; background:#fff; color:var(--ink); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif; overflow:hidden; }
-  .wrap{ padding:12px 12px 6px; max-width:var(--field-w); margin:0 auto; }
-  .field{ position:relative; }
-  .input{
-    width:100%; height:48px; padding:0 38px 0 14px; border:1px solid var(--border); border-radius:var(--radius);
-    background:var(--bg); box-sizing:border-box; font-size:16px; line-height:1.25; outline:none; appearance:none; box-shadow:none;
-  }
-  .input:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
-  .clear{ position:absolute; right:10px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%;
-    display:none; align-items:center; justify-content:center; border:1px solid var(--border); background:#fafafa; color:#555; cursor:pointer; user-select:none; line-height:1; font-size:16px;}
-  .clear:hover{ background:#f5f5f5; }
-
-  .results{ margin-top:6px; }
-  .hidden{ display:none !important; }
-  .item{ display:grid; grid-template-columns:56px 1fr; align-items:center; gap:12px;
-    padding:10px; border:1px solid var(--border); border-radius:var(--radius);
-    background:#fafafa; transition:background .15s,transform .06s,border-color .15s; cursor:pointer; margin-bottom:8px; }
-  .item:hover{ background:#f5f5f5; } .item:active{ transform:scale(.996); }
-  .cover{ width:56px;height:56px;border-radius:8px;object-fit:cover;background:#e9eef0; color:#7a8a8d; display:grid; place-items:center; font-size:12px; }
-  .info{ min-width:0; }
-  .ttl{ margin:0 0 2px; font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .art{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-  .selected{ margin-top:6px; border:1px solid var(--border); border-radius:var(--radius); background:#fff; display:none; }
-  .selected.active{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
-  .sel-inner{ display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center; padding:10px; }
-  .sel-cover{ width:72px;height:72px;border-radius:10px;object-fit:cover;background:#e9eef0;color:#7a8a8d;display:grid;place-items:center;font-size:14px; }
-  .sel-title{ margin:0 0 2px; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .sel-artist{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-  .status{ margin-top:6px; font-size:13px; color:var(--muted); min-height:0; }
-  .status:empty{ margin-top:0; }
-</style>
-</head>
-<body>
-  <div class="wrap" id="wrap">
-    <div class="field">
-      <input id="q" class="input" type="text" placeholder="start typing..." autocomplete="off" inputmode="search" />
-      <button id="clearBtn" class="clear" type="button" aria-label="Clear search">×</button>
-    </div>
-
-    <div id="results" class="results"></div>
-
-    <div id="selected" class="selected" aria-live="polite" aria-atomic="true">
-      <div class="sel-inner">
-        <div id="selCover" class="sel-cover" aria-hidden="true">♪</div>
-        <div class="sel-text">
-          <p id="selTitle" class="sel-title"></p>
-          <p id="selArtist" class="sel-artist"></p>
-        </div>
-      </div>
-    </div>
-
-    <div id="status" class="status"></div>
-  </div>
-
 <script>
   const $=s=>document.querySelector(s);
   const q=$('#q'), clearBtn=$('#clearBtn'), resultsEl=$('#results'), selectedBox=$('#selected'),
         selTitle=$('#selTitle'), selArtist=$('#selArtist'); let selCoverEl=$('#selCover');
   const wrapEl=document.getElementById('wrap');
 
-  /* -------- Height reporting (v5) -------- */
+  /* -------- Height reporting (v5 style) -------- */
   let rAF=null,t1=null,t2=null;
   function measure(){ return Math.ceil(wrapEl.getBoundingClientRect().height)+2; }
   function postH(){ const h=measure(); try{ parent.postMessage({action:'resize',height:h},'*'); }catch{} try{ top.postMessage({action:'resize',height:h},'*'); }catch{} }
@@ -76,7 +12,7 @@
     rAF=requestAnimationFrame(postH); t1=setTimeout(postH,60); t2=setTimeout(postH,200); }
   new ResizeObserver(sendHeight).observe(wrapEl);
 
-  /* -------- JSONP + fetch search -------- */
+  /* -------- JSONP + fetch search (same v5 flow) -------- */
   let debounce=null,lastTerm='',lastTag=null;
   function jsonp(url, cbParam='callback'){
     return new Promise((res,rej)=>{
@@ -94,11 +30,11 @@
   }
   async function searchITunes(term){
     const data=await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=8`,'callback');
-    return (data?.results||[]).map(t=>({title:t.trackName, artist:t.artistName, cover:t.artworkUrl100||t.artworkUrl60, link:t.trackViewUrl}));
+    return (data?.results||[]).map(t=>({title:t.trackName, artist:t.artistName, cover:t.artworkUrl100||t.artworkUrl60, link:t.trackViewUrl, isrc:t.isrc||''}));
   }
   async function searchDeezer(term){
     const data=await jsonp(`https://api.deezer.com/search?q=${encodeURIComponent(term)}&limit=8&output=jsonp`,'callback');
-    return (data?.data||[]).map(d=>({title:d.title, artist:d?.artist?.name||'', cover:d?.album?.cover_medium||d?.album?.cover||'', link:d.link||''}));
+    return (data?.data||[]).map(d=>({title:d.title, artist:d?.artist?.name||'', cover:d?.album?.cover_medium||d?.album?.cover||'', link:d.link||'', isrc:''}));
   }
   async function searchMB(term){
     const r=await fetch(`https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(term)}&fmt=json&limit=8`,{
@@ -108,16 +44,18 @@
     const data=await r.json(); sendHeight();
     return (data.recordings||[]).map(rec=>{
       const ac=rec['artist-credit']; const artist=ac&&ac[0]&&ac[0].name?ac[0].name:'';
-      return {title:rec.title, artist, cover:'', link:'' /* MB has no direct platform link */};
+      return {title:rec.title, artist, cover:'', link:'', isrc:''};
     });
   }
 
-  /* -------- Odesli (song.link) resolver for Spotify-first -------- */
-  async function resolvePreferredLink({link, title, artist}){
-    // If it’s already a Spotify track, keep it.
-    if(link && link.includes('open.spotify.com/track')) return link;
+  /* -------- Spotify-first resolver (force Spotify domain) -------- */
+  // Order of operations:
+  // 1) If we have a source URL (Apple/Deezer), resolve via Odesli → Spotify track URL if possible.
+  // 2) If we only have title/artist, hit iTunes to grab a URL, then Odesli → Spotify.
+  // 3) If still no exact track, FORCE a Spotify Search URL (guaranteed open.spotify.com).
+  async function resolveSpotify({link, title, artist}){
+    if (link && link.includes('open.spotify.com/track')) return link;
 
-    // Helper: try Odesli with a source URL
     async function odesliFromUrl(srcUrl){
       try{
         const r=await fetch(`https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(srcUrl)}&userCountry=US`, {cache:'no-store'});
@@ -125,48 +63,44 @@
         const data=await r.json();
         const byId=data?.entitiesByUniqueId||{};
         const spotifyId=data?.linksByPlatform?.spotify?.entityUniqueId;
-        if(spotifyId && byId[spotifyId]?.url) return byId[spotifyId].url; // Spotify direct
-        // Fallback to Apple Music if available
-        const appleId=data?.linksByPlatform?.appleMusic?.entityUniqueId;
-        if(appleId && byId[appleId]?.url) return byId[appleId].url;
-        // Last resort: Deezer if available
-        const dzId=data?.linksByPlatform?.deezer?.entityUniqueId;
-        if(dzId && byId[dzId]?.url) return byId[dzId].url;
+        if(spotifyId && byId[spotifyId]?.url) return byId[spotifyId].url; // exact Spotify track URL
         return null;
       }catch{ return null; }
     }
 
-    // 1) If we have a source link (Apple/Deezer/etc), try Odesli
-    if(link){
-      const out=await odesliFromUrl(link);
-      if(out) return out;
-      // Couldn’t enrich—just return original
-      return link;
+    // Try Odesli with whatever link we already have
+    if (link){
+      const maybe=await odesliFromUrl(link);
+      if (maybe) return maybe;
     }
 
-    // 2) No link (e.g., MusicBrainz result): try to fetch one quickly from iTunes, then resolve
-    if(title){
-      const it=await searchITunes(`${title} ${artist||''}`.trim());
-      if(it.length && it[0].link){
-        const out=await odesliFromUrl(it[0].link);
-        if(out) return out;
-        return it[0].link;
-      }
+    // No good link yet—try iTunes, then Odesli again
+    if (title){
+      try{
+        const it=await searchITunes(`${title} ${artist||''}`.trim());
+        if (it.length && it[0].link){
+          const maybe=await odesliFromUrl(it[0].link);
+          if (maybe) return maybe;
+        }
+      }catch{}
     }
 
-    // 3) Absolute last resort: Spotify search URL (not a track URL, but good UX)
-    if(title) return `https://open.spotify.com/search/${encodeURIComponent(`${title} ${artist||''}`.trim())}`;
-    return '';
+    // Guaranteed Spotify fallback
+    const q = title ? `${title} ${artist||''}`.trim() : (artist||'');
+    return `https://open.spotify.com/search/${encodeURIComponent(q)}`;
   }
 
-  /* -------- UI helpers -------- */
-  function setStatus(m='',err=false){ const s=$('#status'); s.textContent=m; s.style.color=err?'#b00020':'#616161'; sendHeight(); }
-  function clearResults(){ resultsEl.innerHTML=''; sendHeight(); }
-  function showResults(){ resultsEl.classList.remove('hidden'); sendHeight(); }
-  function hideResults(){ resultsEl.classList.add('hidden'); clearResults(); }
+  /* -------- UI helpers (unchanged look/feel) -------- */
+  function setStatus(m='',err=false){ const s=$('#status'); if(!s) return; s.textContent=m; s.style.color=err?'#b00020':'#616161'; sendHeight(); }
+  function clearResults(){ resultsEl && (resultsEl.innerHTML=''); sendHeight(); }
+  function showResults(){ resultsEl && resultsEl.classList.remove('hidden'); sendHeight(); }
+  function hideResults(){ resultsEl && resultsEl.classList.add('hidden'); clearResults(); }
   function hideSelected(){
     selectedBox.style.display='none'; selectedBox.classList.remove('active');
-    if(selCoverEl && selCoverEl.tagName.toLowerCase()==='img'){ selCoverEl.outerHTML=`<div id="selCover" class="sel-cover" aria-hidden="true">♪</div>`; selCoverEl=document.getElementById('selCover'); }
+    if(selCoverEl && selCoverEl.tagName.toLowerCase()==='img'){
+      selCoverEl.outerHTML=`<div id="selCover" class="sel-cover" aria-hidden="true">♪</div>`;
+      selCoverEl=document.getElementById('selCover');
+    }
     selTitle.textContent=''; selArtist.textContent=''; sendHeight();
   }
 
@@ -191,7 +125,10 @@
       img.addEventListener('load', sendHeight, {once:true});
       if(selCoverEl) selCoverEl.replaceWith(img); selCoverEl=img;
     }else{
-      if(!selCoverEl || selCoverEl.tagName.toLowerCase()==='img'){ const box=document.createElement('div'); box.id='selCover'; box.className='sel-cover'; box.setAttribute('aria-hidden','true'); box.textContent='♪'; if(selCoverEl) selCoverEl.replaceWith(box); selCoverEl=box; }
+      if(!selCoverEl || selCoverEl.tagName.toLowerCase()==='img'){
+        const box=document.createElement('div'); box.id='selCover'; box.className='sel-cover'; box.setAttribute('aria-hidden','true'); box.textContent='♪';
+        if(selCoverEl) selCoverEl.replaceWith(box); selCoverEl=box;
+      }
     }
     selTitle.textContent=title||'Unknown Title'; selArtist.textContent=artist||'Unknown Artist';
     selectedBox.style.display='block'; selectedBox.classList.add('active'); sendHeight();
@@ -202,18 +139,25 @@
     showSelectedCard({title,artist,cover,link});
     hideResults(); sendHeight();
 
-    setStatus('Resolving link…');
-    const bestLink = await resolvePreferredLink({link, title, artist});
+    setStatus('Resolving Spotify link…');
+    const spotifyLink = await resolveSpotify({link, title, artist});
     setStatus('');
 
-    // Push fields back up to the parent (index.html → Jotform)
-    const payload={action:'setFields', fields:{song_title:title||'', artist:artist||'', link:bestLink||''}};
+    // Force Spotify domain 100%
+    let finalLink = spotifyLink || '';
+    if (!finalLink.includes('open.spotify.com')){
+      const qStr = title ? `${title} ${artist||''}`.trim() : (artist||'');
+      finalLink = `https://open.spotify.com/search/${encodeURIComponent(qStr)}`;
+    }
+
+    // Push fields back to parent (index.html → Jotform)
+    const payload={action:'setFields', fields:{song_title:title||'', artist:artist||'', link:finalLink}};
     try{ parent.postMessage(payload, '*'); }catch{}
     try{ top.postMessage(payload, '*'); }catch{}
   }
 
   async function doSearch(term){
-    if(!term){ setStatus(''); hideResults(); /* keep card */ sendHeight(); return; }
+    if(!term){ setStatus(''); hideResults(); /* keep selected card */ sendHeight(); return; }
     setStatus('Searching…');
     try{ const a=await searchITunes(term); if(a.length){ render(a); return; } }catch(e){}
     try{ const b=await searchDeezer(term); if(b.length){ render(b); return; } }catch(e){}
@@ -227,10 +171,14 @@
     clearTimeout(debounce); debounce=setTimeout(()=>doSearch(t), 260); sendHeight();
   });
   q.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doSearch(q.value.trim()); }});
-  clearBtn.addEventListener('click', ()=>{ q.value=''; lastTerm=''; q.focus({preventScroll:true}); clearBtn.style.display='none'; setStatus(''); hideResults(); hideSelected(); sendHeight(); });
+  clearBtn.addEventListener('click', ()=>{
+    q.value=''; lastTerm=''; q.focus({preventScroll:true});
+    clearBtn.style.display='none'; setStatus(''); hideResults(); hideSelected(); sendHeight();
+  });
 
-  window.addEventListener('load', ()=>{ try{ parent.postMessage({action:'ready'},'*'); }catch{} try{ top.postMessage({action:'ready'},'*'); }catch{} sendHeight(); });
+  window.addEventListener('load', ()=>{
+    try{ parent.postMessage({action:'ready'},'*'); }catch{}
+    try{ top.postMessage({action:'ready'},'*'); }catch{}
+    sendHeight();
+  });
 </script>
-
-</body>
-</html>
