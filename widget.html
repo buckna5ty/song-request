@@ -1,234 +1,237 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en" class="supernova ">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>DCE • Song Search Widget</title>
-<style>
-  :root{ --ink:#111; --muted:#616161; --border:#e5e7eb; --ring:rgba(14,165,166,.25); --radius:8px; --teal:#0ea5a6; --bg:#fff; --field-w:640px; }
-  html,body{ margin:0; padding:0; background:#fff; color:var(--ink); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif; overflow:hidden; }
-  .wrap{ padding:12px 12px 6px; max-width:var(--field-w); margin:0 auto; }
-  .field{ position:relative; }
-  .input{
-    width:100%; height:48px; padding:0 38px 0 14px; border:1px solid var(--border); border-radius:var(--radius);
-    background:var(--bg); box-sizing:border-box; font-size:16px; line-height:1.25; outline:none; appearance:none; box-shadow:none;
-  }
-  .input:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
-  .clear{ position:absolute; right:10px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%;
-    display:none; align-items:center; justify-content:center; border:1px solid var(--border); background:#fafafa; color:#555; cursor:pointer; user-select:none; line-height:1; font-size:16px;}
-  .clear:hover{ background:#f5f5f5; }
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=1" />
+  <title>Song Request • David Charles Events</title>
 
-  .results{ margin-top:6px; }
-  .hidden{ display:none !important; }
-  .item{ display:grid; grid-template-columns:56px 1fr; align-items:center; gap:12px;
-    padding:10px; border:1px solid var(--border); border-radius:var(--radius);
-    background:#fafafa; transition:background .15s,transform .06s,border-color .15s; cursor:pointer; margin-bottom:8px; }
-  .item:hover{ background:#f5f5f5; } .item:active{ transform:scale(.996); }
-  .cover{ width:56px;height:56px;border-radius:8px;object-fit:cover;background:#e9eef0; color:#7a8a8d; display:grid; place-items:center; font-size:12px; }
-  .info{ min-width:0; }
-  .ttl{ margin:0 0 2px; font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .art{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  <!-- Jotform CSS -->
+  <link rel="stylesheet" href="https://cdn.jotfor.ms/stylebuilder/static/form-common.css"/>
+  <link id="custom-font" rel="stylesheet" href="//cdn.jotfor.ms/fonts/?family=Inter" />
+  <link rel="stylesheet" href="https://cdn.jotfor.ms/themes/CSS/5e6b428acc8c4e222d1beb91.css"/>
+  <link rel="stylesheet" href="https://cdn.jotfor.ms/css/styles/payment/payment_styles.css" />
+  <link rel="stylesheet" href="https://cdn.jotfor.ms/css/styles/payment/payment_feature.css" />
 
-  .selected{ margin-top:6px; border:1px solid var(--border); border-radius:var(--radius); background:#fff; display:none; }
-  .selected.active{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
-  .sel-inner{ display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center; padding:10px; }
-  .sel-cover{ width:72px;height:72px;border-radius:10px;object-fit:cover;background:#e9eef0;color:#7a8a8d;display:grid;place-items:center;font-size:14px; }
-  .sel-title{ margin:0 0 2px; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .sel-artist{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  <!-- Jotform JS -->
+  <script>window.enableEventObserver=true</script>
+  <script src="https://cdn.jotfor.ms/s/static/70873410d56/static/prototype.forms.js"></script>
+  <script src="https://cdn.jotfor.ms/s/static/70873410d56/static/jotform.forms.js"></script>
+  <script src="https://cdn.jotfor.ms/s/static/70873410d56/js/vendor/smoothscroll.min.js"></script>
+  <script src="https://cdn.jotfor.ms/s/static/70873410d56/js/errorNavigation.js"></script>
 
-  .status{ margin-top:6px; font-size:13px; color:#616161; min-height:0; }
-  .status:empty{ margin-top:0; }
-</style>
+  <style>
+    :root{ --field-w:640px; --teal:#0ea5a6; --ring:rgba(14,165,166,.25); --border:#e5e7eb; --radius:8px; --bg:#fff; --ink:#111; }
+    @font-face{ font-family:"TexGyreAdventorBold"; src:url("texgyreadventor-bold.otf") format("opentype"); font-weight:700; font-style:normal; font-display:swap; }
+
+    body{ background:#f3f2ff; margin:0; color:var(--ink); }
+    .dce-logo{text-align:center; margin:18px 0 4px;}
+    .dce-logo img{ max-width:220px; height:auto; }
+
+    .app-title{
+      text-align:center; margin:0 auto 10px;
+      font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      letter-spacing:.06em; line-height:1.05; font-size:clamp(20px,6.2vw,36px); max-width:66vw; color:#111;
+    }
+
+    /* Hide submission fields */
+    #id_12,#id_8,#id_9{ display:none; }
+
+    /* Normalize visible inputs */
+    .form-textbox{
+      width:100%; height:48px; padding:0 14px; border:1px solid var(--border); border-radius:var(--radius);
+      background:var(--bg); box-sizing:border-box; font-size:16px; line-height:1.25; outline:none; appearance:none; box-shadow:none;
+    }
+
+    /* Same width & centering */
+    #cid_7,#cid_widget{ max-width:var(--field-w); width:100%; margin:0 auto; }
+
+    /* Name input focus (no hover highlight) */
+    #input_7:hover{ border-color:var(--border)!important; box-shadow:none!important; }
+    #input_7:focus{ border-color:var(--teal)!important; box-shadow:0 0 0 4px var(--ring)!important; outline:none; }
+
+    /* Widget iframe — starts compact, JS resizes */
+    #searchWidget{ width:100%; border:0; height:70px; display:block; transition:height .2s ease; }
+
+    /* Tight spacing so submit hugs widget/card */
+    #id_7{ margin-bottom:8px; }
+    #id_widget{ margin-top:0; margin-bottom:0; padding-bottom:0; }
+    #cid_widget{ padding-bottom:0; }
+    #id_2{ margin-top:6px; }
+
+    /* Submit button */
+    #input_2.form-submit-button{
+      background:#111!important; color:#fff!important; text-transform:uppercase!important;
+      font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif!important;
+      letter-spacing:.04em; border-radius:10px; border:1px solid #111!important; padding:14px 28px; height:auto;
+    }
+    #input_2.form-submit-button:hover{ filter:brightness(.92); }
+    #input_2.form-submit-button:active{ transform:translateY(1px); }
+
+    /* Full-screen Thank You overlay */
+    .ty-overlay{ position:fixed; inset:0; background:#fff; display:none; align-items:center; justify-content:center; z-index:9999; }
+    .ty-wrap{ text-align:center; padding:24px; max-width:92vw; }
+    .ty-icon{ width:96px; height:96px; margin:0 auto 22px; display:grid; place-items:center; border-radius:50%; background:#22c55e; box-shadow:0 6px 18px rgba(34,197,94,.35); }
+    .ty-icon svg{ width:52px; height:52px; color:#fff; }
+    .ty-title{ font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; font-size:clamp(28px,7.8vw,56px); line-height:1.05; margin:0 0 10px; color:#0f172a;}
+    .ty-sub{ font:500 16px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#64748b; margin:0;}
+  </style>
+
+  <script>
+    /* ===== Config ===== */
+    const REDIRECT_URL = "https://www.davidcharlesevents.com/song-request";
+    const REDIRECT_DELAY_MS = 4000; // 4 seconds
+
+    JotForm.newDefaultTheme = true;
+    JotForm.singleProduct = false;
+    JotForm.init(function(){});
+
+    const MAP = {
+      yourName:{ id:'input_7', q:7, uname:'q7_yourName' },
+      song_title:{ id:'input_12', q:12, uname:'song_title' },
+      artist:{ id:'input_8', q:8, uname:'artist' },
+      link:{ id:'input_9', q:9, uname:'link' }
+    };
+
+    function setHiddenField(key,val){
+      const el=document.getElementById(MAP[key]?.id);
+      if(!el) return false;
+      el.value=val||'';
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+      el.dispatchEvent(new Event('change',{bubbles:true}));
+      return true;
+    }
+    function buildHiddenInput(n,v){ const i=document.createElement('input'); i.type='hidden'; i.name=n; i.value=v||''; return i; }
+
+    function openThankYou(){ const ov=document.getElementById('tyOverlay'); if(ov) ov.style.display='flex'; }
+    function redirectAfterDelay(){ setTimeout(()=>{ window.location.href=REDIRECT_URL; }, REDIRECT_DELAY_MS); }
+
+    function submitToJotform(ev){
+      ev.preventDefault();
+
+      const nameVal  = (document.getElementById(MAP.yourName.id)?.value || '');
+      const titleVal = (document.getElementById(MAP.song_title.id)?.value || '');
+      const artistVal= (document.getElementById(MAP.artist.id)?.value || '');
+      const linkVal  = (document.getElementById(MAP.link.id)?.value || '');
+
+      let targetFrame=document.getElementById('jf_target');
+      if(!targetFrame){
+        targetFrame=document.createElement('iframe');
+        targetFrame.name='jf_target'; targetFrame.id='jf_target';
+        targetFrame.style.display='none'; document.body.appendChild(targetFrame);
+      }
+      targetFrame.onload=function(){ openThankYou(); redirectAfterDelay(); };
+
+      const tmp=document.createElement('form');
+      tmp.action='https://submit.jotform.com/submit/252746100648052';
+      tmp.method='POST'; tmp.target='jf_target'; tmp.style.display='none';
+
+      tmp.appendChild(buildHiddenInput('formID','252746100648052'));
+      tmp.appendChild(buildHiddenInput('simple_spc','252746100648052-252746100648052'));
+
+      tmp.appendChild(buildHiddenInput(MAP.yourName.uname,nameVal));
+      tmp.appendChild(buildHiddenInput(`q${MAP.yourName.q}_yourName`,nameVal));
+
+      tmp.appendChild(buildHiddenInput(MAP.song_title.uname,titleVal));
+      tmp.appendChild(buildHiddenInput(`q${MAP.song_title.q}_song_title`,titleVal));
+
+      tmp.appendChild(buildHiddenInput(MAP.artist.uname,artistVal));
+      tmp.appendChild(buildHiddenInput(`q${MAP.artist.q}_artist`,artistVal));
+
+      tmp.appendChild(buildHiddenInput(MAP.link.uname,linkVal));
+      tmp.appendChild(buildHiddenInput(`q${MAP.link.q}_link`,linkVal));
+
+      document.body.appendChild(tmp);
+      tmp.submit();
+
+      // UX fallback in case onload is blocked
+      openThankYou(); redirectAfterDelay();
+    }
+
+    /* Receive messages from widget */
+    window.addEventListener('message',(e)=>{
+      const msg=e.data; if(!msg||!msg.action) return;
+
+      if(msg.action==='setFields' && msg.fields){
+        const {song_title,artist,link}=msg.fields;
+        if(song_title!==undefined) setHiddenField('song_title',song_title);
+        if(artist!==undefined)     setHiddenField('artist',artist);
+        if(link!==undefined)       setHiddenField('link',link);
+      }
+
+      if(msg.action==='resize' && typeof msg.height==='number'){
+        const ifr=document.getElementById('searchWidget');
+        if(ifr){ const h=Math.max(60, Math.ceil(msg.height+2)); ifr.style.height=h+'px'; }
+      }
+
+      if(msg.action==='ready'){
+        document.getElementById('input_7')?.focus({preventScroll:true});
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded',()=>{
+      document.getElementById('input_7')?.focus({preventScroll:true});
+      document.getElementById('input_2')?.addEventListener('click', submitToJotform);
+    });
+  </script>
 </head>
 <body>
-  <div class="wrap" id="wrap">
-    <div class="field">
-      <input id="q" class="input" type="text" placeholder="start typing..." autocomplete="off" inputmode="search" />
-      <button id="clearBtn" class="clear" type="button" aria-label="Clear search">×</button>
+  <div role="main" class="form-all" style="max-width:960px; margin:0 auto;">
+    <div class="dce-logo">
+      <img src="assets/client-logo.png" alt="David Charles Events" onerror="this.style.display='none'">
     </div>
+    <div class="app-title">SONG REQUEST</div>
 
-    <div id="results" class="results"></div>
-
-    <div id="selected" class="selected" aria-live="polite" aria-atomic="true">
-      <div class="sel-inner">
-        <div id="selCover" class="sel-cover" aria-hidden="true">♪</div>
-        <div class="sel-text">
-          <p id="selTitle" class="sel-title"></p>
-          <p id="selArtist" class="sel-artist"></p>
+    <ul class="form-section page-section" role="presentation">
+      <!-- Name (not required) -->
+      <li class="form-line" data-type="control_textbox" id="id_7">
+        <label class="form-label form-label-top form-label-auto" for="input_7">What's your name?</label>
+        <div id="cid_7" class="form-input-wide" data-layout="half">
+          <input type="text" id="input_7" name="q7_yourName" class="form-textbox" />
         </div>
-      </div>
-    </div>
+      </li>
 
-    <div id="status" class="status"></div>
+      <!-- Live search widget -->
+      <li class="form-line" data-type="control_widget" id="id_widget">
+        <label class="form-label form-label-top form-label-auto" for="searchWidget" style="margin-bottom:6px;">Search Song, Artist or Lyrics</label>
+        <div id="cid_widget" class="form-input-wide" data-layout="half">
+          <!-- cache-bust to v7 -->
+          <iframe id="searchWidget" src="widget.html?v=7" title="Song Search"></iframe>
+        </div>
+      </li>
+
+      <!-- Hidden fields that go to Jotform/Google Sheets -->
+      <li class="form-line" id="id_12" style="display:none"><div id="cid_12"><input type="text" id="input_12" name="song_title" class="form-textbox" /></div></li>
+      <li class="form-line" id="id_8"  style="display:none"><div id="cid_8"><input type="text" id="input_8"  name="artist"     class="form-textbox" /></div></li>
+      <li class="form-line" id="id_9"  style="display:none"><div id="cid_9"><input type="text" id="input_9"  name="link"       class="form-textbox" /></div></li>
+
+      <!-- Submit -->
+      <li class="form-line" data-type="control_button" id="id_2" style="margin-top:6px;">
+        <div id="cid_2" class="form-input-wide" data-layout="full">
+          <div class="form-buttons-wrapper form-buttons-auto" data-align="auto">
+            <button id="input_2" type="submit" class="form-submit-button submit-button jf-form-buttons">Submit</button>
+          </div>
+        </div>
+      </li>
+    </ul>
   </div>
 
-<script>
-  const $=s=>document.querySelector(s);
-  const q=$('#q'), clearBtn=$('#clearBtn'), resultsEl=$('#results'), selectedBox=$('#selected'),
-        selTitle=$('#selTitle'), selArtist=$('#selArtist'); let selCoverEl=$('#selCover');
-  const wrapEl=document.getElementById('wrap');
+  <!-- Full-screen Thank You overlay -->
+  <div class="ty-overlay" id="tyOverlay" role="dialog" aria-live="polite" aria-modal="true">
+    <div class="ty-wrap">
+      <div class="ty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 6L9 17l-5-5"></path>
+        </svg>
+      </div>
+      <h1 class="ty-title">Got it!</h1>
+      <p class="ty-sub">If it fits the flow, we’ll get it on. Let’s party.</p>
+    </div>
+  </div>
 
-  /* ---------- Height reporting ---------- */
-  let rAF=null,t1=null,t2=null;
-  function measure(){ return Math.ceil(wrapEl.getBoundingClientRect().height)+2; }
-  function postH(){ const h=measure(); try{ parent.postMessage({action:'resize',height:h},'*'); }catch{} try{ top.postMessage({action:'resize',height:h},'*'); }catch{} }
-  function sendHeight(){ if(rAF) cancelAnimationFrame(rAF); clearTimeout(t1); clearTimeout(t2);
-    rAF=requestAnimationFrame(postH); t1=setTimeout(postH,60); t2=setTimeout(postH,200); }
-  new ResizeObserver(sendHeight).observe(wrapEl);
-
-  /* ---------- JSONP + fetch search ---------- */
-  let debounce=null,lastTerm='',lastTag=null;
-  function jsonp(url, cbParam='callback'){
-    return new Promise((res,rej)=>{
-      const cb='cb_'+Math.random().toString(36).slice(2);
-      const sep=url.includes('?')?'&':'?';
-      const src=`${url}${sep}${cbParam}=${cb}`;
-      if(lastTag&&lastTag.parentNode) lastTag.parentNode.removeChild(lastTag);
-      const s=document.createElement('script'); lastTag=s;
-      const kill=setTimeout(()=>{cleanup(); rej(new Error('timeout'));},9000);
-      function cleanup(){ clearTimeout(kill); try{delete window[cb];}catch{} s.parentNode&&s.parentNode.removeChild(s); }
-      window[cb]=(data)=>{ cleanup(); res(data); sendHeight(); };
-      s.onerror=()=>{ cleanup(); rej(new Error('jsonp error')); };
-      s.src=src; document.body.appendChild(s);
-    });
-  }
-  async function searchITunes(term){
-    const data=await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=8`,'callback');
-    return (data?.results||[]).map(t=>({title:t.trackName, artist:t.artistName, cover:t.artworkUrl100||t.artworkUrl60, link:t.trackViewUrl}));
-  }
-  async function searchDeezer(term){
-    const data=await jsonp(`https://api.deezer.com/search?q=${encodeURIComponent(term)}&limit=8&output=jsonp`,'callback');
-    return (data?.data||[]).map(d=>({title:d.title, artist:d?.artist?.name||'', cover:d?.album?.cover_medium||d?.album?.cover||'', link:d.link||''}));
-  }
-  async function searchMB(term){
-    const r=await fetch(`https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(term)}&fmt=json&limit=8`,{
-      headers:{'User-Agent':'DCE-SongRequest/1.0 (https://www.davidcharlesevents.com)'}, cache:'no-store'
-    });
-    if(!r.ok) throw new Error('mb http '+r.status);
-    const data=await r.json(); sendHeight();
-    return (data.recordings||[]).map(rec=>{
-      const ac=rec['artist-credit']; const artist=ac&&ac[0]&&ac[0].name?ac[0].name:'';
-      return {title:rec.title, artist, cover:'', link:''};
-    });
-  }
-
-  /* ---------- Helpers for link resolution ---------- */
-  function normalizeAppleUrl(url){
-    if(!url || !/itunes\.apple\.com/i.test(url)) return url;
-    try{
-      const u=new URL(url);
-      const country = (u.pathname.split('/')[1] || 'us').toLowerCase();
-      const albumId = (u.pathname.match(/id(\d+)/)||[])[1] || '';
-      const trackId = u.searchParams.get('i') || '';
-      // If we have album & track IDs, build a music.apple.com canonical link
-      if(albumId && trackId){
-        return `https://music.apple.com/${country}/album/${albumId}?i=${trackId}`;
-      }
-    }catch(e){}
-    return url;
-  }
-
-  async function resolveBestLink(originalUrl, title, artist){
-    // Normalize old itunes.apple.com to music.apple.com to improve match rate
-    const sourceUrl = normalizeAppleUrl(originalUrl);
-    // 1) Try to convert to Spotify via Odesli (Song.link)
-    if (sourceUrl) {
-      try{
-        const resp = await fetch(`https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(sourceUrl)}`, {cache:'no-store'});
-        if (resp.ok) {
-          const data = await resp.json();
-          const sp = data?.linksByPlatform?.spotify?.url;
-          if (sp) return sp;   // success → Spotify
-        }
-      }catch(e){}
-      // 2) Fallback → original provider link (Apple/Deezer)
-      return sourceUrl;
-    }
-    // 3) No provider URL (e.g., MusicBrainz) → last resort Spotify search URL
-    const search = `${title||''} ${artist||''}`.trim();
-    return search ? `https://open.spotify.com/search/${encodeURIComponent(search)}` : '';
-  }
-
-  /* ---------- UI helpers ---------- */
-  function setStatus(m='',err=false){ const s=$('#status'); s.textContent=m; s.style.color=err?'#b00020':'#616161'; sendHeight(); }
-  function clearResults(){ resultsEl.innerHTML=''; sendHeight(); }
-  function showResults(){ resultsEl.classList.remove('hidden'); sendHeight(); }
-  function hideResults(){ resultsEl.classList.add('hidden'); clearResults(); }
-  function hideSelected(){
-    selectedBox.style.display='none'; selectedBox.classList.remove('active');
-    if(selCoverEl && selCoverEl.tagName.toLowerCase()==='img'){ selCoverEl.outerHTML=`<div id="selCover" class="sel-cover" aria-hidden="true">♪</div>`; selCoverEl=document.getElementById('selCover'); }
-    selTitle.textContent=''; selArtist.textContent=''; sendHeight();
-  }
-
-  function render(list){
-    clearResults(); if(!list.length){ setStatus('No results'); return; } setStatus('');
-    showResults();
-    list.forEach(({title,artist,cover,link})=>{
-      const div=document.createElement('div'); div.className='item'; div.setAttribute('role','button'); div.setAttribute('tabindex','0');
-      const coverHTML=cover?`<img class="cover" src="${cover}" alt="Album cover">`:`<div class="cover" aria-hidden="true">♪</div>`;
-      div.innerHTML=`${coverHTML}<div class="info"><p class="ttl">${title||'Unknown Title'}</p><p class="art">${artist||'Unknown Artist'}</p></div>`;
-      const choose=()=>useSong({title,artist,cover,link}, div);
-      div.onclick=choose; div.onkeyup=e=>{ if(e.key==='Enter'||e.key===' ') choose(); };
-      const img=div.querySelector('img.cover'); if(img) img.addEventListener('load', sendHeight, {once:true});
-      resultsEl.appendChild(div);
-    });
-    sendHeight();
-  }
-
-  function showSelectedCard({title,artist,cover}){
-    if(cover){
-      const img=document.createElement('img'); img.src=cover; img.alt='Album cover'; img.className='sel-cover';
-      img.addEventListener('load', sendHeight, {once:true});
-      if(selCoverEl) selCoverEl.replaceWith(img); selCoverEl=img;
-    }else{
-      if(!selCoverEl || selCoverEl.tagName.toLowerCase()==='img'){ const box=document.createElement('div'); box.id='selCover'; box.className='sel-cover'; box.setAttribute('aria-hidden','true'); box.textContent='♪'; if(selCoverEl) selCoverEl.replaceWith(box); selCoverEl=box; }
-    }
-    selTitle.textContent=title||'Unknown Title'; selArtist.textContent=artist||'Unknown Artist';
-    selectedBox.style.display='block'; selectedBox.classList.add('active'); sendHeight();
-  }
-
-  async function useSong({title,artist,cover,link}, el){
-    document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected')); el?.classList.add('selected');
-
-    let outURL = '';
-    try { outURL = await resolveBestLink(link, title, artist); } catch(e){ outURL=''; }
-
-    try{
-      parent.postMessage({action:'setFields', fields:{
-        song_title: title || '',
-        artist:     artist || '',
-        link:       outURL || ''
-      }}, '*');
-    }catch{}
-    try{
-      top.postMessage({action:'setFields', fields:{
-        song_title: title || '',
-        artist:     artist || '',
-        link:       outURL || ''
-      }}, '*');
-    }catch{}
-
-    showSelectedCard({title,artist,cover,link}); hideResults(); sendHeight();
-  }
-
-  async function doSearch(term){
-    if(!term){ setStatus(''); hideResults(); /* keep card */ sendHeight(); return; }
-    setStatus('Searching…');
-    try{ const a=await searchITunes(term); if(a.length){ render(a); return; } }catch(e){}
-    try{ const b=await searchDeezer(term); if(b.length){ render(b); return; } }catch(e){}
-    try{ const c=await searchMB(term); render(c); }catch(e){ setStatus('Search failed.',true); hideResults(); }
-  }
-
-  /* ---------- events ---------- */
-  q.addEventListener('input', ()=>{
-    const raw=q.value; clearBtn.style.display = raw.length>=1 ? 'flex' : 'none';
-    const t=raw.trim(); if(t===lastTerm) return; lastTerm=t;
-    clearTimeout(debounce); debounce=setTimeout(()=>doSearch(t), 260); sendHeight();
-  });
-  q.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doSearch(q.value.trim()); }});
-  clearBtn.addEventListener('click', ()=>{ q.value=''; lastTerm=''; q.focus({preventScroll:true}); clearBtn.style.display='none'; setStatus(''); hideResults(); hideSelected(); sendHeight(); });
-
-  window.addEventListener('load', ()=>{ try{ parent.postMessage({action:'ready'},'*'); }catch{} try{ top.postMessage({action:'ready'},'*'); }catch{} sendHeight(); });
-</script>
+  <!-- JF spam key -->
+  <input type="hidden" class="simple_spc" id="simple_spc" name="simple_spc" value="252746100648052" />
+  <script>
+    document.querySelectorAll("#simple_spc").forEach(el=>el.value="252746100648052-252746100648052");
+  </script>
 </body>
 </html>
