@@ -5,14 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=1" />
   <title>Song Request • David Charles Events</title>
 
-  <!-- Jotform CSS -->
   <link rel="stylesheet" href="https://cdn.jotfor.ms/stylebuilder/static/form-common.css"/>
   <link id="custom-font" rel="stylesheet" href="//cdn.jotfor.ms/fonts/?family=Inter" />
   <link rel="stylesheet" href="https://cdn.jotfor.ms/themes/CSS/5e6b428acc8c4e222d1beb91.css"/>
   <link rel="stylesheet" href="https://cdn.jotfor.ms/css/styles/payment/payment_styles.css" />
   <link rel="stylesheet" href="https://cdn.jotfor.ms/css/styles/payment/payment_feature.css" />
 
-  <!-- Jotform JS -->
   <script>window.enableEventObserver=true</script>
   <script src="https://cdn.jotfor.ms/s/static/70873410d56/static/prototype.forms.js"></script>
   <script src="https://cdn.jotfor.ms/s/static/70873410d56/static/jotform.forms.js"></script>
@@ -33,32 +31,23 @@
       letter-spacing:.06em; line-height:1.05; font-size:clamp(20px,6.2vw,36px); max-width:66vw; color:#111;
     }
 
-    /* Hide submission fields */
     #id_12,#id_8,#id_9{ display:none; }
 
-    /* Normalize visible inputs */
     .form-textbox{
       width:100%; height:48px; padding:0 14px; border:1px solid var(--border); border-radius:var(--radius);
       background:var(--bg); box-sizing:border-box; font-size:16px; line-height:1.25; outline:none; appearance:none; box-shadow:none;
     }
-
-    /* Same width & centering */
     #cid_7,#cid_widget{ max-width:var(--field-w); width:100%; margin:0 auto; }
-
-    /* Name input focus (no hover highlight) */
     #input_7:hover{ border-color:var(--border)!important; box-shadow:none!important; }
     #input_7:focus{ border-color:var(--teal)!important; box-shadow:0 0 0 4px var(--ring)!important; outline:none; }
 
-    /* Widget iframe — starts compact, JS resizes */
     #searchWidget{ width:100%; border:0; height:70px; display:block; transition:height .2s ease; }
 
-    /* Tight spacing so submit hugs widget/card */
     #id_7{ margin-bottom:8px; }
     #id_widget{ margin-top:0; margin-bottom:0; padding-bottom:0; }
     #cid_widget{ padding-bottom:0; }
     #id_2{ margin-top:6px; }
 
-    /* Submit button */
     #input_2.form-submit-button{
       background:#111!important; color:#fff!important; text-transform:uppercase!important;
       font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif!important;
@@ -67,7 +56,6 @@
     #input_2.form-submit-button:hover{ filter:brightness(.92); }
     #input_2.form-submit-button:active{ transform:translateY(1px); }
 
-    /* Full-screen Thank You overlay */
     .ty-overlay{ position:fixed; inset:0; background:#fff; display:none; align-items:center; justify-content:center; z-index:9999; }
     .ty-wrap{ text-align:center; padding:24px; max-width:92vw; }
     .ty-icon{ width:96px; height:96px; margin:0 auto 22px; display:grid; place-items:center; border-radius:50%; background:#22c55e; box-shadow:0 6px 18px rgba(34,197,94,.35); }
@@ -77,13 +65,10 @@
   </style>
 
   <script>
-    /* ===== Config ===== */
     const REDIRECT_URL = "https://www.davidcharlesevents.com/song-request";
-    const REDIRECT_DELAY_MS = 4000; // 4 seconds
+    const REDIRECT_DELAY_MS = 4000;
 
-    JotForm.newDefaultTheme = true;
-    JotForm.singleProduct = false;
-    JotForm.init(function(){});
+    JotForm.newDefaultTheme = true; JotForm.singleProduct = false; JotForm.init(function(){});
 
     const MAP = {
       yourName:{ id:'input_7', q:7, uname:'q7_yourName' },
@@ -101,24 +86,18 @@
       return true;
     }
     function buildHiddenInput(n,v){ const i=document.createElement('input'); i.type='hidden'; i.name=n; i.value=v||''; return i; }
-
     function openThankYou(){ const ov=document.getElementById('tyOverlay'); if(ov) ov.style.display='flex'; }
     function redirectAfterDelay(){ setTimeout(()=>{ window.location.href=REDIRECT_URL; }, REDIRECT_DELAY_MS); }
 
     function submitToJotform(ev){
       ev.preventDefault();
-
-      const nameVal  = (document.getElementById(MAP.yourName.id)?.value || '');
-      const titleVal = (document.getElementById(MAP.song_title.id)?.value || '');
-      const artistVal= (document.getElementById(MAP.artist.id)?.value || '');
-      const linkVal  = (document.getElementById(MAP.link.id)?.value || '');
+      const nameVal=(document.getElementById(MAP.yourName.id)?.value||'');
+      const titleVal=(document.getElementById(MAP.song_title.id)?.value||'');
+      const artistVal=(document.getElementById(MAP.artist.id)?.value||'');
+      const linkVal=(document.getElementById(MAP.link.id)?.value||'');
 
       let targetFrame=document.getElementById('jf_target');
-      if(!targetFrame){
-        targetFrame=document.createElement('iframe');
-        targetFrame.name='jf_target'; targetFrame.id='jf_target';
-        targetFrame.style.display='none'; document.body.appendChild(targetFrame);
-      }
+      if(!targetFrame){ targetFrame=document.createElement('iframe'); targetFrame.name='jf_target'; targetFrame.id='jf_target'; targetFrame.style.display='none'; document.body.appendChild(targetFrame); }
       targetFrame.onload=function(){ openThankYou(); redirectAfterDelay(); };
 
       const tmp=document.createElement('form');
@@ -142,47 +121,36 @@
 
       document.body.appendChild(tmp);
       tmp.submit();
-
-      // UX fallback in case onload is blocked
       openThankYou(); redirectAfterDelay();
     }
 
-    /* Receive messages from widget */
     window.addEventListener('message',(e)=>{
       const msg=e.data; if(!msg||!msg.action) return;
-
-      if(msg.action==='setFields' && msg.fields){
+      if(msg.action==='setFields'&&msg.fields){
         const {song_title,artist,link}=msg.fields;
         if(song_title!==undefined) setHiddenField('song_title',song_title);
-        if(artist!==undefined)     setHiddenField('artist',artist);
-        if(link!==undefined)       setHiddenField('link',link);
+        if(artist!==undefined) setHiddenField('artist',artist);
+        if(link!==undefined) setHiddenField('link',link);
       }
-
-      if(msg.action==='resize' && typeof msg.height==='number'){
+      if(msg.action==='resize'&&typeof msg.height==='number'){
         const ifr=document.getElementById('searchWidget');
         if(ifr){ const h=Math.max(60, Math.ceil(msg.height+2)); ifr.style.height=h+'px'; }
       }
-
-      if(msg.action==='ready'){
-        document.getElementById('input_7')?.focus({preventScroll:true});
-      }
+      if(msg.action==='ready'){ document.getElementById('input_7')?.focus({preventScroll:true}); }
     });
 
     document.addEventListener('DOMContentLoaded',()=>{
       document.getElementById('input_7')?.focus({preventScroll:true});
-      document.getElementById('input_2')?.addEventListener('click', submitToJotform);
+      document.getElementById('input_2')?.addEventListener('click',submitToJotform);
     });
   </script>
 </head>
 <body>
   <div role="main" class="form-all" style="max-width:960px; margin:0 auto;">
-    <div class="dce-logo">
-      <img src="assets/client-logo.png" alt="David Charles Events" onerror="this.style.display='none'">
-    </div>
+    <div class="dce-logo"><img src="assets/client-logo.png" alt="David Charles Events" onerror="this.style.display='none'"></div>
     <div class="app-title">SONG REQUEST</div>
 
     <ul class="form-section page-section" role="presentation">
-      <!-- Name (not required) -->
       <li class="form-line" data-type="control_textbox" id="id_7">
         <label class="form-label form-label-top form-label-auto" for="input_7">What's your name?</label>
         <div id="cid_7" class="form-input-wide" data-layout="half">
@@ -190,21 +158,18 @@
         </div>
       </li>
 
-      <!-- Live search widget -->
       <li class="form-line" data-type="control_widget" id="id_widget">
         <label class="form-label form-label-top form-label-auto" for="searchWidget" style="margin-bottom:6px;">Search Song, Artist or Lyrics</label>
         <div id="cid_widget" class="form-input-wide" data-layout="half">
-          <!-- cache-bust to v7 -->
-          <iframe id="searchWidget" src="widget.html?v=6" title="Song Search"></iframe>
+          <!-- cache-busting -->
+          <iframe id="searchWidget" src="widget.html?v=5" title="Song Search"></iframe>
         </div>
       </li>
 
-      <!-- Hidden fields that go to Jotform/Google Sheets -->
       <li class="form-line" id="id_12" style="display:none"><div id="cid_12"><input type="text" id="input_12" name="song_title" class="form-textbox" /></div></li>
-      <li class="form-line" id="id_8"  style="display:none"><div id="cid_8"><input type="text" id="input_8"  name="artist"     class="form-textbox" /></div></li>
-      <li class="form-line" id="id_9"  style="display:none"><div id="cid_9"><input type="text" id="input_9"  name="link"       class="form-textbox" /></div></li>
+      <li class="form-line" id="id_8"  style="display:none"><div id="cid_8"><input type="text" id="input_8" name="artist" class="form-textbox" /></div></li>
+      <li class="form-line" id="id_9"  style="display:none"><div id="cid_9"><input type="text" id="input_9" name="link" class="form-textbox" /></div></li>
 
-      <!-- Submit -->
       <li class="form-line" data-type="control_button" id="id_2" style="margin-top:6px;">
         <div id="cid_2" class="form-input-wide" data-layout="full">
           <div class="form-buttons-wrapper form-buttons-auto" data-align="auto">
@@ -215,23 +180,17 @@
     </ul>
   </div>
 
-  <!-- Full-screen Thank You overlay -->
   <div class="ty-overlay" id="tyOverlay" role="dialog" aria-live="polite" aria-modal="true">
     <div class="ty-wrap">
       <div class="ty-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 6L9 17l-5-5"></path>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
       </div>
       <h1 class="ty-title">Got it!</h1>
       <p class="ty-sub">If it fits the flow, we’ll get it on. Let’s party.</p>
     </div>
   </div>
 
-  <!-- JF spam key -->
   <input type="hidden" class="simple_spc" id="simple_spc" name="simple_spc" value="252746100648052" />
-  <script>
-    document.querySelectorAll("#simple_spc").forEach(el=>el.value="252746100648052-252746100648052");
-  </script>
+  <script>document.querySelectorAll("#simple_spc").forEach(el=>el.value="252746100648052-252746100648052");</script>
 </body>
 </html>
