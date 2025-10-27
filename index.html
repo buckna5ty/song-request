@@ -101,7 +101,7 @@
 
 <script>
 /* ------------ Config ------------ */
-const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbzRjQFNePsGmd5c-edTvgrzfLrtn21b1ZZBZKcKQ0OeIEwo1jeIpRCMAjxP6zHtJ1u9rg/exec'; // no trailing ?debug
+const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbzRjQFNePsGmd5c-edTvgrzfLrtn21b1ZZBZKcKQ0OeIEwo1jeIpRCMAjxP6zHtJ1u9rg/exec';
 const REDIRECT_URL = 'https://www.davidcharlesevents.com/song-request';
 const REDIRECT_DELAY_MS = 4000;
 
@@ -143,27 +143,47 @@ function renderResults(list){
     resultsEl.appendChild(div);
   });
 }
+
+/* ✅ FIXED showSelectedCard (the buggy lines are corrected here) */
+function showSelectedCard({title,artist,cover}){
+  if(cover){
+    const img = document.createElement('img');
+    img.src = cover;
+    img.alt = 'Album cover';
+    img.className = 'sel-cover';
+    if(selCoverEl) selCoverEl.replaceWith(img);
+    selCoverEl = img;
+  }else{
+    if(!selCoverEl || selCoverEl.tagName.toLowerCase() === 'img'){
+      const box = document.createElement('div');
+      box.id = 'selCover';
+      box.className = 'sel-cover';
+      box.setAttribute('aria-hidden','true');
+      box.textContent = '♪';
+      if(selCoverEl) selCoverEl.replaceWith(box);
+      selCoverEl = box;
+    }
+  }
+  selTitle.textContent = title || 'Unknown Title';
+  selArtist.textContent = artist || 'Unknown Artist';
+  selBox.style.display = 'block';
+  selBox.classList.add('active');
+}
+
 function hideSelected(){
   selBox.style.display='none'; selBox.classList.remove('active');
   if(selCoverEl && selCoverEl.tagName.toLowerCase()==='img'){
-    selCoverEl.outerHTML = `<div id="selCover" class="sel-cover" aria-hidden="true">♪</div>`;
-    selCoverEl = $('#selCover');
+    const box = document.createElement('div');
+    box.id = 'selCover';
+    box.className = 'sel-cover';
+    box.setAttribute('aria-hidden','true');
+    box.textContent = '♪';
+    selCoverEl.replaceWith(box);
+    selCoverEl = box;
   }
   selTitle.textContent = ''; selArtist.textContent = '';
 }
-function showSelectedCard({title,artist,cover}){
-  if(cover){
-    const img = document.createElement('img'); img.src = cover; img.alt='Album cover'; img.className='sel-cover';
-    if(selCoverEl) selCoverEl.replaceWith(img); selCoverEl = img;
-  }else{
-    if(!selCoverEl || selCoverEl.tagName.toLowerCase()==='img'){
-      const box = document.createElement('div'); box.id='selCover'; className='sel-cover'; box = document.createElement('div');
-    }
-  }
-  selTitle.textContent = title||'Unknown Title';
-  selArtist.textContent = artist||'Unknown Artist';
-  selBox.style.display='block'; selBox.classList.add('active');
-}
+
 function useSong({title, artist, cover, link}, el){
   document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected')); el?.classList.add('selected');
   songTitleEl.value = title||''; artistEl.value = artist||''; linkEl.value = link||'';
