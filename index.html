@@ -7,79 +7,47 @@
 
 <link rel="preconnect" href="https://itunes.apple.com" crossorigin>
 <style>
-  :root{
-    --field-w:640px; --teal:#0ea5a6; --ring:rgba(14,165,166,.25);
-    --border:#e5e7eb; --radius:8px; --bg:#fff; --ink:#111; --muted:#616161;
-  }
-  @font-face{
-    font-family:"TexGyreAdventorBold";
-    src:url("texgyreadventor-bold.otf") format("opentype");
-    font-weight:700; font-style:normal; font-display:swap;
-  }
+  :root{ --field-w:640px; --teal:#0ea5a6; --ring:rgba(14,165,166,.25); --border:#e5e7eb; --radius:8px; --bg:#fff; --ink:#111; --muted:#616161; }
+  @font-face{ font-family:"TexGyreAdventorBold"; src:url("texgyreadventor-bold.otf") format("opentype"); font-weight:700; font-style:normal; font-display:swap; }
   *{ box-sizing:border-box; }
   body{ background:#f3f2ff; margin:0; color:var(--ink); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
   .wrap{ max-width:960px; margin:0 auto; padding:0 12px 28px; }
   .dce-logo{text-align:center; margin:18px 0 4px;}
   .dce-logo img{ max-width:220px; height:auto; }
-  .app-title{
-    text-align:center; margin:0 auto 10px;
-    font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    letter-spacing:.06em; line-height:1.05; font-size:clamp(20px,6.2vw,36px); max-width:66vw; color:#111;
-  }
-
+  .app-title{ text-align:center; margin:0 auto 10px; font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; letter-spacing:.06em; line-height:1.05; font-size:clamp(20px,6.2vw,36px); max-width:66vw; color:#111; }
   .field-wrap{ max-width:var(--field-w); width:100%; margin:0 auto; }
   label{ display:block; font-size:14px; color:#111; margin:14px 0 6px; }
-  .textbox{
-    width:100%; height:48px; padding:0 14px; border:1px solid var(--border); border-radius:var(--radius);
-    background:var(--bg); font-size:16px; line-height:1.25; outline:none; box-shadow:none; appearance:none;
-  }
+  .textbox{ width:100%; height:48px; padding:0 14px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg); font-size:16px; line-height:1.25; outline:none; box-shadow:none; appearance:none; }
   .textbox:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
-
   .results{ margin-top:6px; }
-  .item{
-    display:grid; grid-template-columns:56px 1fr; align-items:center; gap:12px;
-    padding:10px; border:1px solid var(--border); border-radius:var(--radius);
-    background:#fafafa; transition:background .15s,transform .06s,border-color .15s; cursor:pointer; margin-bottom:8px;
-  }
+  .item{ display:grid; grid-template-columns:56px 1fr; align-items:center; gap:12px; padding:10px; border:1px solid var(--border); border-radius:var(--radius); background:#fafafa; transition:background .15s,transform .06s,border-color .15s; cursor:pointer; margin-bottom:8px; }
   .item:hover{ background:#f5f5f5; } .item:active{ transform:scale(.996); }
   .cover{ width:56px;height:56px;border-radius:8px;object-fit:cover;background:#e9eef0; color:#7a8a8d; display:grid; place-items:center; font-size:12px; }
   .info{ min-width:0; }
   .ttl{ margin:0 0 2px; font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .art{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
   .selected{ margin-top:6px; border:1px solid var(--border); border-radius:var(--radius); background:#fff; display:none; }
   .selected.active{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
   .sel-inner{ display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center; padding:10px; }
   .sel-cover{ width:72px;height:72px;border-radius:10px;object-fit:cover;background:#e9eef0;color:#7a8a8d;display:grid;place-items:center;font-size:14px; }
   .sel-title{ margin:0 0 2px; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .sel-artist{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
   .status{ margin-top:6px; font-size:13px; color:var(--muted); min-height:0; }
   .status:empty{ margin-top:0; }
-
-  .btn{
-    background:#111; color:#fff; text-transform:uppercase;
-    font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    letter-spacing:.04em; border-radius:10px; border:1px solid #111; padding:14px 28px; height:auto; cursor:pointer;
-  }
+  .btn{ background:#111; color:#fff; text-transform:uppercase; font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; letter-spacing:.04em; border-radius:10px; border:1px solid #111; padding:14px 28px; height:auto; cursor:pointer; }
   .btn:hover{ filter:brightness(.92); }
   .btn:active{ transform:translateY(1px); }
   .btn[disabled]{ opacity:.55; cursor:not-allowed; }
-
+  .row{ margin-top:10px; display:flex; gap:10px; align-items:center; }
+  .grow{ flex:1; }
+  .clear{ width:48px; height:48px; border-radius:var(--radius); border:1px solid var(--border); background:#fafafa; display:inline-grid; place-items:center; cursor:pointer; user-select:none; font-size:20px; color:#555; }
+  .clear:hover{ background:#f5f5f5; }
   .ty-overlay{ position:fixed; inset:0; background:#fff; display:none; align-items:center; justify-content:center; z-index:9999; }
   .ty-wrap{ text-align:center; padding:24px; max-width:92vw; }
   .ty-icon{ width:96px; height:96px; margin:0 auto 22px; display:grid; place-items:center; border-radius:50%; background:#22c55e; box-shadow:0 6px 18px rgba(34,197,94,.35); }
   .ty-icon svg{ width:52px; height:52px; color:#fff; }
-  .ty-title{ font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; font-size:clamp(28px,7.8vw,56px); line-height:1.05; margin:0 0 10px; color:#0f172a;}
+  .ty-title{ font-family:"TexGyreAdventorBold"; font-size:clamp(28px,7.8vw,56px); line-height:1.05; margin:0 0 10px; color:#0f172a;}
   .ty-sub{ font:500 16px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#64748b; margin:0;}
-
-  .row{ margin-top:10px; display:flex; gap:10px; align-items:center; }
-  .grow{ flex:1; }
-  .clear{
-    width:48px; height:48px; border-radius:var(--radius); border:1px solid var(--border); background:#fafafa;
-    display:inline-grid; place-items:center; cursor:pointer; user-select:none; font-size:20px; color:#555;
-  }
-  .clear:hover{ background:#f5f5f5; }
 </style>
 </head>
 <body>
@@ -111,7 +79,6 @@
 
       <p id="status" class="status"></p>
 
-      <!-- Hidden fields just to mirror old structure, not strictly required -->
       <input type="hidden" id="song_title" />
       <input type="hidden" id="artist" />
       <input type="hidden" id="link" />
@@ -122,7 +89,6 @@
     </div>
   </div>
 
-  <!-- Thank you overlay -->
   <div class="ty-overlay" id="tyOverlay" role="dialog" aria-live="polite" aria-modal="true">
     <div class="ty-wrap">
       <div class="ty-icon" aria-hidden="true">
@@ -135,9 +101,13 @@
 
 <script>
 /* ------------ Config ------------ */
-const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbzRjQFNePsGmd5c-edTvgrzfLrtn21b1ZZBZKcKQ0OeIEwo1jeIpRCMAjxP6zHtJ1u9rg/exec'; // from Apps Script deploy
+const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbzRjQFNePsGmd5c-edTvgrzfLrtn21b1ZZBZKcKQ0OeIEwo1jeIpRCMAjxP6zHtJ1u9rg/exec'; // no trailing ?debug
 const REDIRECT_URL = 'https://www.davidcharlesevents.com/song-request';
 const REDIRECT_DELAY_MS = 4000;
+
+/* ------------ URL params ------------ */
+const params = new URLSearchParams(location.search);
+const EVENT_CODE = (params.get('event') || '').trim();
 
 /* ------------ Helpers ------------ */
 const $ = s => document.querySelector(s);
@@ -147,16 +117,17 @@ let selCoverEl = $('#selCover'), selTitle = $('#selTitle'), selArtist = $('#selA
 
 const songTitleEl = $('#song_title'), artistEl = $('#artist'), linkEl = $('#link');
 
+// anti-spam cache: block same name+song for 60s
+const lastSubmits = new Map();
+function spamKey(name, title){ return (name||'').toLowerCase().trim() + '||' + (title||'').toLowerCase().trim(); }
+
 function setStatus(m = '', isErr = false){
   statusEl.textContent = m;
   statusEl.style.color = isErr ? '#b00020' : 'var(--muted)';
 }
-
 function enableSubmitIfReady(){
-  const ok = !!(nameEl.value.trim() && songTitleEl.value);
-  submitBtn.disabled = !ok;
+  submitBtn.disabled = !(nameEl.value.trim() && songTitleEl.value.trim());
 }
-
 function clearResults(){ resultsEl.innerHTML = ''; }
 function renderResults(list){
   clearResults();
@@ -165,20 +136,13 @@ function renderResults(list){
   list.forEach(({title, artist, cover, link})=>{
     const div = document.createElement('div');
     div.className = 'item'; div.setAttribute('role','button'); div.setAttribute('tabindex','0');
-    const coverHTML = cover ? `<img class="cover" src="${cover}" alt="Album cover">`
-                            : `<div class="cover" aria-hidden="true">♪</div>`;
-    div.innerHTML = `${coverHTML}<div class="info">
-        <p class="ttl">${title || 'Unknown Title'}</p>
-        <p class="art">${artist || 'Unknown Artist'}</p>
-      </div>`;
+    const coverHTML = cover ? `<img class="cover" src="${cover}" alt="Album cover">` : `<div class="cover" aria-hidden="true">♪</div>`;
+    div.innerHTML = `${coverHTML}<div class="info"><p class="ttl">${title||'Unknown Title'}</p><p class="art">${artist||'Unknown Artist'}</p></div>`;
     const choose = ()=>useSong({title, artist, cover, link}, div);
-    div.onclick = choose;
-    div.onkeyup = e=>{ if(e.key==='Enter'||e.key===' ') choose(); };
-    const img = div.querySelector('img.cover'); if(img) img.addEventListener('load', ()=>{}, {once:true});
+    div.onclick = choose; div.onkeyup = e=>{ if(e.key==='Enter'||e.key===' ') choose(); };
     resultsEl.appendChild(div);
   });
 }
-
 function hideSelected(){
   selBox.style.display='none'; selBox.classList.remove('active');
   if(selCoverEl && selCoverEl.tagName.toLowerCase()==='img'){
@@ -187,30 +151,24 @@ function hideSelected(){
   }
   selTitle.textContent = ''; selArtist.textContent = '';
 }
-
 function showSelectedCard({title,artist,cover}){
   if(cover){
-    const img = document.createElement('img');
-    img.src = cover; img.alt = 'Album cover'; img.className = 'sel-cover';
+    const img = document.createElement('img'); img.src = cover; img.alt='Album cover'; img.className='sel-cover';
     if(selCoverEl) selCoverEl.replaceWith(img); selCoverEl = img;
   }else{
     if(!selCoverEl || selCoverEl.tagName.toLowerCase()==='img'){
-      const box = document.createElement('div'); box.id='selCover'; box.className='sel-cover';
-      box.setAttribute('aria-hidden','true'); box.textContent='♪';
-      if(selCoverEl) selCoverEl.replaceWith(box); selCoverEl = box;
+      const box = document.createElement('div'); box.id='selCover'; className='sel-cover'; box = document.createElement('div');
     }
   }
-  selTitle.textContent = title || 'Unknown Title';
-  selArtist.textContent = artist || 'Unknown Artist';
+  selTitle.textContent = title||'Unknown Title';
+  selArtist.textContent = artist||'Unknown Artist';
   selBox.style.display='block'; selBox.classList.add('active');
 }
-
 function useSong({title, artist, cover, link}, el){
   document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected')); el?.classList.add('selected');
-  songTitleEl.value = title || ''; artistEl.value = artist || ''; linkEl.value = link || '';
+  songTitleEl.value = title||''; artistEl.value = artist||''; linkEl.value = link||'';
   showSelectedCard({title,artist,cover,link});
-  clearResults();
-  enableSubmitIfReady();
+  clearResults(); enableSubmitIfReady();
 }
 
 /* ------------ iTunes Search (JSONP) ------------ */
@@ -221,63 +179,59 @@ function jsonp(url, cbParam='callback'){
     const src = `${url}${sep}${cbParam}=${cb}`;
     const s = document.createElement('script');
     const kill = setTimeout(()=>{ cleanup(); reject(new Error('timeout')); }, 9000);
-    function cleanup(){
-      clearTimeout(kill);
-      try{ delete window[cb]; }catch{}
-      s.parentNode && s.parentNode.removeChild(s);
-    }
+    function cleanup(){ clearTimeout(kill); try{ delete window[cb]; }catch{} s.parentNode && s.parentNode.removeChild(s); }
     window[cb] = (data)=>{ cleanup(); resolve(data); };
     s.onerror = ()=>{ cleanup(); reject(new Error('jsonp error')); };
-    s.src = src;
-    document.body.appendChild(s);
+    s.src = src; document.body.appendChild(s);
   });
 }
-
 async function searchITunes(term){
   const data = await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=10`, 'callback');
-  const list = (data?.results || []).map(t=>({
-    title: t.trackName, artist: t.artistName,
-    cover: t.artworkUrl100 || t.artworkUrl60 || '',
-    link:  t.trackViewUrl || ''
-  }));
-  return list;
+  return (data?.results||[]).map(t=>({ title:t.trackName, artist:t.artistName, cover:t.artworkUrl100||t.artworkUrl60||'', link:t.trackViewUrl||'' }));
 }
 
 /* ------------ Submit to Google Sheet (JSONP) ------------ */
-function openThankYou(){
-  const ov = document.getElementById('tyOverlay');
-  if(ov) ov.style.display='flex';
-}
-function redirectAfterDelay(){
-  setTimeout(()=>{ window.location.href = REDIRECT_URL; }, REDIRECT_DELAY_MS);
-}
+function openThankYou(){ const ov = document.getElementById('tyOverlay'); if(ov) ov.style.display='flex'; }
+function redirectAfterDelay(){ setTimeout(()=>{ window.location.href = REDIRECT_URL; }, REDIRECT_DELAY_MS); }
 
 async function submitRequest(){
   const name = nameEl.value.trim();
   const title = songTitleEl.value.trim();
   const artist = artistEl.value.trim();
   const link = linkEl.value.trim();
+
   if(!name){ setStatus('Please enter your name.', true); nameEl.focus(); return; }
   if(!title){ setStatus('Please pick a track from the list.', true); q.focus(); return; }
 
+  // Anti-spam: block same name+song for 60s
+  const key = spamKey(name, title);
+  const now = Date.now();
+  const prev = lastSubmits.get(key) || 0;
+  if(now - prev < 60000){ setStatus('Hang tight—just submitted that one.', true); return; }
+  lastSubmits.set(key, now);
+
   setStatus('Saving your request…');
 
-  const params = new URLSearchParams({
-    name, song_title: title, artist, link,
+  const qs = new URLSearchParams({
+    mode: 'write',
+    event: EVENT_CODE,
+    name,
+    song_title: title,
+    artist,
+    link,
     ua: navigator.userAgent,
     referer: document.referrer || ''
   });
 
   try{
-    // JSONP call to Apps Script (expects ?callback=…)
-    const res = await jsonp(`${ENDPOINT_URL}?${params.toString()}`, 'callback');
+    const res = await jsonp(`${ENDPOINT_URL}?${qs.toString()}`, 'callback');
     if(res && res.ok){
       setStatus('Saved!');
       openThankYou(); redirectAfterDelay();
     }else{
       setStatus('Couldn’t save (server error). Try again?', true);
     }
-  }catch(e){
+  }catch{
     setStatus('Couldn’t reach the server. Are you online?', true);
   }
 }
@@ -285,36 +239,20 @@ async function submitRequest(){
 /* ------------ Events ------------ */
 let debounce = null, lastTerm = '';
 q.addEventListener('input', ()=>{
-  const raw = q.value;
-  clearBtn.style.display = raw.length >= 1 ? 'inline-grid' : 'none';
-  const t = raw.trim();
-  if(t === lastTerm) return;
-  lastTerm = t;
+  const raw = q.value; clearBtn.style.display = raw.length>=1 ? 'inline-grid' : 'none';
+  const t = raw.trim(); if(t===lastTerm) return; lastTerm=t;
   clearTimeout(debounce);
-  if(!t){ setStatus(''); clearResults(); hideSelected(); enableSubmitIfReady(); return; }
+  if(!t){ setStatus(''); clearResults(); /* keep card */ enableSubmitIfReady(); return; }
   setStatus('Searching…');
   debounce = setTimeout(async ()=>{
     try{
       const list = await searchITunes(t);
-      if(list.length){ renderResults(list); setStatus(''); }
-      else{ clearResults(); setStatus('No results'); }
-    }catch{
-      clearResults(); setStatus('Search failed.', true);
-    }
+      if(list.length){ renderResults(list); setStatus(''); } else { clearResults(); setStatus('No results'); }
+    }catch{ clearResults(); setStatus('Search failed.', true); }
   }, 260);
 });
-
-q.addEventListener('keydown', e=>{
-  if(e.key === 'Enter'){ e.preventDefault(); const t = q.value.trim(); if(t) lastTerm = ''; }
-});
-
-clearBtn.addEventListener('click', ()=>{
-  q.value=''; lastTerm=''; q.focus({preventScroll:true});
-  clearBtn.style.display='none'; setStatus(''); clearResults();
-  // keep selection visible unless you prefer to clear it:
-  // hideSelected(); songTitleEl.value=''; artistEl.value=''; linkEl.value=''; enableSubmitIfReady();
-});
-
+q.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); const t=q.value.trim(); if(t) lastTerm=''; }});
+clearBtn.addEventListener('click', ()=>{ q.value=''; lastTerm=''; q.focus({preventScroll:true}); clearBtn.style.display='none'; setStatus(''); clearResults(); /* leave selection */ });
 nameEl.addEventListener('input', enableSubmitIfReady);
 submitBtn.addEventListener('click', submitRequest);
 window.addEventListener('load', ()=>{ nameEl?.focus({preventScroll:true}); });
