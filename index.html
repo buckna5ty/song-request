@@ -1,480 +1,323 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SONG REQUEST</title>
-  <style>
-    :root {
-      --bg: #0f1115;
-      --card: #161a22;
-      --muted: #7e8aa3;
-      --text: #e7ecf7;
-      --accent: #e869ff;
-      --accent-2: #38d6c6;
-      --border: #242b38;
-      --ok: #39d98a;
-      --warn: #ffb020;
-      --err: #ff6b6b;
-      --shadow: 0 10px 30px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.25);
-      --radius: 18px;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-      background: radial-gradient(1200px 1200px at 20% -10%, rgba(232,105,255,.15), transparent 60%),
-                  radial-gradient(1200px 1200px at 120% 10%, rgba(56,214,198,.12), transparent 60%),
-                  var(--bg);
-      color: var(--text);
-      min-height: 100svh;
-      display: grid; place-items: start center;
-      padding: 28px 16px 80px;
-    }
-    .wrap { width: 100%; max-width: 980px; }
-    header {
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      margin-bottom: 18px;
-    }
-    h1 {
-      margin: 0; font-size: clamp(24px, 4vw, 36px); letter-spacing: .05em;
-      background: linear-gradient(90deg, var(--accent), var(--accent-2));
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-      font-weight: 800;
-    }
-    .card {
-      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0)) , var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-    }
-    .grid {
-      display: grid; gap: 16px;
-      grid-template-columns: 1fr;
-    }
-    @media (min-width: 880px) {
-      .grid { grid-template-columns: 1.1fr 1.4fr; }
-    }
-    label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 6px; }
-    input[type="text"] {
-      width: 100%; padding: 12px 14px; border-radius: 12px;
-      background: #0e1117; border: 1px solid var(--border); color: var(--text);
-      outline: none; transition: border .15s ease, box-shadow .15s ease;
-    }
-    input[type="text"]:focus {
-      border-color: #3a4358; box-shadow: 0 0 0 3px rgba(232,105,255,.15);
-    }
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 12px 16px; border-radius: 12px; font-weight: 700; letter-spacing: .02em;
-      border: 1px solid var(--border); background: #11151d; color: var(--text);
-      cursor: pointer; transition: transform .06s ease, opacity .2s ease, border .15s ease;
-      user-select: none; text-decoration: none;
-    }
-    .btn:hover { border-color: #3a4358; }
-    .btn:active { transform: translateY(1px); }
-    .btn.primary { background: linear-gradient(90deg, var(--accent), var(--accent-2)); color: #0b0d12; border: none; }
-    .btn.ghost { background: transparent; }
-    .btn.small { padding: 8px 10px; font-size: 13px; border-radius: 10px; }
-    .btn[disabled] { opacity: .5; cursor: not-allowed; }
-    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .results {
-      display: grid; grid-template-columns: 1fr; gap: 10px; max-height: 480px; overflow: auto; padding-right: 2px;
-    }
-    @media (min-width: 560px) {
-      .results { grid-template-columns: 1fr 1fr; }
-    }
-    .result {
-      display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: center;
-      padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: #0d1117;
-    }
-    .result img { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; }
-    .result h4 { margin: 0 0 4px; font-size: 14px; }
-    .result p { margin: 0; font-size: 12px; color: var(--muted); }
-    .pill { font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px dashed #2a3344; color: var(--muted); }
-    .selected {
-      padding: 12px; border: 1px dashed #2d3546; border-radius: 12px; background: #0d1117;
-      display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center;
-    }
-    .selected img { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; }
-    .muted { color: var(--muted); }
-    .list { display: grid; gap: 10px; max-height: 360px; overflow: auto; }
-    .list-item {
-      padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: #0d1117;
-      display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px;
-    }
-    .list-item small { color: var(--muted); }
-    .empty {
-      padding: 20px; text-align: center; border: 1px dashed #2d3546; border-radius: 12px; color: var(--muted);
-    }
-    .divider { height: 1px; background: var(--border); margin: 10px 0; }
-    .badge { display: inline-flex; gap: 6px; align-items: center; padding: 6px 10px; border-radius: 999px; background: #101520; border: 1px solid var(--border); color: var(--muted); font-size: 12px; }
-    .toast {
-      position: fixed; inset: auto 16px 16px auto; background: #101520; color: var(--text);
-      border: 1px solid var(--border); border-left: 6px solid var(--ok); padding: 12px 14px; border-radius: 14px;
-      box-shadow: var(--shadow); display: none; z-index: 20;
-    }
-    .sr-only { position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Song Request • David Charles Events</title>
+
+<link rel="preconnect" href="https://itunes.apple.com" crossorigin>
+<style>
+  :root{
+    --field-w:640px; --teal:#0ea5a6; --ring:rgba(14,165,166,.25);
+    --border:#e5e7eb; --radius:8px; --bg:#fff; --ink:#111; --muted:#616161;
+  }
+  @font-face{
+    font-family:"TexGyreAdventorBold";
+    src:url("texgyreadventor-bold.otf") format("opentype");
+    font-weight:700; font-style:normal; font-display:swap;
+  }
+  *{ box-sizing:border-box; }
+  body{ background:#f3f2ff; margin:0; color:var(--ink); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+  .wrap{ max-width:960px; margin:0 auto; padding:0 12px 28px; }
+  .dce-logo{text-align:center; margin:18px 0 4px;}
+  .dce-logo img{ max-width:220px; height:auto; }
+  .app-title{
+    text-align:center; margin:0 auto 10px;
+    font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    letter-spacing:.06em; line-height:1.05; font-size:clamp(20px,6.2vw,36px); max-width:66vw; color:#111;
+  }
+
+  .field-wrap{ max-width:var(--field-w); width:100%; margin:0 auto; }
+  label{ display:block; font-size:14px; color:#111; margin:14px 0 6px; }
+  .textbox{
+    width:100%; height:48px; padding:0 14px; border:1px solid var(--border); border-radius:var(--radius);
+    background:var(--bg); font-size:16px; line-height:1.25; outline:none; box-shadow:none; appearance:none;
+  }
+  .textbox:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
+
+  .results{ margin-top:6px; }
+  .item{
+    display:grid; grid-template-columns:56px 1fr; align-items:center; gap:12px;
+    padding:10px; border:1px solid var(--border); border-radius:var(--radius);
+    background:#fafafa; transition:background .15s,transform .06s,border-color .15s; cursor:pointer; margin-bottom:8px;
+  }
+  .item:hover{ background:#f5f5f5; } .item:active{ transform:scale(.996); }
+  .cover{ width:56px;height:56px;border-radius:8px;object-fit:cover;background:#e9eef0; color:#7a8a8d; display:grid; place-items:center; font-size:12px; }
+  .info{ min-width:0; }
+  .ttl{ margin:0 0 2px; font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .art{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .selected{ margin-top:6px; border:1px solid var(--border); border-radius:var(--radius); background:#fff; display:none; }
+  .selected.active{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
+  .sel-inner{ display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center; padding:10px; }
+  .sel-cover{ width:72px;height:72px;border-radius:10px;object-fit:cover;background:#e9eef0;color:#7a8a8d;display:grid;place-items:center;font-size:14px; }
+  .sel-title{ margin:0 0 2px; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sel-artist{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .status{ margin-top:6px; font-size:13px; color:var(--muted); min-height:0; }
+  .status:empty{ margin-top:0; }
+
+  .btn{
+    background:#111; color:#fff; text-transform:uppercase;
+    font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    letter-spacing:.04em; border-radius:10px; border:1px solid #111; padding:14px 28px; height:auto; cursor:pointer;
+  }
+  .btn:hover{ filter:brightness(.92); }
+  .btn:active{ transform:translateY(1px); }
+  .btn[disabled]{ opacity:.55; cursor:not-allowed; }
+
+  .ty-overlay{ position:fixed; inset:0; background:#fff; display:none; align-items:center; justify-content:center; z-index:9999; }
+  .ty-wrap{ text-align:center; padding:24px; max-width:92vw; }
+  .ty-icon{ width:96px; height:96px; margin:0 auto 22px; display:grid; place-items:center; border-radius:50%; background:#22c55e; box-shadow:0 6px 18px rgba(34,197,94,.35); }
+  .ty-icon svg{ width:52px; height:52px; color:#fff; }
+  .ty-title{ font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; font-size:clamp(28px,7.8vw,56px); line-height:1.05; margin:0 0 10px; color:#0f172a;}
+  .ty-sub{ font:500 16px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#64748b; margin:0;}
+
+  .row{ margin-top:10px; display:flex; gap:10px; align-items:center; }
+  .grow{ flex:1; }
+  .clear{
+    width:48px; height:48px; border-radius:var(--radius); border:1px solid var(--border); background:#fafafa;
+    display:inline-grid; place-items:center; cursor:pointer; user-select:none; font-size:20px; color:#555;
+  }
+  .clear:hover{ background:#f5f5f5; }
+</style>
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <h1>SONG REQUEST</h1>
+    <div class="dce-logo"><img src="assets/client-logo.png" alt="David Charles Events" onerror="this.style.display='none'"></div>
+    <div class="app-title">SONG REQUEST</div>
+
+    <div class="field-wrap">
+      <label for="name">What's your name?</label>
+      <input id="name" class="textbox" type="text" autocomplete="name" />
+
+      <label for="q">Search Song, Artist or Lyrics</label>
       <div class="row">
-        <button id="toggleViewBtn" class="btn ghost small" title="Switch between Requester / DJ views">Toggle DJ View</button>
-        <a id="exportCsvBtn" class="btn ghost small" download="song-requests.csv" href="#">Export CSV</a>
+        <input id="q" class="textbox grow" type="text" placeholder="start typing..." autocomplete="off" inputmode="search" />
+        <button id="clearBtn" class="clear" type="button" aria-label="Clear search">×</button>
       </div>
-    </header>
 
-    <div class="grid">
-      <!-- Left: Request form -->
-      <section class="card" aria-labelledby="requestFormTitle">
-        <div class="row" style="justify-content: space-between;">
-          <div class="badge"><span>Powered by Apple Music Search API</span></div>
-          <span id="webhookBadge" class="pill" title="Optional webhook is off">Webhook: OFF</span>
-        </div>
+      <div id="results" class="results"></div>
 
-        <h2 id="requestFormTitle" class="sr-only">Request a Song</h2>
-
-        <label for="nameInput">Your name</label>
-        <input id="nameInput" type="text" placeholder="e.g., Jamie / Wedding Couple / Table 12" autocomplete="name" />
-
-        <label for="searchInput">Find your song</label>
-        <input id="searchInput" type="text" placeholder="Type song title or artist…" autocomplete="off" />
-        <div class="muted" style="margin-top:6px;font-size:12px;">
-          Tip: try “Artist – Song Title” for laser-accurate matches.
-        </div>
-
-        <div id="results" class="results" style="margin-top:12px;" aria-live="polite"></div>
-
-        <div id="selectedBox" class="selected" style="margin-top:12px; display:none;">
-          <img id="selectedArt" alt="">
-          <div>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <strong id="selectedTitle"></strong>
-              <span class="pill" id="selectedArtist"></span>
-            </div>
-            <div class="row" style="margin-top:8px;">
-              <a id="appleLink" class="btn small" target="_blank" rel="noopener">Apple Music</a>
-              <audio id="preview" controls preload="none" style="height:28px;"></audio>
-              <button id="clearSelectionBtn" class="btn small">Clear</button>
-            </div>
+      <div id="selected" class="selected" aria-live="polite" aria-atomic="true">
+        <div class="sel-inner">
+          <div id="selCover" class="sel-cover" aria-hidden="true">♪</div>
+          <div class="sel-text">
+            <p id="selTitle" class="sel-title"></p>
+            <p id="selArtist" class="sel-artist"></p>
           </div>
         </div>
+      </div>
 
-        <div class="divider"></div>
+      <p id="status" class="status"></p>
 
-        <div class="row" style="justify-content: space-between;">
-          <span class="muted" style="font-size:12px;">We’ll do our best to play it!</span>
-          <button id="submitBtn" class="btn primary" disabled>Submit Request</button>
-        </div>
-      </section>
+      <!-- Hidden fields just to mirror old structure, not strictly required -->
+      <input type="hidden" id="song_title" />
+      <input type="hidden" id="artist" />
+      <input type="hidden" id="link" />
 
-      <!-- Right: Requests / DJ View -->
-      <section class="card" aria-labelledby="djListTitle">
-        <h3 id="djListTitle" style="margin:0 0 10px;font-size:16px;">Requests</h3>
-        <div class="row" style="gap:8px; flex-wrap: wrap; margin-bottom: 6px;">
-          <span class="pill" id="countPill">0 total</span>
-          <button id="clearAllBtn" class="btn small" title="Clears local list only">Clear Local</button>
-        </div>
-        <div id="requestList" class="list"></div>
-        <div id="emptyState" class="empty">No requests yet.</div>
-      </section>
+      <div class="row" style="justify-content:flex-end; margin-top:12px;">
+        <button id="submitBtn" class="btn" type="button" disabled>Submit</button>
+      </div>
     </div>
   </div>
 
-  <div id="toast" class="toast" role="status" aria-live="polite">Request received—thank you!</div>
+  <!-- Thank you overlay -->
+  <div class="ty-overlay" id="tyOverlay" role="dialog" aria-live="polite" aria-modal="true">
+    <div class="ty-wrap">
+      <div class="ty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+      </div>
+      <h1 class="ty-title">Got it!</h1>
+      <p class="ty-sub">If it fits the flow, we’ll get it on. Let’s party.</p>
+    </div>
+  </div>
 
-  <script>
-  ;(() => {
-    // =========================
-    // CONFIG
-    // =========================
-    // Optional webhook (POST JSON) for persistence beyond localStorage.
-    // Example target: a Google Apps Script Web App, Supabase, tiny Node endpoint, etc.
-    // Leave empty "" to disable.
-    const WEBHOOK_URL = ""; // e.g., "https://script.google.com/macros/s/XXXX/exec"
-    const WEBHOOK_METHOD = "POST";
-    const WEBHOOK_BADGE = document.getElementById("webhookBadge");
+<script>
+/* ------------ Config ------------ */
+const ENDPOINT_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE'; // from Apps Script deploy
+const REDIRECT_URL = 'https://www.davidcharlesevents.com/song-request';
+const REDIRECT_DELAY_MS = 4000;
 
-    // UI refs
-    const nameInput = document.getElementById("nameInput");
-    const searchInput = document.getElementById("searchInput");
-    const resultsEl = document.getElementById("results");
-    const selectedBox = document.getElementById("selectedBox");
-    const selectedArt = document.getElementById("selectedArt");
-    const selectedTitle = document.getElementById("selectedTitle");
-    const selectedArtist = document.getElementById("selectedArtist");
-    const appleLink = document.getElementById("appleLink");
-    const preview = document.getElementById("preview");
-    const clearSelectionBtn = document.getElementById("clearSelectionBtn");
-    const submitBtn = document.getElementById("submitBtn");
-    const requestList = document.getElementById("requestList");
-    const emptyState = document.getElementById("emptyState");
-    const toggleViewBtn = document.getElementById("toggleViewBtn");
-    const exportCsvBtn = document.getElementById("exportCsvBtn");
-    const clearAllBtn = document.getElementById("clearAllBtn");
-    const countPill = document.getElementById("countPill");
-    const toast = document.getElementById("toast");
+/* ------------ Helpers ------------ */
+const $ = s => document.querySelector(s);
+const nameEl = $('#name'), q = $('#q'), resultsEl = $('#results'), statusEl = $('#status'),
+      selBox = $('#selected'), submitBtn = $('#submitBtn'), clearBtn = $('#clearBtn');
+let selCoverEl = $('#selCover'), selTitle = $('#selTitle'), selArtist = $('#selArtist');
 
-    // State
-    let state = {
-      selected: null, // currently selected track from search results
-      view: "guest",  // "guest" or "dj" (just affects list sorting/filtering)
-      requests: loadRequests()
-    };
+const songTitleEl = $('#song_title'), artistEl = $('#artist'), linkEl = $('#link');
 
-    // Show webhook badge
-    WEBHOOK_BADGE.textContent = `Webhook: ${WEBHOOK_URL ? "ON" : "OFF"}`;
-    WEBHOOK_BADGE.style.borderColor = WEBHOOK_URL ? "rgba(56,214,198,.65)" : "#2a3344";
-    WEBHOOK_BADGE.style.color = WEBHOOK_URL ? "var(--accent-2)" : "var(--muted)";
+function setStatus(m = '', isErr = false){
+  statusEl.textContent = m;
+  statusEl.style.color = isErr ? '#b00020' : 'var(--muted)';
+}
 
-    // =========================
-    // Helpers
-    // =========================
-    function saveRequests() {
-      try { localStorage.setItem("song_requests_v1", JSON.stringify(state.requests)); }
-      catch(e) { console.warn("localStorage save failed", e); }
-      renderList();
+function enableSubmitIfReady(){
+  const ok = !!(nameEl.value.trim() && songTitleEl.value);
+  submitBtn.disabled = !ok;
+}
+
+function clearResults(){ resultsEl.innerHTML = ''; }
+function renderResults(list){
+  clearResults();
+  if(!list.length){ setStatus('No results'); return; }
+  setStatus('');
+  list.forEach(({title, artist, cover, link})=>{
+    const div = document.createElement('div');
+    div.className = 'item'; div.setAttribute('role','button'); div.setAttribute('tabindex','0');
+    const coverHTML = cover ? `<img class="cover" src="${cover}" alt="Album cover">`
+                            : `<div class="cover" aria-hidden="true">♪</div>`;
+    div.innerHTML = `${coverHTML}<div class="info">
+        <p class="ttl">${title || 'Unknown Title'}</p>
+        <p class="art">${artist || 'Unknown Artist'}</p>
+      </div>`;
+    const choose = ()=>useSong({title, artist, cover, link}, div);
+    div.onclick = choose;
+    div.onkeyup = e=>{ if(e.key==='Enter'||e.key===' ') choose(); };
+    const img = div.querySelector('img.cover'); if(img) img.addEventListener('load', ()=>{}, {once:true});
+    resultsEl.appendChild(div);
+  });
+}
+
+function hideSelected(){
+  selBox.style.display='none'; selBox.classList.remove('active');
+  if(selCoverEl && selCoverEl.tagName.toLowerCase()==='img'){
+    selCoverEl.outerHTML = `<div id="selCover" class="sel-cover" aria-hidden="true">♪</div>`;
+    selCoverEl = $('#selCover');
+  }
+  selTitle.textContent = ''; selArtist.textContent = '';
+}
+
+function showSelectedCard({title,artist,cover}){
+  if(cover){
+    const img = document.createElement('img');
+    img.src = cover; img.alt = 'Album cover'; img.className = 'sel-cover';
+    if(selCoverEl) selCoverEl.replaceWith(img); selCoverEl = img;
+  }else{
+    if(!selCoverEl || selCoverEl.tagName.toLowerCase()==='img'){
+      const box = document.createElement('div'); box.id='selCover'; box.className='sel-cover';
+      box.setAttribute('aria-hidden','true'); box.textContent='♪';
+      if(selCoverEl) selCoverEl.replaceWith(box); selCoverEl = box;
     }
-    function loadRequests() {
-      try {
-        const raw = localStorage.getItem("song_requests_v1");
-        return raw ? JSON.parse(raw) : [];
-      } catch(e) {
-        console.warn("localStorage parse failed", e);
-        return [];
-      }
-    }
-    function uid() {
-      return Math.random().toString(36).slice(2) + Date.now().toString(36);
-    }
-    function fmtTime(ts) {
-      const d = new Date(ts);
-      return d.toLocaleString();
-    }
-    function showToast(msg = "Saved!") {
-      toast.textContent = msg;
-      toast.style.display = "block";
-      clearTimeout(showToast._t);
-      showToast._t = setTimeout(() => toast.style.display = "none", 2300);
-    }
-    function debounce(fn, ms=350) {
-      let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-    }
-    function toCsv(rows) {
-      const header = ["timestamp","name","title","artist","apple_link","preview_url","artwork","track_id"];
-      const lines = [header.join(",")];
-      for (const r of rows) {
-        const vals = [
-          JSON.stringify(new Date(r.timestamp).toISOString()),
-          JSON.stringify(r.name),
-          JSON.stringify(r.title),
-          JSON.stringify(r.artist),
-          JSON.stringify(r.apple_link || ""),
-          JSON.stringify(r.preview_url || ""),
-          JSON.stringify(r.artwork || ""),
-          JSON.stringify(r.track_id || "")
-        ];
-        lines.push(vals.join(","));
-      }
-      return lines.join("\r\n");
-    }
+  }
+  selTitle.textContent = title || 'Unknown Title';
+  selArtist.textContent = artist || 'Unknown Artist';
+  selBox.style.display='block'; selBox.classList.add('active');
+}
 
-    // =========================
-    // Apple Music (iTunes) Search
-    // =========================
-    async function searchApple(term) {
-      if (!term || term.trim().length < 2) { resultsEl.innerHTML = ""; return; }
-      const url = new URL("https://itunes.apple.com/search");
-      url.searchParams.set("term", term);
-      url.searchParams.set("entity", "song");
-      url.searchParams.set("limit", "24");
+function useSong({title, artist, cover, link}, el){
+  document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected')); el?.classList.add('selected');
+  songTitleEl.value = title || ''; artistEl.value = artist || ''; linkEl.value = link || '';
+  showSelectedCard({title,artist,cover,link});
+  clearResults();
+  enableSubmitIfReady();
+}
 
-      resultsEl.innerHTML = `<div class="muted">Searching…</div>`;
-      try {
-        const res = await fetch(url.toString());
-        if (!res.ok) throw new Error("Search failed");
-        const data = await res.json();
-        renderResults(data.results || []);
-      } catch (e) {
-        resultsEl.innerHTML = `<div class="muted">Error searching Apple Music.</div>`;
-        console.error(e);
-      }
+/* ------------ iTunes Search (JSONP) ------------ */
+function jsonp(url, cbParam='callback'){
+  return new Promise((resolve, reject)=>{
+    const cb = 'cb_' + Math.random().toString(36).slice(2);
+    const sep = url.includes('?') ? '&' : '?';
+    const src = `${url}${sep}${cbParam}=${cb}`;
+    const s = document.createElement('script');
+    const kill = setTimeout(()=>{ cleanup(); reject(new Error('timeout')); }, 9000);
+    function cleanup(){
+      clearTimeout(kill);
+      try{ delete window[cb]; }catch{}
+      s.parentNode && s.parentNode.removeChild(s);
     }
+    window[cb] = (data)=>{ cleanup(); resolve(data); };
+    s.onerror = ()=>{ cleanup(); reject(new Error('jsonp error')); };
+    s.src = src;
+    document.body.appendChild(s);
+  });
+}
 
-    function renderResults(items) {
-      if (!items.length) {
-        resultsEl.innerHTML = `<div class="muted">No matches found. Try another search.</div>`;
-        return;
-      }
-      resultsEl.innerHTML = "";
-      for (const it of items) {
-        const art = it.artworkUrl100?.replace("100x100bb", "200x200bb") || "";
-        const el = document.createElement("div");
-        el.className = "result";
-        el.innerHTML = `
-          <img src="${art}" alt="">
-          <div>
-            <h4>${it.trackName || "Unknown Title"}</h4>
-            <p>${it.artistName || "Unknown Artist"}</p>
-            <div class="row" style="margin-top:8px;">
-              <button class="btn small selectBtn">Select</button>
-              ${it.previewUrl ? `<audio controls preload="none" style="height:28px;"><source src="${it.previewUrl}"></audio>` : ""}
-              ${it.trackViewUrl ? `<a class="btn small" href="${it.trackViewUrl}" target="_blank" rel="noopener">Apple Music</a>` : ""}
-            </div>
-          </div>
-        `;
-        el.querySelector(".selectBtn").addEventListener("click", () => {
-          state.selected = {
-            track_id: it.trackId,
-            title: it.trackName,
-            artist: it.artistName,
-            apple_link: it.trackViewUrl || "",
-            preview_url: it.previewUrl || "",
-            artwork: art
-          };
-          updateSelectedBox();
-        });
-        resultsEl.appendChild(el);
-      }
+async function searchITunes(term){
+  const data = await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=10`, 'callback');
+  const list = (data?.results || []).map(t=>({
+    title: t.trackName, artist: t.artistName,
+    cover: t.artworkUrl100 || t.artworkUrl60 || '',
+    link:  t.trackViewUrl || ''
+  }));
+  return list;
+}
+
+/* ------------ Submit to Google Sheet (JSONP) ------------ */
+function openThankYou(){
+  const ov = document.getElementById('tyOverlay');
+  if(ov) ov.style.display='flex';
+}
+function redirectAfterDelay(){
+  setTimeout(()=>{ window.location.href = REDIRECT_URL; }, REDIRECT_DELAY_MS);
+}
+
+async function submitRequest(){
+  const name = nameEl.value.trim();
+  const title = songTitleEl.value.trim();
+  const artist = artistEl.value.trim();
+  const link = linkEl.value.trim();
+  if(!name){ setStatus('Please enter your name.', true); nameEl.focus(); return; }
+  if(!title){ setStatus('Please pick a track from the list.', true); q.focus(); return; }
+
+  setStatus('Saving your request…');
+
+  const params = new URLSearchParams({
+    name, song_title: title, artist, link,
+    ua: navigator.userAgent,
+    referer: document.referrer || ''
+  });
+
+  try{
+    // JSONP call to Apps Script (expects ?callback=…)
+    const res = await jsonp(`${ENDPOINT_URL}?${params.toString()}`, 'callback');
+    if(res && res.ok){
+      setStatus('Saved!');
+      openThankYou(); redirectAfterDelay();
+    }else{
+      setStatus('Couldn’t save (server error). Try again?', true);
     }
+  }catch(e){
+    setStatus('Couldn’t reach the server. Are you online?', true);
+  }
+}
 
-    function updateSelectedBox() {
-      if (!state.selected) { selectedBox.style.display = "none"; submitBtn.disabled = true; return; }
-      selectedArt.src = state.selected.artwork || "";
-      selectedArt.alt = `${state.selected.title} cover`;
-      selectedTitle.textContent = state.selected.title;
-      selectedArtist.textContent = state.selected.artist;
-      appleLink.href = state.selected.apple_link || "#";
-      appleLink.setAttribute("aria-disabled", state.selected.apple_link ? "false" : "true");
-      preview.src = state.selected.preview_url || "";
-      selectedBox.style.display = "grid";
-      validateSubmit();
+/* ------------ Events ------------ */
+let debounce = null, lastTerm = '';
+q.addEventListener('input', ()=>{
+  const raw = q.value;
+  clearBtn.style.display = raw.length >= 1 ? 'inline-grid' : 'none';
+  const t = raw.trim();
+  if(t === lastTerm) return;
+  lastTerm = t;
+  clearTimeout(debounce);
+  if(!t){ setStatus(''); clearResults(); hideSelected(); enableSubmitIfReady(); return; }
+  setStatus('Searching…');
+  debounce = setTimeout(async ()=>{
+    try{
+      const list = await searchITunes(t);
+      if(list.length){ renderResults(list); setStatus(''); }
+      else{ clearResults(); setStatus('No results'); }
+    }catch{
+      clearResults(); setStatus('Search failed.', true);
     }
+  }, 260);
+});
 
-    // =========================
-    // Submit
-    // =========================
-    function validateSubmit() {
-      const ok = !!(nameInput.value.trim() && state.selected);
-      submitBtn.disabled = !ok;
-    }
+q.addEventListener('keydown', e=>{
+  if(e.key === 'Enter'){ e.preventDefault(); const t = q.value.trim(); if(t) lastTerm = ''; }
+});
 
-    async function submitRequest() {
-      const name = nameInput.value.trim();
-      if (!name || !state.selected) return;
-      const payload = {
-        id: uid(),
-        timestamp: Date.now(),
-        name,
-        ...state.selected
-      };
+clearBtn.addEventListener('click', ()=>{
+  q.value=''; lastTerm=''; q.focus({preventScroll:true});
+  clearBtn.style.display='none'; setStatus(''); clearResults();
+  // keep selection visible unless you prefer to clear it:
+  // hideSelected(); songTitleEl.value=''; artistEl.value=''; linkEl.value=''; enableSubmitIfReady();
+});
 
-      // Add locally
-      state.requests.unshift(payload);
-      saveRequests();
-      showToast("Request received—thank you!");
-
-      // Attempt webhook
-      if (WEBHOOK_URL) {
-        try {
-          await fetch(WEBHOOK_URL, {
-            method: WEBHOOK_METHOD,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-        } catch (e) {
-          console.warn("Webhook failed (local saved ok):", e);
-          showToast("Saved locally. (Webhook offline)");
-        }
-      }
-
-      // Reset selection but keep the name for multiple requests
-      state.selected = null;
-      updateSelectedBox();
-    }
-
-    // =========================
-    // DJ View / List
-    // =========================
-    function renderList() {
-      const rows = state.requests.slice(); // copy
-      countPill.textContent = `${rows.length} total`;
-      if (!rows.length) {
-        requestList.innerHTML = "";
-        emptyState.style.display = "block";
-        return;
-      }
-      emptyState.style.display = "none";
-      requestList.innerHTML = "";
-      for (const r of rows) {
-        const item = document.createElement("div");
-        item.className = "list-item";
-        item.innerHTML = `
-          <div>
-            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-              <strong>${r.title}</strong>
-              <span class="pill">${r.artist}</span>
-            </div>
-            <small>Requested by <strong>${r.name}</strong> • ${fmtTime(r.timestamp)}</small>
-          </div>
-          <div class="row">
-            ${r.apple_link ? `<a class="btn small" href="${r.apple_link}" target="_blank" rel="noopener">Apple</a>` : ""}
-            ${r.preview_url ? `<audio controls preload="none" style="height:28px;"><source src="${r.preview_url}"></audio>` : ""}
-            <button class="btn small" data-id="${r.id}" data-action="remove">✕</button>
-          </div>
-        `;
-        requestList.appendChild(item);
-      }
-    }
-
-    function removeRequest(id) {
-      state.requests = state.requests.filter(r => r.id !== id);
-      saveRequests();
-    }
-
-    function clearLocal() {
-      if (!confirm("Clear local requests? This does not affect any remote sheet/webhook.")) return;
-      state.requests = [];
-      saveRequests();
-    }
-
-    function exportCsv() {
-      const csv = toCsv(state.requests);
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      exportCsvBtn.href = url;
-      // filename already set via download attribute
-    }
-
-    function toggleView() {
-      state.view = state.view === "guest" ? "dj" : "guest";
-      toggleViewBtn.textContent = state.view === "guest" ? "Toggle DJ View" : "Toggle Guest View";
-      // Future hook: add filters or sorting per view. For now we just keep it simple.
-    }
-
-    // =========================
-    // Events
-    // =========================
-    searchInput.addEventListener("input", debounce(() => searchApple(searchInput.value), 350));
-    nameInput.addEventListener("input", validateSubmit);
-    clearSelectionBtn.addEventListener("click", () => { state.selected = null; updateSelectedBox(); });
-    submitBtn.addEventListener("click", submitRequest);
-    toggleViewBtn.addEventListener("click", toggleView);
-    exportCsvBtn.addEventListener("click", exportCsv);
-    clearAllBtn.addEventListener("click", clearLocal);
-    requestList.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-action='remove']");
-      if (!btn) return;
-      removeRequest(btn.getAttribute("data-id"));
-    });
-
-    // Init
-    renderList();
-    updateSelectedBox();
-  })();
-  </script>
+nameEl.addEventListener('input', enableSubmitIfReady);
+submitBtn.addEventListener('click', submitRequest);
+window.addEventListener('load', ()=>{ nameEl?.focus({preventScroll:true}); });
+</script>
 </body>
 </html>
