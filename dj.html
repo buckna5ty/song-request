@@ -11,12 +11,10 @@
   .wrap{ max-width:1100px; margin:0 auto; padding:18px 14px 40px; }
   h1{ margin:0 0 14px; font-size:28px; line-height:1.1; }
   .sub{ color:var(--sub); margin:4px 0 16px; }
-
   .grid{ display:grid; gap:14px; grid-template-columns:1.2fr 1fr; }
   .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; }
   .row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
   .pill{ border:1px solid var(--border); border-radius:999px; padding:6px 10px; background:#fff; font-size:13px; }
-  label{ font-size:13px; color:var(--sub); }
   input[type="text"]{ height:40px; border:1px solid var(--border); border-radius:10px; padding:0 12px; min-width:220px; }
   button{ height:40px; padding:0 14px; border:1px solid var(--border); background:#111; color:#fff; border-radius:10px; cursor:pointer; }
   button.secondary{ background:#fff; color:#111; }
@@ -34,13 +32,10 @@
 <body>
 <div class="wrap">
   <h1>DJ View</h1>
-  <p class="sub">Live requests pulled from the sheet. De-duped per person per song. Filter by event if you’re using <span class="mono">?event=CODE</span>.</p>
+  <p class="sub">Live requests pulled from the sheet. De-duped per person per song. Filter by event with <span class="mono">?event=CODE</span>.</p>
 
   <div class="row">
-    <label>Endpoint:</label>
-    <input id="ep" type="text" placeholder="https://script.google.com/macros/s/.../exec" />
-    <label>Event:</label>
-    <input id="ev" type="text" placeholder="(optional)" />
+    <span class="muted">Endpoint is preconfigured in code. You can override with <span class="mono">?ep=URL</span>.</span>
     <button id="refresh">Refresh</button>
     <button id="auto" class="secondary">Auto: Off</button>
   </div>
@@ -63,14 +58,19 @@
 </div>
 
 <script>
+/* ------------ Config ------------ */
+const DEFAULT_ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbzRjQFNePsGmd5c-edTvgrzfLrtn21b1ZZBZKcKQ0OeIEwo1jeIpRCMAjxP6zHtJ1u9rg/exec';
+
+/* ------------ URL params ------------ */
+const urlp = new URLSearchParams(location.search);
+const ENDPOINT_URL = urlp.get('ep') || DEFAULT_ENDPOINT_URL;
+const EVENT_CODE = (urlp.get('event') || '').trim();
+
+/* ------------ DOM & helpers ------------ */
 const $ = s=>document.querySelector(s);
 const feedEl = $('#feed'), topSongsEl = $('#topSongs tbody'), topArtistsEl = $('#topArtists tbody'),
       statusEl=$('#status'), countPill=$('#countPill');
-const epInput = $('#ep'), evInput = $('#ev'), btnRefresh = $('#refresh'), btnAuto=$('#auto');
-
-const urlp = new URLSearchParams(location.search);
-epInput.value = urlp.get('ep') || '';      // you can bookmark dj.html?ep=...&event=...
-evInput.value = urlp.get('event') || '';
+const btnRefresh = $('#refresh'), btnAuto=$('#auto');
 
 function setStatus(m){ statusEl.textContent = m || ''; }
 function jsonp(url, cbParam='callback'){
@@ -88,7 +88,6 @@ function jsonp(url, cbParam='callback'){
 }
 
 function dedupeByPersonSong(rows){
-  // keep only first occurrence of (name,song_title)
   const seen = new Set();
   const out = [];
   for(const r of rows){
@@ -99,7 +98,6 @@ function dedupeByPersonSong(rows){
   }
   return out;
 }
-
 function groupCounts(items, keyFn){
   const map = new Map();
   for(const it of items){
@@ -108,7 +106,6 @@ function groupCounts(items, keyFn){
   }
   return Array.from(map.entries()).sort((a,b)=>b[1]-a[1]);
 }
-
 function renderFeed(rows){
   feedEl.innerHTML='';
   for(const r of rows){
@@ -121,7 +118,6 @@ function renderFeed(rows){
     feedEl.appendChild(row);
   }
 }
-
 function renderTopSongs(rows){
   topSongsEl.innerHTML='';
   const counts = groupCounts(rows, r => (r.song_title||'').trim().toLowerCase() + ' | ' + (r.artist||'').trim().toLowerCase());
@@ -132,7 +128,6 @@ function renderTopSongs(rows){
     topSongsEl.appendChild(tr);
   });
 }
-
 function renderTopArtists(rows){
   topArtistsEl.innerHTML='';
   const counts = groupCounts(rows, r => (r.artist||'').trim().toLowerCase());
@@ -144,16 +139,13 @@ function renderTopArtists(rows){
 }
 
 async function refresh(){
-  const ep = epInput.value.trim();
-  if(!ep){ setStatus('Set the endpoint first.'); return; }
-  const ev = evInput.value.trim();
-  setStatus('Loading…');
   const qs = new URLSearchParams({ mode:'read', limit:'500' });
-  if(ev) qs.set('event', ev);
+  if(EVENT_CODE) qs.set('event', EVENT_CODE);
+  setStatus('Loading…');
   try{
-    const data = await jsonp(`${ep}?${qs.toString()}`, 'callback');
+    const data = await jsonp(`${ENDPOINT_URL}?${qs.toString()}`, 'callback');
     if(!data || !data.ok){ setStatus('Server error.'); return; }
-    const rows = Array.isArray(data.rows)? data.rows : [];
+    const rows = Array.isArray(data.rows) ? data.rows : [];
     const uniq = dedupeByPersonSong(rows);
     countPill.textContent = `${uniq.length} unique requests`;
     renderFeed(uniq);
@@ -179,11 +171,7 @@ btnAuto.addEventListener('click', ()=>{
   }
 });
 
-// Auto-fill from URL if provided, then refresh once
-window.addEventListener('load', ()=>{
-  const ep = epInput.value.trim();
-  if(ep) refresh();
-});
+window.addEventListener('load', refresh);
 </script>
 </body>
 </html>
