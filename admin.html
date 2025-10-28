@@ -3,28 +3,21 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>DCE • Events Admin + QR</title>
+<title>DCE • Events Admin</title>
 <style>
   :root{ --ink:#0f172a; --sub:#475569; --border:#e2e8f0; --bg:#f8fafc; --card:#ffffff; --accent:#111; --radius:14px; }
-  *{ box-sizing:border-box; }
-  body{ margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
+  *{ box-sizing:border-box; } body{ margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
   .wrap{ max-width:1100px; margin:0 auto; padding:22px 14px 44px; }
-  h1{ margin:0 0 10px; font-size:28px; line-height:1.1; }
-  h2{ margin:18px 0 10px; font-size:18px; }
+  h1{ margin:0 0 12px; font-size:28px; } h2{ margin:18px 0 10px; font-size:18px; }
   .sub{ color:var(--sub); margin:2px 0 16px; }
-  .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+  .card{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
   label{ display:block; font-size:13px; color:var(--sub); margin:12px 0 6px; }
-  input[type="text"], input[type="date"], select{
-    width:100%; height:44px; border:1px solid var(--border); border-radius:10px; padding:0 12px; font-size:15px;
-  }
-  .row{ display:flex; gap:10px; flex-wrap:wrap; }
-  .half{ flex:1 1 260px; }
-  .btn{ height:44px; padding:0 16px; border:1px solid var(--border); background:var(--accent); color:#fff; border-radius:10px; cursor:pointer; }
+  input[type="text"], input[type="date"], select{ width:100%; height:44px; border:1px solid var(--border); border-radius:10px; padding:0 12px; font-size:15px; }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; } .half{ flex:1 1 260px; }
+  .btn{ height:44px; padding:0 16px; border:1px solid var(--border); background:#111; color:#fff; border-radius:10px; cursor:pointer; }
   .btn.secondary{ background:#fff; color:#111; }
-  .muted{ color:#64748b; font-size:12px; }
-  .mono{ font-family:ui-monospace, Menlo, Consolas, monospace; }
-  table{ width:100%; border-collapse:collapse; }
-  th, td{ border-bottom:1px solid var(--border); text-align:left; padding:10px 8px; font-size:14px; }
+  .muted{ color:#64748b; font-size:12px; } .mono{ font-family:ui-monospace, Menlo, Consolas, monospace; }
+  table{ width:100%; border-collapse:collapse; } th,td{ border-bottom:1px solid var(--border); text-align:left; padding:10px 8px; font-size:14px; }
   th{ color:#475569; font-size:12px; text-transform:uppercase; letter-spacing:.02em; }
   .tag{ display:inline-block; padding:3px 8px; border-radius:999px; border:1px solid var(--border); font-size:12px; }
   .ok{ color:#0a7c2f; } .err{ color:#b00020; }
@@ -38,10 +31,10 @@
 <body>
 <div class="wrap">
   <h1>Events Admin</h1>
-  <p class="sub">Add events to the <strong>Active</strong> list (what the DJ sees), and generate per-event QR codes.</p>
+  <p class="sub">Create events, manage actives, print QRs, and export CSV.</p>
 
   <div class="card">
-    <h2>Add To Active Events</h2>
+    <h2>Create Event</h2>
     <div class="row">
       <div class="half">
         <label for="eventDate">Event date</label>
@@ -68,7 +61,7 @@
   <div class="card" style="margin-top:16px;">
     <h2>Active Events (what DJ sees)</h2>
     <table>
-      <thead><tr><th>Code</th><th>Name</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Code</th><th>Name</th><th>Date</th><th>Status</th><th style="width:350px;">Actions</th></tr></thead>
       <tbody id="eventsTbody"></tbody>
     </table>
   </div>
@@ -94,64 +87,42 @@
 
 <script>
 /* ------------ Config ------------ */
-const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbx2mhrHbyle8zBZRFn55GisuBfLIxDhBkhiBUbXCgBSJN7ssJtEyGEgwTlCZx1sSiy5vg/exec';
+const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxZ9ylpDohWZnp1Krsn9THEPEciFv68uBB5unr0a41qNTesaOBkCWsQOeiucY4asIYH5A/exec';
 
 /* ------------ DOM ------------ */
 const $ = s => document.querySelector(s);
-const eventDate   = $('#eventDate');
-const eventName   = $('#eventName');
-const eventCode   = $('#eventCode');
-const statusEl    = $('#status');
-const eventsTbody = $('#eventsTbody');
-const baseUrlSel  = $('#baseUrl');
-const qrGrid      = $('#qrGrid');
-const btnPreview  = $('#btnPreview');
-const btnSave     = $('#btnSave');
-const btnQrPreview= $('#btnQrPreview');
-const btnQrDownloadAll = $('#btnQrDownloadAll');
+const eventDate = $('#eventDate'), eventName = $('#eventName'), eventCode = $('#eventCode');
+const statusEl = $('#status'), eventsTbody = $('#eventsTbody');
+const baseUrlSel = $('#baseUrl'), qrGrid = $('#qrGrid');
+const btnPreview = $('#btnPreview'), btnSave = $('#btnSave'), btnQrPreview = $('#btnQrPreview'), btnQrDownloadAll = $('#btnQrDownloadAll');
 
-/* ------------ Helpers ------------ */
-function setStatus(msg, kind=null){
-  statusEl.textContent = msg || '';
-  statusEl.className = 'muted ' + (kind==='ok' ? 'ok' : kind==='err' ? 'err' : '');
-}
-function slugify(str){
-  return (str || '')
-    .normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').replace(/_{2,}/g,'_');
-}
-function makeCode(){
-  const d = eventDate.value; // yyyy-mm-dd
-  const n = eventName.value;
-  if(!d && !n) return '';
-  let ymd = '';
-  if(d && /^\d{4}-\d{2}-\d{2}$/.test(d)){ ymd = d.replaceAll('-',''); }
-  const slug = slugify(n);
-  return [slug, ymd].filter(Boolean).join('_');
-}
+/* ------------ Utils ------------ */
+function setStatus(msg, kind=null){ statusEl.textContent = msg||''; statusEl.className = 'muted ' + (kind==='ok'?'ok':kind==='err'?'err':''); }
+function slugify(str){ return (str||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').replace(/_{2,}/g,'_'); }
+function makeCode(){ const d=eventDate.value; const n=eventName.value; if(!d&&!n) return ''; const ymd=(/^\d{4}-\d{2}-\d{2}$/.test(d)?d.replaceAll('-',''):''); const slug=slugify(n); return [slug, ymd].filter(Boolean).join('_'); }
 function jsonp(url, cbParam='callback'){
-  return new Promise((resolve, reject)=>{
+  return new Promise((resolve,reject)=>{
     const cb='cb_'+Math.random().toString(36).slice(2);
-    const sep = url.includes('?') ? '&' : '?';
-    const src=`${url}${sep}${cbParam}=${cb}`;
-    const s=document.createElement('script');
+    const s=document.createElement('script'); s.src = url + (url.includes('?')?'&':'?') + cbParam + '=' + cb;
     const kill=setTimeout(()=>{cleanup(); reject(new Error('timeout'));},9000);
-    function cleanup(){ clearTimeout(kill); try{delete window[cb];}catch{} s.parentNode&&s.parentNode.removeChild(s); }
+    function cleanup(){ clearTimeout(kill); try{delete window[cb];}catch{} s.remove(); }
     window[cb]=(data)=>{ cleanup(); resolve(data); };
     s.onerror=()=>{ cleanup(); reject(new Error('jsonp error')); };
-    s.src=src; document.body.appendChild(s);
+    document.body.appendChild(s);
   });
 }
 
-/* ------------ Events table (Active only) ------------ */
+/* ------------ Active events table ------------ */
 async function loadActiveEvents(){
   eventsTbody.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
   try{
-    const data = await jsonp(`${ENDPOINT_URL}?mode=events_list&active=1`, 'callback');
+    const data = await jsonp(`${ENDPOINT_URL}?mode=events_list&active=1`);
     const list = (data && data.ok && Array.isArray(data.events)) ? data.events : [];
     if(!list.length){ eventsTbody.innerHTML = '<tr><td colspan="5">No active events.</td></tr>'; return; }
     eventsTbody.innerHTML = '';
     list.forEach(ev=>{
+      const guestUrl = baseUrlSel.value.replace(/\/+$/,'') + '/?event=' + encodeURIComponent(ev.code);
+      const djUrl    = baseUrlSel.value.replace(/\/+$/,'') + '/dj.html?event=' + encodeURIComponent(ev.code);
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="mono">${ev.code}</td>
@@ -159,30 +130,36 @@ async function loadActiveEvents(){
         <td>${ev.date || ''}</td>
         <td><span class="tag">Active</span></td>
         <td>
-          <button class="btn secondary" data-act="inactive" data-code="${ev.code}">Set Inactive</button>
-          <button class="btn secondary" data-act="qr" data-code="${ev.code}">Preview QR</button>
+          <button class="btn secondary" data-act="copy"  data-url="${guestUrl}">Copy Link</button>
+          <a class="btn secondary" href="${ENDPOINT_URL}?mode=csv&event=${encodeURIComponent(ev.code)}" download="${ev.code}.csv">Download Song Requests (CSV)</a>
+          <button class="btn secondary" data-act="qr"    data-code="${ev.code}">Preview QR</button>
+          <button class="btn"           data-act="delete" data-code="${ev.code}">Delete Event</button>
         </td>
       `;
       eventsTbody.appendChild(tr);
     });
-    // Bind actions
-    eventsTbody.querySelectorAll('button[data-act="inactive"]').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        const code = btn.getAttribute('data-code');
-        try{
-          const qs = new URLSearchParams({ mode:'events_set_active', code, active:'0' });
-          const res = await jsonp(`${ENDPOINT_URL}?${qs.toString()}`, 'callback');
-          if(res && res.ok){ setStatus(`“${code}” set inactive.`, 'ok'); loadActiveEvents(); }
-          else{ setStatus('Server rejected the change. Re-deploy your script with ADMIN_KEY empty, or pass admin param.', 'err'); }
-        }catch{ setStatus('Failed to reach server.', 'err'); }
-      });
-    });
+
+    // actions
     eventsTbody.querySelectorAll('button[data-act="qr"]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
+        const code = btn.getAttribute('data-code'); eventCode.value = code; buildQrFor(code); setStatus(`QR preview for “${code}”.`, 'ok');
+      });
+    });
+    eventsTbody.querySelectorAll('button[data-act="delete"]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
         const code = btn.getAttribute('data-code');
-        eventCode.value = code;
-        buildQrFor(code);
-        setStatus(`QR preview for “${code}”.`, 'ok');
+        if(!confirm(`Delete event "${code}" and ALL its requests? This cannot be undone.`)) return;
+        try{
+          const res = await jsonp(`${ENDPOINT_URL}?mode=events_delete&code=${encodeURIComponent(code)}`);
+          if(res && res.ok){ setStatus(`Deleted “${code}” and its data.`, 'ok'); loadActiveEvents(); if(eventCode.value===code){ qrGrid.innerHTML=''; } }
+          else{ setStatus('Delete failed (server).', 'err'); }
+        }catch{ setStatus('Delete failed (network).', 'err'); }
+      });
+    });
+    eventsTbody.querySelectorAll('button[data-act="copy"]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const url = btn.getAttribute('data-url');
+        try{ await navigator.clipboard.writeText(url); setStatus('Copied event URL to clipboard.', 'ok'); }catch{ setStatus('Copy failed.', 'err'); }
       });
     });
   }catch{
@@ -190,7 +167,7 @@ async function loadActiveEvents(){
   }
 }
 
-/* ------------ Create (adds as Active=1) ------------ */
+/* ------------ Create ------------ */
 btnPreview.addEventListener('click', (e)=>{
   e.preventDefault();
   if(!eventCode.value) eventCode.value = makeCode();
@@ -198,39 +175,32 @@ btnPreview.addEventListener('click', (e)=>{
   buildQrFor(eventCode.value.trim());
   setStatus('Code generated & QR preview updated.', 'ok');
 });
-
 btnSave.addEventListener('click', async (e)=>{
   e.preventDefault();
   let code = (eventCode.value || makeCode() || '').trim();
   const name = (eventName.value || '').trim();
   const date = (eventDate.value || '').trim();
   if(!code){ setStatus('Provide date/name to generate a code, or type a code.', 'err'); return; }
-
   setStatus('Saving…');
   try{
-    const qs = new URLSearchParams({ mode:'events_add', code, name, date, active:'1' });
-    const res = await jsonp(`${ENDPOINT_URL}?${qs.toString()}`, 'callback');
+    const res = await jsonp(`${ENDPOINT_URL}?mode=events_add&code=${encodeURIComponent(code)}&name=${encodeURIComponent(name)}&date=${encodeURIComponent(date)}&active=1`);
     if(res && res.ok){
       setStatus('Added to Active events.', 'ok');
       buildQrFor(code);
+      // clear create form
+      eventDate.value=''; eventName.value=''; eventCode.value='';
       loadActiveEvents();
     }else{
-      setStatus('Server rejected the change. Re-deploy your script with ADMIN_KEY empty, or pass admin param.', 'err');
+      setStatus('Server rejected the change.', 'err');
     }
-  }catch{
-    setStatus('Failed to reach server.', 'err');
-  }
+  }catch{ setStatus('Failed to reach server.', 'err'); }
 });
 
-/* ------------ QR generation using QRServer PNG ------------ */
-function qrImgUrl(text, size){
-  return 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&data=' + encodeURIComponent(text);
-}
-function buildQrCards(code) {
+/* ------------ QR generation (qrserver.com) ------------ */
+function qrImgUrl(text, size){ return 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(text); }
+function buildQrCards(code){
   qrGrid.innerHTML = '';
-  if(!code){
-    const d=document.createElement('div'); d.className='muted'; d.textContent='Enter or select an event, then preview.'; qrGrid.appendChild(d); return;
-  }
+  if(!code){ const d=document.createElement('div'); d.className='muted'; d.textContent='Enter or select an event, then preview.'; qrGrid.appendChild(d); return; }
   const base = baseUrlSel.value.replace(/\/+$/,'') + '/';
   const items = [
     { title:'Guest (event param)', url: `${base}?event=${encodeURIComponent(code)}` },
@@ -249,18 +219,11 @@ function buildQrCards(code) {
   }
 }
 function buildQrFor(code){ buildQrCards(code); }
-
-/* ------------ Extra QR controls ------------ */
 btnQrPreview.addEventListener('click', (e)=>{ e.preventDefault(); const code=(eventCode.value||'').trim(); if(!code){ setStatus('Enter or select an event code first.', 'err'); return; } buildQrFor(code); setStatus('QR preview updated.', 'ok'); });
-btnQrDownloadAll.addEventListener('click', (e)=>{
-  e.preventDefault();
-  qrGrid.querySelectorAll('a.btn.secondary').forEach(a=>{ a.click(); });
-});
+btnQrDownloadAll.addEventListener('click', (e)=>{ e.preventDefault(); qrGrid.querySelectorAll('a.btn.secondary').forEach(a=>a.click()); });
 
 /* ------------ Init ------------ */
 window.addEventListener('load', ()=>{ loadActiveEvents(); });
 </script>
 </body>
 </html>
-
-
