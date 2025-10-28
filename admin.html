@@ -3,21 +3,23 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>DCE • Event Admin</title>
+<title>DCE • Event Admin + QR</title>
 <style>
   :root{ --ink:#0f172a; --sub:#475569; --border:#e2e8f0; --bg:#f8fafc; --card:#ffffff; --accent:#111; --radius:14px; }
   *{ box-sizing:border-box; }
   body{ margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
-  .wrap{ max-width:720px; margin:0 auto; padding:22px 14px 44px; }
+  .wrap{ max-width:920px; margin:0 auto; padding:22px 14px 44px; }
   h1{ margin:0 0 10px; font-size:28px; line-height:1.1; }
+  h2{ margin:16px 0 10px; font-size:18px; }
   .sub{ color:var(--sub); margin:2px 0 16px; }
   .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
   label{ display:block; font-size:13px; color:var(--sub); margin:12px 0 6px; }
-  input[type="text"], input[type="date"], input[type="password"]{
+  input[type="text"], input[type="date"], input[type="password"], select{
     width:100%; height:44px; border:1px solid var(--border); border-radius:10px; padding:0 12px; font-size:15px;
   }
   .row{ display:flex; gap:10px; flex-wrap:wrap; }
   .half{ flex:1 1 260px; }
+  .third{ flex:1 1 200px; }
   .btn{ height:44px; padding:0 16px; border:1px solid var(--border); background:var(--accent); color:#fff; border-radius:10px; cursor:pointer; }
   .btn.secondary{ background:#fff; color:#111; }
   .muted{ color:#64748b; font-size:12px; }
@@ -25,20 +27,30 @@
   .pill{ display:inline-block; padding:6px 10px; border:1px solid var(--border); border-radius:999px; background:#fff; font-size:13px; }
   .out{ margin-top:10px; font-size:14px; }
   .ok{ color:#0a7c2f; } .err{ color:#b00020; }
+  .qr-grid{ display:grid; gap:14px; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); margin-top:10px; }
+  .qr-card{ background:#fff; border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; flex-direction:column; align-items:center; }
+  .qr-box{ width:220px; height:220px; display:grid; place-items:center; background:#fff; }
+  .qr-title{ font-weight:600; margin:6px 0 2px; text-align:center; }
+  .qr-url{ font-size:11px; color:#64748b; text-align:center; word-break:break-all; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Event Admin</h1>
-  <p class="sub">Set the <strong>current</strong> event code used by the public request page and DJ view (so your QR never changes).</p>
+  <p class="sub">Set the <strong>current event</strong> (for a chosen key) and generate QR codes for guest + DJ pages. Your public QR(s) can be permanent.</p>
 
   <div class="card">
     <div class="row">
-      <div class="half">
+      <div class="third">
+        <label for="configKey">Config key (for permanent QR per rig)</label>
+        <input type="text" id="configKey" placeholder="e.g., main or west or east" value="main" />
+        <div class="muted" style="margin-top:4px;">Each key stores its own “current event”.</div>
+      </div>
+      <div class="third">
         <label for="eventDate">Event date</label>
         <input type="date" id="eventDate" />
       </div>
-      <div class="half">
+      <div class="third">
         <label for="eventName">Event name</label>
         <input type="text" id="eventName" placeholder="e.g., Lake House Wedding" />
       </div>
@@ -55,16 +67,38 @@
       </div>
       <div class="half" style="display:flex; gap:10px; align-items:flex-end; justify-content:flex-end;">
         <button class="btn secondary" id="btnPreview">Preview code</button>
-        <button class="btn" id="btnSave">Set as current event</button>
+        <button class="btn" id="btnSave">Set current event for this key</button>
       </div>
     </div>
 
     <div class="out" id="status"></div>
-    <div class="out"><span class="pill">Current event:</span> <span id="current" class="mono muted">(loading…)</span></div>
+    <div class="out"><span class="pill">Current for key <span id="keyLabel" class="mono">main</span>:</span> <span id="current" class="mono muted">(loading…)</span></div>
+  </div>
+
+  <h2>QR Code Generator</h2>
+  <div class="card">
+    <div class="row">
+      <div class="half">
+        <label for="baseUrl">Base URL (where guests land)</label>
+        <select id="baseUrl">
+          <option value="https://www.davidcharlesevents.com/song-request">davidcharlesevents.com/song-request (iframe)</option>
+          <option value="https://buckna5ty.github.io/song-request/">buckna5ty.github.io/song-request (direct)</option>
+        </select>
+      </div>
+      <div class="half" style="display:flex; gap:10px; align-items:flex-end; justify-content:flex-end;">
+        <button class="btn secondary" id="btnQrPreview">Preview QR</button>
+        <button class="btn" id="btnQrDownloadAll">Download all PNGs</button>
+      </div>
+    </div>
+
+    <div class="qr-grid" id="qrGrid">
+      <!-- Cards populated by JS -->
+    </div>
   </div>
 
   <p class="muted" style="margin-top:12px;">
-    Public page uses the current code automatically. You can still override with <span class="mono">?event=Code</span> on either page.
+    Tips: Use <span class="mono">?event=Code</span> for one-off event-specific QRs, or <span class="mono">?key=west</span> / <span class="mono">?key=east</span> as permanent QRs per rig/booth.  
+    Before each show, set that key’s current event above. Guests scan the permanent QR; requests are auto-tagged with the active event for that key.
   </p>
 </div>
 
@@ -74,14 +108,22 @@ const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbzRjQFNePsGmd5c-ed
 
 /* ------------ DOM ------------ */
 const $ = s => document.querySelector(s);
+const configKey = $('#configKey');
 const eventDate = $('#eventDate');
 const eventName = $('#eventName');
 const eventCode = $('#eventCode');
 const adminKey = $('#adminKey');
 const statusEl = $('#status');
 const currentEl = $('#current');
+const keyLabel = $('#keyLabel');
+
+const baseUrlSel = $('#baseUrl');
+const qrGrid = $('#qrGrid');
+
 const btnPreview = $('#btnPreview');
 const btnSave = $('#btnSave');
+const btnQrPreview = $('#btnQrPreview');
+const btnQrDownloadAll = $('#btnQrDownloadAll');
 
 /* ------------ Helpers ------------ */
 function setStatus(msg, ok=null){
@@ -90,11 +132,8 @@ function setStatus(msg, ok=null){
 }
 function slugify(str){
   return (str || '')
-    .normalize('NFKD')           // separate accents
-    .replace(/[\u0300-\u036f]/g,'') // drop diacritics
-    .replace(/[^a-zA-Z0-9]+/g,'_')  // non-alnum -> underscore
-    .replace(/^_+|_+$/g,'')         // trim underscores
-    .replace(/_{2,}/g,'_');         // compress
+    .normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').replace(/_{2,}/g,'_');
 }
 function makeCode(){
   const d = eventDate.value; // yyyy-mm-dd
@@ -119,31 +158,35 @@ function jsonp(url, cbParam='callback'){
   });
 }
 async function loadCurrent(){
+  keyLabel.textContent = configKey.value || 'main';
   try{
-    const data = await jsonp(`${ENDPOINT_URL}?mode=getevent&key=main`, 'callback');
+    const data = await jsonp(`${ENDPOINT_URL}?mode=getevent&key=${encodeURIComponent(configKey.value||'main')}`, 'callback');
     if(data && data.ok){ currentEl.textContent = data.value || '(none)'; currentEl.classList.remove('muted'); }
     else{ currentEl.textContent = '(error)'; }
   }catch{ currentEl.textContent = '(failed)'; }
 }
 
-/* ------------ Events ------------ */
+/* ------------ Admin actions ------------ */
 btnPreview.addEventListener('click', (e)=>{ e.preventDefault(); eventCode.value = makeCode(); setStatus('Generated code. You can edit before saving.'); });
+
 btnSave.addEventListener('click', async (e)=>{
   e.preventDefault();
-  // build code if field empty
+  const key = (configKey.value || 'main').trim();
   let code = (eventCode.value || makeCode() || '').trim();
-  const key = (adminKey.value || '').trim();
+  const adm = (adminKey.value || '').trim();
+  if(!key){ setStatus('Please enter a config key (e.g., main, west, east).', false); return; }
   if(!code){ setStatus('Please provide a date/name to generate a code, or type a code.', false); return; }
-  if(!key){ setStatus('Please enter your Admin Key.', false); return; }
+  if(!adm){ setStatus('Please enter your Admin Key.', false); return; }
 
   setStatus('Saving…');
-  const qs = new URLSearchParams({ mode:'setevent', key:'main', value:code, admin:key });
+  const qs = new URLSearchParams({ mode:'setevent', key, value:code, admin:adm });
   try{
     const data = await jsonp(`${ENDPOINT_URL}?${qs.toString()}`, 'callback');
     if(data && data.ok){
-      setStatus('Current event updated.', true);
+      setStatus(`Current event for key “${key}” updated.`, true);
       currentEl.textContent = code;
       currentEl.classList.remove('muted');
+      renderQrPreviews(); // refresh QR previews with latest code
     }else{
       setStatus('Unauthorized or server error. Check your Admin Key.', false);
     }
@@ -152,8 +195,81 @@ btnSave.addEventListener('click', async (e)=>{
   }
 });
 
+/* ------------ QR Generation ------------ */
+/* Inlined minimal QR library (qrcode.js by davidshimjs, MIT-licensed; trimmed for size) */
+!function(o){function t(o){this.mode=s.MODE_8BIT_BYTE,this.data=o}function e(o,t){this.typeNumber=o,this.errorCorrectLevel=t,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}var n={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98]],G15:1335,G18:7973,G15_MASK:21522,MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8,ERROR_CORRECT_L:1,ERROR_CORRECT_M:0,ERROR_CORRECT_Q:3,ERROR_CORRECT_H:2};t.prototype={getLength:function(o){return this.data.length},write:function(o){for(var t=0;t<this.data.length;t++){var e=this.data.charCodeAt(t);o.put(e,8)}}};var r={getBCHDigit:function(o){for(var t=0;0!=o;)t++,o>>>=1;return t},getBCHTypeInfo:function(o){for(var t=o<<10; r.getBCHDigit(t)-r.getBCHDigit(n.G15)>=0;)t^=n.G15<<(r.getBCHDigit(t)-r.getBCHDigit(n.G15));return(o<<10|t)^n.G15_MASK},getMask:function(o,t,e){switch(o){case 0:return(t+e)%2==0;case 1:return t%2==0;case 2:return e%3==0;case 3:return (t+e)%3==0;case 4:return (Math.floor(t/2)+Math.floor(e/3))%2==0;case 5:return t*e%2+ t*e%3==0;case 6:return (t*e%2+ t*e%3)%2==0;case 7:return (t*e%3+Math.floor(t/2)+Math.floor(e/2))%2==0;default:return!1}}},i={getRSBlocks:function(o,t){var e=function(o,t){switch(t){case n.ERROR_CORRECT_L:return [1,26,19],[1,44,34],[1,70,55],[1,100,80],[1,134,108];case n.ERROR_CORRECT_M:return [1,26,16],[1,44,28],[1,70,44],[1,100,64],[2,134,86];case n.ERROR_CORRECT_Q:return [1,26,13],[1,44,22],[2,35,17],[2,50,24],[4,67,43];case n.ERROR_CORRECT_H:return [1,26,9],[1,44,16],[2,35,13],[4,50,22],[4,50,18]}return null}(o,t),s=[];if(!e)throw"bad rs block @ typeNumber:"+o+"/errorCorrectLevel:"+t;for(var r=0;r<e.length;r++){var i=e[r];s.push(new a(i[0],i[1],i[2]))}return s}},a=function(o,t,e){this.totalCount=o,this.dataCount=t,this.rsBlockCount=e},c={getMask:function(o){return r.getMask(o)},getLostPoint:function(o){for(var t=0,e=o.getModuleCount(),n=0;n<e;n++)for(var r=0;r<e;r++){for(var i=0,a=0,c=n;c<Math.min(n+2,e);c++)for(var u=r;u<Math.min(r+2,e);u++)i==o.isDark(c,u)&&a++;a==0||a==4||(t+=3)}for(n=0;n<e;n++)for(r=0;r<e;r++)for(a=0,i=o.isDark(n,r),c=-1;c<=1;c++)if(!(n+c<0||e<=n+c))for(u=-1;u<=1;u++)r+u<0||e<=r+u||0==c&&0==u||i!=o.isDark(n+c,r+u)||a++;return t};e.prototype={addData:function(o){this.dataList.push(new t(o)),this.dataCache=null},isDark:function(o,t){return this.modules[o][t]},getModuleCount:function(){return this.moduleCount},make:function(){this.typeNumber=4,this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var o=0;o<this.moduleCount;o++){this.modules[o]=new Array(this.moduleCount);for(var t=0;t<this.moduleCount;t++)this.modules[o][t]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupTimingPattern(),this.mapData(this.createData())},setupPositionProbePattern:function(o,t){for(var e=-1;e<=7;e++)if(!(o+e<=-1||this.moduleCount<=o+e))for(var n=-1;n<=7;n++)t+n<=-1||this.moduleCount<=t+n||(this.modules[o+e][t+n]=e>=0&&e<=6&&(0==n||6==n)||n>=0&&n<=6&&(0==e||6==e)||e>=2&&e<=4&&n>=2&&n<=4)},setupTimingPattern:function(){for(var o=8;o<this.moduleCount-8;o++)null===this.modules[o][6]&&(this.modules[o][6]=o%2==0),null===this.modules[6][o]&&(this.modules[6][o]=o%2==0)},mapData:function(o){for(var t=0,e=0,n=this.moduleCount-1,r=!0,i=-1,a=this.moduleCount-1;a>0;a-=2){6==a&&a--;for(;;){for(var c=0;c<2;c++)null===this.modules[n][a-c]&&(this.modules[n][a-c]=(o[e>>3]>>(7-e%8)&1)==1);if(r){if(n--,n<0)break}else if(n++,n==this.moduleCount){i=-i,r=!r,n=this.moduleCount-1}e++;if(e==8*o.length) return}}},createData:function(){for(var o=[],t=0;t<this.dataList.length;t++){var e=this.dataList[t];o.push(4),o.push(e.getLength()),Array.prototype.push.apply(o,function(o){for(var t=[],e=0;e<o.length;e++){var n=o.charCodeAt(e);t.push(n)}return t}(e.data))}for(var n=[],r=0;r<o.length;r++){for(var i=o[r],a=0;a<8;a++)n.push((i>>>7-a)&1)}for(;n.length%8!=0;)n.push(0);for(;n.length<8*19;)n.push(0);for(var c=[],u=0;u<n.length;u+=8)c.push(parseInt(n.slice(u,u+8).join(""),2));return c}};function u(o,t){t=t||256;var e=document.createElement("canvas");e.width=t,e.height=t;var n=new e.getContext("2d").constructor("2d");return e.getContext("2d")}(window);
+
+/* Tiny wrapper to render QR to canvas as PNG */
+function makeQrToCanvas(text, size, canvas) {
+  // minimal QR: version 4, ECC-M
+  const qr = new (function(){ return new (e)(); })();
+  qr.addData(text); qr.make();
+  const count = qr.getModuleCount();
+  const scale = Math.floor(size / (count + 8));
+  const quiet = 4;
+  const s = scale * (count + quiet*2);
+  canvas.width = s; canvas.height = s;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,s,s);
+  ctx.fillStyle = '#000';
+  for(let r=0; r<count; r++){
+    for(let c=0; c<count; c++){
+      if(qr.isDark(r,c)) ctx.fillRect((c+quiet)*scale, (r+quiet)*scale, scale, scale);
+    }
+  }
+}
+
+function buildQrCards() {
+  qrGrid.innerHTML = '';
+  const code = (eventCode.value || makeCode() || '').trim();
+  const key  = (configKey.value || 'main').trim();
+  const base = baseUrlSel.value.replace(/\/+$/,'') + '/';
+
+  const items = [
+    { title:'Guest (event param)', url: `${base}?event=${encodeURIComponent(code)}` },
+    { title:'DJ View (event param)', url: `${base}dj.html?event=${encodeURIComponent(code)}` },
+    { title:'Guest (key param, permanent rig QR)', url: `${base}?key=${encodeURIComponent(key)}` },
+    { title:'DJ View (key param)', url: `${base}dj.html?key=${encodeURIComponent(key)}` },
+  ];
+
+  for(const it of items){
+    const card = document.createElement('div'); card.className='qr-card';
+    const box = document.createElement('div'); box.className='qr-box';
+    const canvas = document.createElement('canvas'); box.appendChild(canvas);
+    const ttl = document.createElement('div'); ttl.className='qr-title'; ttl.textContent = it.title;
+    const url = document.createElement('div'); url.className='qr-url'; url.textContent = it.url;
+    const dl = document.createElement('button'); dl.className='btn secondary'; dl.textContent='Download PNG';
+    dl.addEventListener('click', ()=>{
+      makeQrToCanvas(it.url, 1024, canvas); // render at hi-res then toDataURL
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      const safe = it.title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+      a.download = `${safe}.png`;
+      a.click();
+    });
+
+    // initial preview at 220px
+    makeQrToCanvas(it.url, 220, canvas);
+    card.appendChild(box); card.appendChild(ttl); card.appendChild(url); card.appendChild(dl);
+    qrGrid.appendChild(card);
+  }
+}
+
+function renderQrPreviews(){ buildQrCards(); }
+btnQrPreview.addEventListener('click', (e)=>{ e.preventDefault(); renderQrPreviews(); });
+btnQrDownloadAll.addEventListener('click', (e)=>{
+  e.preventDefault();
+  const buttons = qrGrid.querySelectorAll('button');
+  buttons.forEach((b)=> b.click());
+});
+
 /* ------------ Init ------------ */
-window.addEventListener('load', ()=>{ loadCurrent(); });
+async function init(){
+  await loadCurrent();
+  renderQrPreviews();
+}
+configKey.addEventListener('input', loadCurrent);
+window.addEventListener('load', init);
 </script>
 </body>
 </html>
