@@ -15,9 +15,6 @@
   .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; }
   .row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
   .pill{ border:1px solid var(--border); border-radius:999px; padding:6px 10px; background:#fff; font-size:13px; }
-  input[type="text"]{ height:40px; border:1px solid var(--border); border-radius:10px; padding:0 12px; min-width:220px; }
-  button{ height:40px; padding:0 14px; border:1px solid var(--border); background:#111; color:#fff; border-radius:10px; cursor:pointer; }
-  button.secondary{ background:#fff; color:#111; }
   table{ width:100%; border-collapse:separate; border-spacing:0 8px; }
   th{ text-align:left; font-size:12px; color:var(--sub); font-weight:600; }
   td{ background:#fff; border:1px solid var(--border); padding:10px 12px; }
@@ -27,15 +24,17 @@
   .mono{ font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; color:#334155; }
   .muted{ color:#64748b; font-size:12px; }
   .feed{ max-height:62vh; overflow:auto; padding-right:4px; }
+  button{ height:40px; padding:0 14px; border:1px solid var(--border); background:#111; color:#fff; border-radius:10px; cursor:pointer; }
+  button.secondary{ background:#fff; color:#111; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>DJ View</h1>
-  <p class="sub">Live requests pulled from the sheet. De-duped per person per song. Filter by event with <span class="mono">?event=CODE</span>.</p>
+  <p class="sub">Live requests (de-duped per person+song). Use <span class="mono">?event=CODE</span> or it will load the current event from config.</p>
 
   <div class="row">
-    <span class="muted">Endpoint is preconfigured in code. You can override with <span class="mono">?ep=URL</span>.</span>
+    <span class="muted">Endpoint is preconfigured. Override with <span class="mono">?ep=URL</span> if needed.</span>
     <button id="refresh">Refresh</button>
     <button id="auto" class="secondary">Auto: Off</button>
   </div>
@@ -61,10 +60,10 @@
 /* ------------ Config ------------ */
 const DEFAULT_ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbzRjQFNePsGmd5c-edTvgrzfLrtn21b1ZZBZKcKQ0OeIEwo1jeIpRCMAjxP6zHtJ1u9rg/exec';
 
-/* ------------ URL params ------------ */
+/* ------------ URL params / Event ------------ */
 const urlp = new URLSearchParams(location.search);
 const ENDPOINT_URL = urlp.get('ep') || DEFAULT_ENDPOINT_URL;
-const EVENT_CODE = (urlp.get('event') || '').trim();
+let EVENT_CODE = (urlp.get('event') || '').trim();
 
 /* ------------ DOM & helpers ------------ */
 const $ = s=>document.querySelector(s);
@@ -138,7 +137,17 @@ function renderTopArtists(rows){
   });
 }
 
+async function ensureEventCode(){
+  if (EVENT_CODE) return EVENT_CODE;
+  try{
+    const data = await jsonp(`${ENDPOINT_URL}?mode=getevent&key=main`, 'callback');
+    if(data && data.ok){ EVENT_CODE = (data.value || '').trim(); }
+  }catch{}
+  return EVENT_CODE;
+}
+
 async function refresh(){
+  await ensureEventCode();
   const qs = new URLSearchParams({ mode:'read', limit:'500' });
   if(EVENT_CODE) qs.set('event', EVENT_CODE);
   setStatus('Loading…');
@@ -148,27 +157,17 @@ async function refresh(){
     const rows = Array.isArray(data.rows) ? data.rows : [];
     const uniq = dedupeByPersonSong(rows);
     countPill.textContent = `${uniq.length} unique requests`;
-    renderFeed(uniq);
-    renderTopSongs(uniq);
-    renderTopArtists(uniq);
+    renderFeed(uniq); renderTopSongs(uniq); renderTopArtists(uniq);
     setStatus(`Updated ${new Date().toLocaleTimeString()}`);
-  }catch(e){
-    setStatus('Fetch failed.');
-  }
+  }catch(e){ setStatus('Fetch failed.'); }
 }
 btnRefresh.addEventListener('click', refresh);
 
 let auto=false, timer=null;
 btnAuto.addEventListener('click', ()=>{
   auto=!auto;
-  if(auto){
-    btnAuto.textContent='Auto: On';
-    refresh();
-    timer=setInterval(refresh, 10000); // 10s
-  }else{
-    btnAuto.textContent='Auto: Off';
-    clearInterval(timer); timer=null;
-  }
+  if(auto){ btnAuto.textContent='Auto: On'; refresh(); timer=setInterval(refresh, 10000); }
+  else{ btnAuto.textContent='Auto: Off'; clearInterval(timer); timer=null; }
 });
 
 window.addEventListener('load', refresh);
