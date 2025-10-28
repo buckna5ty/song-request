@@ -21,24 +21,26 @@
   td:first-child{ border-radius:10px 0 0 10px; }
   td:last-child{ border-radius:0 10px 10px 0; }
   .badge{ display:inline-block; min-width:26px; text-align:center; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background:#fff; font-size:12px; }
-  .mono{ font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; color:#334155; }
+  .mono{ font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace; color:#334155; }
   .muted{ color:#64748b; font-size:12px; }
   .feed{ max-height:62vh; overflow:auto; padding-right:4px; }
   button{ height:40px; padding:0 14px; border:1px solid var(--border); background:#111; color:#fff; border-radius:10px; cursor:pointer; }
   button.secondary{ background:#fff; color:#111; }
+  select{ height:40px; border:1px solid var(--border); border-radius:10px; padding:0 10px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>DJ View</h1>
-  <p class="sub">Live requests (de-duped per person+song). Use <span class="mono">?event=CODE</span> or it will load the current event from config.</p>
+  <p class="sub">Pick an active event and I’ll show requests (de-duped per person+song). Use <span class="mono">?event=CODE</span> to preselect on load.</p>
 
   <div class="row">
-    <span class="muted">Endpoint is preconfigured. Override with <span class="mono">?ep=URL</span> if needed.</span>
+    <label for="eventSelect" class="muted">Active Event</label>
+    <select id="eventSelect"><option value="">(loading active events…)</option></select>
     <button id="refresh">Refresh</button>
     <button id="auto" class="secondary">Auto: Off</button>
+    <span id="status" class="muted" style="margin-left:auto;"></span>
   </div>
-  <div class="row"><span id="status" class="muted"></span></div>
 
   <div class="grid">
     <div class="card">
@@ -58,16 +60,16 @@
 
 <script>
 /* ------------ Config ------------ */
-const DEFAULT_ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbzRjQFNePsGmd5c-edTvgrzfLrtn21b1ZZBZKcKQ0OeIEwo1jeIpRCMAjxP6zHtJ1u9rg/exec';
+const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbzRjQFNePsGmd5c-edTvgrzfLrtn21b1ZZBZKcKQ0OeIEwo1jeIpRCMAjxP6zHtJ1u9rg/exec';
 
-/* ------------ URL params / Event ------------ */
+/* ------------ URL / Preselect ------------ */
 const urlp = new URLSearchParams(location.search);
-const ENDPOINT_URL = urlp.get('ep') || DEFAULT_ENDPOINT_URL;
-let EVENT_CODE = (urlp.get('event') || '').trim();
+const PRESELECT_EVENT = (urlp.get('event') || '').trim();
 
 /* ------------ DOM & helpers ------------ */
 const $ = s=>document.querySelector(s);
-const feedEl = $('#feed'), topSongsEl = $('#topSongs tbody'), topArtistsEl = $('#topArtists tbody'),
+const eventSelect = $('#eventSelect'), feedEl = $('#feed'),
+      topSongsEl = $('#topSongs tbody'), topArtistsEl = $('#topArtists tbody'),
       statusEl=$('#status'), countPill=$('#countPill');
 const btnRefresh = $('#refresh'), btnAuto=$('#auto');
 
@@ -85,24 +87,18 @@ function jsonp(url, cbParam='callback'){
     s.src=src; document.body.appendChild(s);
   });
 }
-
 function dedupeByPersonSong(rows){
-  const seen = new Set();
-  const out = [];
+  const seen = new Set(), out=[];
   for(const r of rows){
     const key = (r.name||'').trim().toLowerCase() + '||' + (r.song_title||'').trim().toLowerCase();
     if(seen.has(key)) continue;
-    seen.add(key);
-    out.push(r);
+    seen.add(key); out.push(r);
   }
   return out;
 }
 function groupCounts(items, keyFn){
   const map = new Map();
-  for(const it of items){
-    const k = keyFn(it);
-    map.set(k, (map.get(k)||0)+1);
-  }
+  for(const it of items){ const k=keyFn(it); map.set(k,(map.get(k)||0)+1); }
   return Array.from(map.entries()).sort((a,b)=>b[1]-a[1]);
 }
 function renderFeed(rows){
@@ -137,19 +133,38 @@ function renderTopArtists(rows){
   });
 }
 
-async function ensureEventCode(){
-  if (EVENT_CODE) return EVENT_CODE;
+/* ------------ Active events dropdown ------------ */
+async function loadActiveEvents(){
+  eventSelect.innerHTML = `<option value="">(loading…)</option>`;
   try{
-    const data = await jsonp(`${ENDPOINT_URL}?mode=getevent&key=main`, 'callback');
-    if(data && data.ok){ EVENT_CODE = (data.value || '').trim(); }
-  }catch{}
-  return EVENT_CODE;
+    const data = await jsonp(`${ENDPOINT_URL}?mode=events_list&active=1`, 'callback');
+    const list = (data && data.ok && Array.isArray(data.events)) ? data.events : [];
+    if(!list.length){ eventSelect.innerHTML = `<option value="">(no active events)</option>`; return; }
+    eventSelect.innerHTML = '';
+    list.forEach(ev=>{
+      const opt = document.createElement('option');
+      opt.value = ev.code; opt.textContent = ev.name ? `${ev.name} (${ev.code})` : ev.code;
+      eventSelect.appendChild(opt);
+    });
+    // Preselect if requested
+    if(PRESELECT_EVENT){
+      const found = Array.from(eventSelect.options).some(o=>o.value===PRESELECT_EVENT);
+      if(found) eventSelect.value = PRESELECT_EVENT;
+    }
+    // If nothing selected and only one event, auto-select it
+    if(!eventSelect.value && eventSelect.options.length === 1){
+      eventSelect.selectedIndex = 0;
+    }
+  }catch{
+    eventSelect.innerHTML = `<option value="">(failed to load)</option>`;
+  }
 }
 
+/* ------------ Refresh data ------------ */
 async function refresh(){
-  await ensureEventCode();
-  const qs = new URLSearchParams({ mode:'read', limit:'500' });
-  if(EVENT_CODE) qs.set('event', EVENT_CODE);
+  const code = eventSelect.value.trim();
+  if(!code){ setStatus('Select an active event.'); return; }
+  const qs = new URLSearchParams({ mode:'read', limit:'500', event:code });
   setStatus('Loading…');
   try{
     const data = await jsonp(`${ENDPOINT_URL}?${qs.toString()}`, 'callback');
@@ -162,6 +177,7 @@ async function refresh(){
   }catch(e){ setStatus('Fetch failed.'); }
 }
 btnRefresh.addEventListener('click', refresh);
+eventSelect.addEventListener('change', refresh);
 
 let auto=false, timer=null;
 btnAuto.addEventListener('click', ()=>{
@@ -170,7 +186,11 @@ btnAuto.addEventListener('click', ()=>{
   else{ btnAuto.textContent='Auto: Off'; clearInterval(timer); timer=null; }
 });
 
-window.addEventListener('load', refresh);
+/* ------------ Init ------------ */
+window.addEventListener('load', async ()=>{
+  await loadActiveEvents();
+  if(eventSelect.value){ refresh(); }
+});
 </script>
 </body>
 </html>
