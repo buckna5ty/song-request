@@ -94,7 +94,7 @@
 
 <script>
 /* ------------ Config ------------ */
-const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbzRjQFNePsGmd5c-edTvgrzfLrtn21b1ZZBZKcKQ0OeIEwo1jeIpRCMAjxP6zHtJ1u9rg/exec';
+const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycby6x3cEz0mzqshJILwbQgujIONB5E9DzX_kRK94ghk6jiofQqUi_Zl8fynhdV0vmpe-/exec';
 
 /* ------------ DOM ------------ */
 const $ = s => document.querySelector(s);
@@ -127,7 +127,7 @@ function makeCode(){
   let ymd = '';
   if(d && /^\d{4}-\d{2}-\d{2}$/.test(d)){ ymd = d.replaceAll('-',''); }
   const slug = slugify(n);
-  return [slug, ymd].filter(Boolean).join('_'); // e.g., Lake_House_Wedding_20251027
+  return [slug, ymd].filter(Boolean).join('_');
 }
 function jsonp(url, cbParam='callback'){
   return new Promise((resolve, reject)=>{
@@ -147,7 +147,7 @@ function jsonp(url, cbParam='callback'){
 async function loadActiveEvents(){
   eventsTbody.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
   try{
-    const data = await jsonp(`${ENDPOINT_URL}?mode=events_list&active=1`, 'callback'); // ACTIVE ONLY
+    const data = await jsonp(`${ENDPOINT_URL}?mode=events_list&active=1`, 'callback');
     const list = (data && data.ok && Array.isArray(data.events)) ? data.events : [];
     if(!list.length){ eventsTbody.innerHTML = '<tr><td colspan="5">No active events.</td></tr>'; return; }
     eventsTbody.innerHTML = '';
@@ -173,7 +173,7 @@ async function loadActiveEvents(){
           const qs = new URLSearchParams({ mode:'events_set_active', code, active:'0' });
           const res = await jsonp(`${ENDPOINT_URL}?${qs.toString()}`, 'callback');
           if(res && res.ok){ setStatus(`“${code}” set inactive.`, 'ok'); loadActiveEvents(); }
-          else{ setStatus('Server rejected the change. If you still have ADMIN_KEY set in Code.gs, clear it or pass the key.', 'err'); }
+          else{ setStatus('Server rejected the change. Re-deploy your script with ADMIN_KEY empty, or pass admin param.', 'err'); }
         }catch{ setStatus('Failed to reach server.', 'err'); }
       });
     });
@@ -215,16 +215,16 @@ btnSave.addEventListener('click', async (e)=>{
       buildQrFor(code);
       loadActiveEvents();
     }else{
-      setStatus('Server rejected the change. If you still have ADMIN_KEY set in Code.gs, clear it or pass the key.', 'err');
+      setStatus('Server rejected the change. Re-deploy your script with ADMIN_KEY empty, or pass admin param.', 'err');
     }
   }catch{
     setStatus('Failed to reach server.', 'err');
   }
 });
 
-/* ------------ QR generation using Google Chart PNG ------------ */
+/* ------------ QR generation using QRServer PNG ------------ */
 function qrImgUrl(text, size){
-  return 'https://chart.googleapis.com/chart?cht=qr&chs=' + size + 'x' + size + '&chl=' + encodeURIComponent(text);
+  return 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&data=' + encodeURIComponent(text);
 }
 function buildQrCards(code) {
   qrGrid.innerHTML = '';
