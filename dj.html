@@ -107,32 +107,22 @@ function elItem(r, controls=true){
   const div=document.createElement('div'); div.className='item';
   div.innerHTML=`<div class="title">${r.song_title||'Unknown'} — ${r.artist||''}</div>
                  <div class="muted" style="margin-left:auto;">${r.name||'anon'}</div>`;
-  if(controls){
-    const btn=document.createElement('button'); btn.className='btn secondary'; btn.textContent='Mark as played';
-    btn.addEventListener('click', ()=> setPlayed(r.id, 1));
-    div.appendChild(btn);
-  }else{
-    const btn=document.createElement('button'); btn.className='btn secondary'; btn.textContent='Mark as unplayed';
-    btn.addEventListener('click', ()=> setPlayed(r.id, 0));
-    div.appendChild(btn);
-  }
+  const btn=document.createElement('button'); btn.className='btn secondary';
+  btn.textContent = controls ? 'Mark as played' : 'Mark as unplayed';
+  btn.addEventListener('click', ()=> setPlayed(r.id, controls ? 1 : 0));
+  div.appendChild(btn);
   return div;
 }
 function renderLists(all){
-  // split played vs not
   const notPlayed = all.filter(r=>!r.played);
   const played    = all.filter(r=> r.played);
-
   const {uniq, spam} = dedupe(notPlayed);
 
-  // main feed
   feedEl.innerHTML=''; uniq.forEach(r=> feedEl.appendChild(elItem(r, true)));
   countPill.textContent = `${uniq.length} unique requests`;
 
-  // played list
   playedList.innerHTML=''; played.forEach(r=> playedList.appendChild(elItem(r, false)));
 
-  // spam list
   spamList.innerHTML=''; spam.forEach(r=>{
     const d=document.createElement('div'); d.className='item';
     d.innerHTML = `<div class="title">${r.song_title||'Unknown'} — ${r.artist||''}</div>
@@ -140,7 +130,6 @@ function renderLists(all){
     spamList.appendChild(d);
   });
 
-  // top sections from unique only
   topSongsEl.innerHTML=''; topArtistsEl.innerHTML='';
   groupCounts(uniq, r=>(r.song_title||'').trim().toLowerCase()+' | '+(r.artist||'').trim().toLowerCase())
     .slice(0,10).forEach(([k,c],i)=>{ const [song,artist]=k.split(' | '); const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${song}</td><td>${artist}</td><td><span class="badge">${c}</span></td>`; topSongsEl.appendChild(tr); });
@@ -149,22 +138,30 @@ function renderLists(all){
 }
 
 async function loadActiveEvents(){
-  eventSelect.innerHTML = `<option value="">(loading…)</option>`;
+  const prev = eventSelect.value;
   try{
     const data = await jsonp(`${ENDPOINT_URL}?mode=events_list&active=1`);
     const list = (data && data.ok && Array.isArray(data.events)) ? data.events : [];
-    if(!list.length){ eventSelect.innerHTML = `<option value="">(no active events)</option>`; return; }
     eventSelect.innerHTML = '';
+    if(!list.length){ eventSelect.innerHTML = `<option value="">(no active events)</option>`; return; }
     list.forEach(ev=>{ const o=document.createElement('option'); o.value=ev.code; o.textContent=ev.name?`${ev.name} (${ev.code})`:ev.code; eventSelect.appendChild(o); });
-    if(PRESELECT_EVENT && Array.from(eventSelect.options).some(o=>o.value===PRESELECT_EVENT)) eventSelect.value = PRESELECT_EVENT;
-    if(!eventSelect.value && eventSelect.options.length===1) eventSelect.selectedIndex=0;
-  }catch{ eventSelect.innerHTML=`<option value="">(failed to load)</option>`; }
+
+    // prefer URL param, else keep previous selection if still present, else first item
+    if (PRESELECT_EVENT && Array.from(eventSelect.options).some(o=>o.value===PRESELECT_EVENT)) {
+      eventSelect.value = PRESELECT_EVENT;
+    } else if (prev && Array.from(eventSelect.options).some(o=>o.value===prev)) {
+      eventSelect.value = prev;
+    } else if (!eventSelect.value) {
+      eventSelect.selectedIndex = 0;
+    }
+  }catch{
+    if (!eventSelect.options.length) eventSelect.innerHTML=`<option value="">(failed to load)</option>`;
+  }
 }
 
 async function refresh(){
   const code = (eventSelect.value||'').trim();
   if(!code){ setStatus('Select an active event.'); return; }
-  setStatus('Loading…');
   try{
     const data = await jsonp(`${ENDPOINT_URL}?mode=read&limit=1000&event=${encodeURIComponent(code)}`);
     if(!data || !data.ok){ setStatus('Server error.'); return; }
@@ -182,17 +179,22 @@ async function setPlayed(id, played){
   }catch{ setStatus('Network error while updating played.'); }
 }
 
-// Always auto-pull every 10s
-let timer=null;
-function startAuto(){ if(timer) clearInterval(timer); timer=setInterval(refresh, 10000); }
+// Timers: requests every 10s; active events every 30s (to catch newly-added events)
+let reqTimer=null, evTimer=null;
+function startTimers(){
+  if (reqTimer) clearInterval(reqTimer);
+  if (evTimer)  clearInterval(evTimer);
+  reqTimer = setInterval(refresh, 10000);
+  evTimer  = setInterval(async ()=>{ await loadActiveEvents(); }, 30000);
+}
 
 btnRefresh.addEventListener('click', refresh);
 eventSelect.addEventListener('change', ()=>{ refresh(); });
 
 window.addEventListener('load', async ()=>{
   await loadActiveEvents();
-  if(eventSelect.value) refresh();
-  startAuto();
+  if(eventSelect.value) await refresh();
+  startTimers();
 });
 </script>
 </body>
