@@ -19,7 +19,11 @@
   }
   input[type="text"]:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
   .row{ max-width:var(--field-w); margin:0 auto; }
-  #searchWidget{ width:100%; border:0; height:70px; display:block; transition:height .2s ease; }
+  #searchWidget{
+    width:100%; border:0; display:block; transition:height .2s ease;
+    height:360px;        /* visible immediately */
+    min-height:320px;    /* never too short */
+  }
   .btn{ height:46px; padding:0 20px; border:1px solid #111; background:#111; color:#fff; border-radius:10px; cursor:pointer; font-weight:700; letter-spacing:.03em; }
   .btn:hover{ filter:brightness(.95); }
   .ty-overlay{ position:fixed; inset:0; background:#fff; display:none; align-items:center; justify-content:center; z-index:9999; }
@@ -41,7 +45,7 @@
 
   <div class="row" style="margin-top:8px;">
     <label for="searchWidget">Search Song, Artist or Lyrics</label>
-    <iframe id="searchWidget" src="widget.html?v=7" title="Song Search"></iframe>
+    <iframe id="searchWidget" src="widget.html?v=8" title="Song Search" allow="clipboard-write *"></iframe>
   </div>
 
   <!-- Hidden fields that the widget fills via postMessage -->
@@ -64,25 +68,13 @@
 </div>
 
 <script>
-/* ---------------- Config ---------------- */
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxZ9ylpDohWZnp1Krsn9THEPEciFv68uBB5unr0a41qNTesaOBkCWsQOeiucY4asIYH5A/exec';
-
-/* ---------------- Event code capture ----------------
-   We prefer ?event= from our own URL. If missing (e.g., page is embedded at
-   https://www.davidcharlesevents.com/song-request?event=CODE and THEY iframe us
-   without forwarding the query), we fall back to parsing document.referrer. */
 const urlp = new URLSearchParams(location.search);
 let EVENT_CODE = (urlp.get('event') || '').trim();
-
 if (!EVENT_CODE && document.referrer) {
-  try {
-    const ref = new URL(document.referrer);
-    const refEvent = ref.searchParams.get('event');
-    if (refEvent) EVENT_CODE = refEvent.trim();
-  } catch {}
+  try { const ref = new URL(document.referrer); const refEvent = ref.searchParams.get('event'); if (refEvent) EVENT_CODE = refEvent.trim(); } catch {}
 }
 
-/* ---------------- DOM ---------------- */
 const byId = id => document.getElementById(id);
 const nameInput  = byId('yourName');
 const titleInput = byId('songTitle');
@@ -92,17 +84,13 @@ const submitBtn  = byId('submitBtn');
 const searchWidget = byId('searchWidget');
 const tyOverlay  = byId('tyOverlay');
 
-/* ---------------- Widget messaging ---------------- */
 function setHiddenField(key, val){
   if (key==='song_title') titleInput.value = val || '';
   if (key==='artist')     artistInput.value = val || '';
   if (key==='link')       linkInput.value = val || '';
 }
-function clearHiddenFields(){
-  titleInput.value = '';
-  artistInput.value = '';
-  linkInput.value = '';
-}
+function clearHiddenFields(){ titleInput.value=''; artistInput.value=''; linkInput.value=''; }
+
 window.addEventListener('message', (e)=>{
   const msg = e.data; if (!msg || !msg.action) return;
   if (msg.action === 'setFields' && msg.fields) {
@@ -111,29 +99,24 @@ window.addEventListener('message', (e)=>{
     if (artist     !== undefined) setHiddenField('artist', artist);
     if (link       !== undefined) setHiddenField('link', link);
   }
-  if (msg.action === 'clearSelected') {
-    clearHiddenFields();
-  }
+  if (msg.action === 'clearSelected') clearHiddenFields();
   if (msg.action === 'resize' && typeof msg.height === 'number') {
-    const h = Math.max(60, Math.ceil(msg.height+2));
+    const h = Math.max(320, Math.ceil(msg.height+2)); // never below 320
     searchWidget.style.height = h + 'px';
   }
 });
 
-/* ---------------- Submit ---------------- */
 function openThankYou(){ tyOverlay.style.display='flex'; }
 function writeRequest(){
   const nameVal = (nameInput.value || '').trim();
   const titleVal= (titleInput.value || '').trim();
   const artistVal=(artistInput.value || '').trim();
   const linkVal = (linkInput.value || '').trim();
-
-  // Require a title + artist (prevents blank submits when the widget wasn't used)
   if (!titleVal && !artistVal) { nameInput.focus(); return; }
 
   const qs = new URLSearchParams({
     mode: 'write',
-    event: EVENT_CODE || '',   // may be empty if truly no event param
+    event: EVENT_CODE || '',
     name: nameVal,
     song_title: titleVal,
     artist: artistVal,
@@ -142,7 +125,6 @@ function writeRequest(){
     referer: document.referrer || location.href
   });
 
-  // JSONP submit - create script tag
   const cb = 'cb_' + Math.random().toString(36).slice(2);
   window[cb] = (data)=>{ try{ delete window[cb]; }catch{} openThankYou(); };
   const s = document.createElement('script');
@@ -151,8 +133,6 @@ function writeRequest(){
   document.body.appendChild(s);
 }
 submitBtn.addEventListener('click', writeRequest);
-
-/* Focus on load (optional) */
 window.addEventListener('load', ()=>{ nameInput.focus({preventScroll:true}); });
 </script>
 </body>
