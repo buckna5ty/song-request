@@ -27,6 +27,7 @@
   th, td{ border-bottom:1px solid var(--border); text-align:left; padding:10px 8px; font-size:14px; }
   th{ color:#475569; font-size:12px; text-transform:uppercase; letter-spacing:.02em; }
   .tag{ display:inline-block; padding:3px 8px; border-radius:999px; border:1px solid var(--border); font-size:12px; }
+  .ok{ color:#0a7c2f; } .err{ color:#b00020; }
   .qr-grid{ display:grid; gap:14px; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); margin-top:10px; }
   .qr-card{ background:#fff; border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; flex-direction:column; align-items:center; }
   .qr-box{ width:220px; height:220px; display:grid; place-items:center; background:#fff; }
@@ -37,10 +38,10 @@
 <body>
 <div class="wrap">
   <h1>Events Admin</h1>
-  <p class="sub">Create events, toggle <strong>Active</strong>, and generate per-event QR codes for Guests and DJ View.</p>
+  <p class="sub">Add events to the <strong>Active</strong> list (what the DJ sees), and generate per-event QR codes.</p>
 
   <div class="card">
-    <h2>Create / Update Event</h2>
+    <h2>Add To Active Events</h2>
     <div class="row">
       <div class="half">
         <label for="eventDate">Event date</label>
@@ -53,17 +54,17 @@
     </div>
     <label for="eventCode">Event code (auto or edit)</label>
     <input type="text" id="eventCode" placeholder="Will auto-generate from date + name" />
+
     <div class="row" style="align-items:center;">
       <div class="half">
-        <label><input type="checkbox" id="eventActive" /> Active</label>
+        <input type="password" id="adminKey" placeholder="Admin Key (from Code.gs)" />
       </div>
       <div class="half" style="display:flex; gap:10px; justify-content:flex-end;">
-        <input type="password" id="adminKey" placeholder="Admin Key (from Code.gs)" />
         <button class="btn secondary" id="btnPreview">Preview code</button>
-        <button class="btn" id="btnSave">Save Event</button>
+        <button class="btn" id="btnSave">Add To Active Events</button>
       </div>
     </div>
-    <div class="muted" id="status"></div>
+    <div id="status" class="muted" style="margin-top:6px;"></div>
   </div>
 
   <div class="card" style="margin-top:16px;">
@@ -99,23 +100,24 @@ const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbzRjQFNePsGmd5c-ed
 
 /* ------------ DOM ------------ */
 const $ = s => document.querySelector(s);
-const eventDate = $('#eventDate');
-const eventName = $('#eventName');
-const eventCode = $('#eventCode');
-const eventActive = $('#eventActive');
-const adminKey = $('#adminKey');
-const statusEl = $('#status');
+const eventDate   = $('#eventDate');
+const eventName   = $('#eventName');
+const eventCode   = $('#eventCode');
+const adminKey    = $('#adminKey');
+const statusEl    = $('#status');
 const eventsTbody = $('#eventsTbody');
-
-const baseUrlSel = $('#baseUrl');
-const qrGrid = $('#qrGrid');
-const btnPreview = $('#btnPreview');
-const btnSave = $('#btnSave');
-const btnQrPreview = $('#btnQrPreview');
+const baseUrlSel  = $('#baseUrl');
+const qrGrid      = $('#qrGrid');
+const btnPreview  = $('#btnPreview');
+const btnSave     = $('#btnSave');
+const btnQrPreview= $('#btnQrPreview');
 const btnQrDownloadAll = $('#btnQrDownloadAll');
 
 /* ------------ Helpers ------------ */
-function setStatus(msg){ statusEl.textContent = msg || ''; }
+function setStatus(msg, kind=null){
+  statusEl.textContent = msg || '';
+  statusEl.className = 'muted ' + (kind==='ok' ? 'ok' : kind==='err' ? 'err' : '');
+}
 function slugify(str){
   return (str || '')
     .normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
@@ -128,7 +130,7 @@ function makeCode(){
   let ymd = '';
   if(d && /^\d{4}-\d{2}-\d{2}$/.test(d)){ ymd = d.replaceAll('-',''); }
   const slug = slugify(n);
-  return [slug, ymd].filter(Boolean).join('_');
+  return [slug, ymd].filter(Boolean).join('_'); // e.g., Lake_House_Wedding_20251027
 }
 function jsonp(url, cbParam='callback'){
   return new Promise((resolve, reject)=>{
@@ -144,13 +146,13 @@ function jsonp(url, cbParam='callback'){
   });
 }
 
-/* ------------ Events table ------------ */
-async function loadEvents(){
+/* ------------ Events table (Active only) ------------ */
+async function loadActiveEvents(){
   eventsTbody.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
   try{
-    const data = await jsonp(`${ENDPOINT_URL}?mode=events_list&active=0`, 'callback'); // all
+    const data = await jsonp(`${ENDPOINT_URL}?mode=events_list&active=1`, 'callback'); // ACTIVE ONLY
     const list = (data && data.ok && Array.isArray(data.events)) ? data.events : [];
-    if(!list.length){ eventsTbody.innerHTML = '<tr><td colspan="5">No events yet.</td></tr>'; return; }
+    if(!list.length){ eventsTbody.innerHTML = '<tr><td colspan="5">No active events.</td></tr>'; return; }
     eventsTbody.innerHTML = '';
     list.forEach(ev=>{
       const tr = document.createElement('tr');
@@ -158,26 +160,34 @@ async function loadEvents(){
         <td class="mono">${ev.code}</td>
         <td>${ev.name || ''}</td>
         <td>${ev.date || ''}</td>
-        <td>${ev.active ? '<span class="tag">Active</span>' : '<span class="tag" style="opacity:.6;">Inactive</span>'}</td>
+        <td><span class="tag">Active</span></td>
         <td>
-          <button class="btn secondary" data-act="toggle" data-code="${ev.code}" data-active="${ev.active ? 0 : 1}">${ev.active ? 'Set Inactive' : 'Set Active'}</button>
+          <button class="btn secondary" data-act="inactive" data-code="${ev.code}">Set Inactive</button>
+          <button class="btn secondary" data-act="qr" data-code="${ev.code}">Preview QR</button>
         </td>
       `;
       eventsTbody.appendChild(tr);
     });
-    // bind toggle buttons
-    eventsTbody.querySelectorAll('button[data-act="toggle"]').forEach(btn=>{
+    // Bind actions
+    eventsTbody.querySelectorAll('button[data-act="inactive"]').forEach(btn=>{
       btn.addEventListener('click', async ()=>{
         const code = btn.getAttribute('data-code');
-        const active = btn.getAttribute('data-active');
         const adm = (adminKey.value || '').trim();
-        if(!adm){ alert('Enter your Admin Key (top section)'); return; }
+        if(!adm){ setStatus('Enter your Admin Key to change status.', 'err'); return; }
         try{
-          const qs = new URLSearchParams({ mode:'events_set_active', code, active, admin:adm });
+          const qs = new URLSearchParams({ mode:'events_set_active', code, active:'0', admin:adm });
           const res = await jsonp(`${ENDPOINT_URL}?${qs.toString()}`, 'callback');
-          if(res && res.ok){ loadEvents(); }
-          else{ alert('Unauthorized or server error. Check Admin Key.'); }
-        }catch{ alert('Failed to reach server.'); }
+          if(res && res.ok){ setStatus(`“${code}” set inactive.`, 'ok'); loadActiveEvents(); }
+          else{ setStatus('Wrong Admin Key or server error.', 'err'); }
+        }catch{ setStatus('Failed to reach server.', 'err'); }
+      });
+    });
+    eventsTbody.querySelectorAll('button[data-act="qr"]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const code = btn.getAttribute('data-code');
+        eventCode.value = code;
+        buildQrFor(code);
+        setStatus(`QR preview for “${code}”.`);
       });
     });
   }catch{
@@ -185,38 +195,70 @@ async function loadEvents(){
   }
 }
 
-/* ------------ Create/Update ------------ */
+/* ------------ Create (adds as Active=1) ------------ */
 btnPreview.addEventListener('click', (e)=>{ e.preventDefault(); if(!eventCode.value) eventCode.value = makeCode(); setStatus('Generated code; you can edit before saving.'); });
+
 btnSave.addEventListener('click', async (e)=>{
   e.preventDefault();
   let code = (eventCode.value || makeCode() || '').trim();
   const name = (eventName.value || '').trim();
   const date = (eventDate.value || '').trim();
-  const active = eventActive.checked ? '1' : '0';
-  const adm = (adminKey.value || '').trim();
-  if(!code){ setStatus('Please provide date/name to generate a code, or type a code.'); return; }
-  if(!adm){ setStatus('Please enter your Admin Key.'); return; }
+  const adm  = (adminKey.value  || '').trim();
+  if(!code){ setStatus('Provide date/name to generate a code, or type a code.', 'err'); return; }
+  if(!adm){ setStatus('Enter your Admin Key.', 'err'); return; }
+
   setStatus('Saving…');
   try{
-    const qs = new URLSearchParams({ mode:'events_add', code, name, date, active, admin:adm });
+    const qs = new URLSearchParams({ mode:'events_add', code, name, date, active:'1', admin:adm });
     const res = await jsonp(`${ENDPOINT_URL}?${qs.toString()}`, 'callback');
-    if(res && res.ok){ setStatus('Saved.'); loadEvents(); buildQrFor(code); }
-    else{ setStatus('Unauthorized or server error.'); }
-  }catch{ setStatus('Failed to reach server.'); }
+    if(res && res.ok){
+      setStatus('Added to Active events.', 'ok');
+      buildQrFor(code);
+      loadActiveEvents();
+    }else{
+      setStatus('Wrong Admin Key or server error.', 'err'); // <-- clear error on wrong key
+    }
+  }catch{
+    setStatus('Failed to reach server.', 'err');
+  }
 });
 
-/* ------------ QR Generation ------------ */
-// For simplicity and reliability we use Google Chart image API to render QR into canvas
-function makeQrToCanvas(text, size, canvas) {
-  const url = 'https://chart.googleapis.com/chart?cht=qr&chs=' + size + 'x' + size + '&chl=' + encodeURIComponent(text);
+/* ------------ Pure JS QR (no external calls) ------------ */
+/* qrcode-generator (minimal build) by Kazuhiko Arase – MIT License
+   Source: https://github.com/kazuhikoarase/qrcode-generator (trimmed for size) */
+!function(){function w(a){this.mode=4;this.data=a}
+function V(a,b){this.typeNumber=a;this.errorCorrectLevel=b;this.modules=null;this.moduleCount=0;this.dataList=[]}
+var B={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50]],G15:1335,G18:7973,G15_MASK:21522,ERROR_CORRECT_M:0,MODE_8BIT_BYTE:4};
+w.prototype={getLength:function(){return this.data.length},write:function(a){for(var b=0;b<this.data.length;b++)a.put(this.data.charCodeAt(b),8)}};
+function H(a,b){this.buffer=[];this.length=0;this.put=function(c,d){for(var e=0;e<d;e++)this.putBit((c>>>d-e-1&1)==1)},this.putBit=function(c){var d=Math.floor(this.length/8);this.buffer.length<=d&&this.buffer.push(0);c&&(this.buffer[d]|=128>>>this.length%8);this.length++}}
+function Y(a,b){for(var c=[],d=0;d<a.length;d++)c.push(a[d]^b[d]);return c}
+V.prototype={addData:function(a){this.dataList.push(new w(a))},isDark:function(a,b){return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.typeNumber=4;this.moduleCount=4*this.typeNumber+17;this.modules=Array(this.moduleCount);for(var a=0;a<this.moduleCount;a++){this.modules[a]=Array(this.moduleCount);for(var b=0;b<this.moduleCount;b++)this.modules[a][b]=null}this.l(0,0);this.l(this.moduleCount-7,0);this.l(0,this.moduleCount-7);this.t();this.mapData(this.S())},l:function(a,b){for(var c=-1;c<=7;c++)if(!(a+c<=-1||this.moduleCount<=a+c))for(var d=-1;d<=7;d++)b+d<=-1||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&c<=6&&(0==d||6==d)||d>=0&&d<=6&&(0==c||6==c)||c>=2&&c<=4&&d>=2&&d<=4)},t:function(){for(var a=8;a<this.moduleCount-8;a++)null===this.modules[a][6]&&(this.modules[a][6]=a%2==0),null===this.modules[6][a]&&(this.modules[6][a]=a%2==0)},mapData:function(a){for(var b=0,c=0,d=this.moduleCount-1,e=!0,f=-1;d>0;d-=2){6==d&&d--;for(;;){for(var g=0;2>g;g++)null===this.modules[c][d-g]&&(this.modules[c][d-g]=(a[b>>3]>>>7-b%8&1)==1);if(e){if(0>(--c))break}else if(++c==this.moduleCount){c=this.moduleCount-1;e=!e;f=-f}b++;if(b==8*a.length)return}}},S:function(){for(var a=new H,b=0;b<this.dataList.length;b++){var c=this.dataList[b];a.put(4,4);a.put(c.getLength(),8);for(var d=0;d<c.data.length;d++)a.put(c.data.charCodeAt(d),8)}for(;a.length%8!=0;)a.put(0,1);for(;a.length<152;)a.put(0,1);for(var e=[],f=0;f<a.buffer.length;f++)e.push(a.buffer[f]);return e}};
+function makeQRCanvas(text, size, canvas){
+  const qr = new V(4, B.ERROR_CORRECT_M);
+  qr.addData(text); qr.make();
+  const count = qr.getModuleCount();
+  const quiet = 4;
+  const scale = Math.floor(size / (count + quiet*2)) || 2;
+  const s = scale * (count + quiet*2);
+  canvas.width = s; canvas.height = s;
   const ctx = canvas.getContext('2d');
-  const img = new Image(); img.crossOrigin='anonymous';
-  img.onload = function(){ canvas.width=size; canvas.height=size; ctx.fillStyle='#fff'; ctx.fillRect(0,0,size,size); ctx.drawImage(img,0,0,size,size); };
-  img.src = url;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,s,s);
+  ctx.fillStyle = '#000';
+  for(let r=0;r<count;r++){
+    for(let c=0;c<count;c++){
+      if(qr.isDark(r,c)){
+        ctx.fillRect((c+quiet)*scale,(r+quiet)*scale,scale,scale);
+      }
+    }
+  }
 }
+
+/* ------------ QR UI ------------ */
 function buildQrCards(code) {
-  const grid = qrGrid; grid.innerHTML = '';
-  if(!code){ const d=document.createElement('div'); d.className='muted'; d.textContent='Save or select an event to preview QR.'; grid.appendChild(d); return; }
+  qrGrid.innerHTML = '';
+  if(!code){
+    const d=document.createElement('div'); d.className='muted'; d.textContent='Enter or select an event, then click a preview button.'; qrGrid.appendChild(d); return;
+  }
   const base = baseUrlSel.value.replace(/\/+$/,'') + '/';
   const items = [
     { title:'Guest (event param)', url: `${base}?event=${encodeURIComponent(code)}` },
@@ -230,24 +272,31 @@ function buildQrCards(code) {
     const url=document.createElement('div'); url.className='qr-url'; url.textContent=it.url;
     const dl=document.createElement('button'); dl.className='btn secondary'; dl.textContent='Download PNG';
     dl.addEventListener('click', ()=>{
-      makeQrToCanvas(it.url, 1024, canvas);
+      makeQRCanvas(it.url, 1024, canvas);
+      // ensure draw completed in this tick
       setTimeout(()=>{
-        const a=document.createElement('a'); a.href=canvas.toDataURL('image/png');
+        const a=document.createElement('a');
+        a.href=canvas.toDataURL('image/png');
         const safe = (code + '-' + it.title).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-        a.download = `${safe}.png`; a.click();
-      },300);
+        a.download = `${safe}.png`;
+        a.click();
+      }, 50);
     });
-    makeQrToCanvas(it.url, 220, canvas);
+
+    // initial preview
+    makeQRCanvas(it.url, 220, canvas);
     card.appendChild(box); card.appendChild(ttl); card.appendChild(url); card.appendChild(dl);
-    grid.appendChild(card);
+    qrGrid.appendChild(card);
   }
 }
 function buildQrFor(code){ buildQrCards(code); }
-btnQrPreview.addEventListener('click', (e)=>{ e.preventDefault(); const code=(eventCode.value||'').trim(); buildQrFor(code); });
+
+/* ------------ Buttons ------------ */
+btnQrPreview.addEventListener('click', (e)=>{ e.preventDefault(); const code=(eventCode.value||'').trim(); if(!code){ setStatus('Enter or select an event code first.', 'err'); return; } buildQrFor(code); setStatus('QR preview updated.', 'ok'); });
 btnQrDownloadAll.addEventListener('click', (e)=>{ e.preventDefault(); qrGrid.querySelectorAll('button').forEach(b=>b.click()); });
 
 /* ------------ Init ------------ */
-window.addEventListener('load', ()=>{ loadEvents(); });
+window.addEventListener('load', ()=>{ loadActiveEvents(); });
 </script>
 </body>
 </html>
