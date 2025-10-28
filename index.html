@@ -2,253 +2,158 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Song Request • David Charles Events</title>
-<link rel="preconnect" href="https://itunes.apple.com" crossorigin>
 <style>
-  :root{ --field-w:640px; --teal:#0ea5a6; --ring:rgba(14,165,166,.25); --border:#e5e7eb; --radius:8px; --bg:#fff; --ink:#111; --muted:#616161; }
+  :root{ --field-w:640px; --teal:#0ea5a6; --ring:rgba(14,165,166,.25); --border:#e5e7eb; --radius:8px; --bg:#fff; --ink:#111; }
   @font-face{ font-family:"TexGyreAdventorBold"; src:url("texgyreadventor-bold.otf") format("opentype"); font-weight:700; font-style:normal; font-display:swap; }
-  *{ box-sizing:border-box; }
-  body{ background:#f3f2ff; margin:0; color:var(--ink); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
-  .wrap{ max-width:960px; margin:0 auto; padding:0 12px 28px; }
+  html,body{ margin:0; background:#f3f2ff; color:var(--ink); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+  .wrap{ max-width:960px; margin:0 auto; padding:16px 12px 48px; }
   .dce-logo{text-align:center; margin:18px 0 4px;}
   .dce-logo img{ max-width:220px; height:auto; }
-  .app-title{ text-align:center; margin:0 auto 10px; font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; letter-spacing:.06em; line-height:1.05; font-size:clamp(20px,6.2vw,36px); max-width:66vw; color:#111; }
-  .field-wrap{ max-width:var(--field-w); width:100%; margin:0 auto; }
-  label{ display:block; font-size:14px; color:#111; margin:14px 0 6px; }
-  .textbox{ width:100%; height:48px; padding:0 14px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg); font-size:16px; line-height:1.25; outline:none; box-shadow:none; appearance:none; }
-  .textbox:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
-  .results{ margin-top:6px; }
-  .item{ display:grid; grid-template-columns:56px 1fr; align-items:center; gap:12px; padding:10px; border:1px solid var(--border); border-radius:var(--radius); background:#fafafa; transition:background .15s,transform .06s,border-color .15s; cursor:pointer; margin-bottom:8px; }
-  .item:hover{ background:#f5f5f5; } .item:active{ transform:scale(.996); }
-  .cover{ width:56px;height:56px;border-radius:8px;object-fit:cover;background:#e9eef0; color:#7a8a8d; display:grid; place-items:center; font-size:12px; }
-  .info{ min-width:0; }
-  .ttl{ margin:0 0 2px; font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .art{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .selected{ margin-top:6px; border:1px solid var(--border); border-radius:var(--radius); background:#fff; display:none; }
-  .selected.active{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
-  .sel-inner{ display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center; padding:10px; }
-  .sel-cover{ width:72px;height:72px;border-radius:10px;object-fit:cover;background:#e9eef0;color:#7a8a8d;display:grid;place-items:center;font-size:14px; }
-  .sel-title{ margin:0 0 2px; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .sel-artist{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .status{ margin-top:6px; font-size:13px; color:#muted; min-height:0; }
-  .btn{ background:#111; color:#fff; text-transform:uppercase; font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; letter-spacing:.04em; border-radius:10px; border:1px solid #111; padding:14px 28px; height:auto; cursor:pointer; }
-  .btn:hover{ filter:brightness(.92); }
-  .btn:active{ transform:translateY(1px); }
-  .btn[disabled]{ opacity:.55; cursor:not-allowed; }
-  .row{ margin-top:10px; display:flex; gap:10px; align-items:center; }
-  .grow{ flex:1; }
-  .clear{ width:48px; height:48px; border-radius:var(--radius); border:1px solid var(--border); background:#fafafa; display:inline-grid; place-items:center; cursor:pointer; user-select:none; font-size:20px; color:#555; }
-  .clear:hover{ background:#f5f5f5; }
+  .app-title{ text-align:center; margin:0 auto 12px; font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; letter-spacing:.06em; line-height:1.05; font-size:clamp(22px,6vw,38px); color:#111; }
+  label{ display:block; font-size:14px; color:#475569; margin:10px 0 6px; }
+  input[type="text"]{
+    width:100%; height:48px; padding:0 14px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg);
+    font-size:16px; outline:none;
+  }
+  input[type="text"]:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
+  .row{ max-width:var(--field-w); margin:0 auto; }
+  #searchWidget{ width:100%; border:0; height:70px; display:block; transition:height .2s ease; }
+  .btn{ height:46px; padding:0 20px; border:1px solid #111; background:#111; color:#fff; border-radius:10px; cursor:pointer; font-weight:700; letter-spacing:.03em; }
+  .btn:hover{ filter:brightness(.95); }
   .ty-overlay{ position:fixed; inset:0; background:#fff; display:none; align-items:center; justify-content:center; z-index:9999; }
   .ty-wrap{ text-align:center; padding:24px; max-width:92vw; }
-  .ty-icon{ width:96px; height:96px; margin:0 auto 22px; display:grid; place-items:center; border-radius:50%; background:#22c55e; box-shadow:0 6px 18px rgba(34,197,94,.35); }
-  .ty-icon svg{ width:52px; height:52px; color:#fff; }
-  .ty-title{ font-family:"TexGyreAdventorBold"; font-size:clamp(28px,7.8vw,56px); line-height:1.05; margin:0 0 10px; color:#0f172a;}
+  .ty-icon{ width:96px; height:96px; margin:0 auto 22px; display:grid; place-items:center; border-radius:50%; background:#22c55e; box-shadow:0 6px 18px rgba(34,197,94,.35); color:#fff; font-size:48px; }
+  .ty-title{ font-family:"TexGyreAdventorBold", Inter, system-ui; font-size:clamp(28px,7.8vw,56px); line-height:1.05; margin:0 0 8px; color:#0f172a;}
   .ty-sub{ font:500 16px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#64748b; margin:0;}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="dce-logo"><img src="assets/client-logo.png" alt="David Charles Events" onerror="this.style.display='none'"></div>
-    <div class="app-title">SONG REQUEST</div>
+<div class="wrap">
+  <div class="dce-logo"><img src="assets/client-logo.png" alt="David Charles Events" onerror="this.style.display='none'"></div>
+  <div class="app-title">SONG REQUEST</div>
 
-    <div class="field-wrap">
-      <label for="name">What's your name?</label>
-      <input id="name" class="textbox" type="text" autocomplete="name" />
-
-      <label for="q">Search Song, Artist or Lyrics</label>
-      <div class="row">
-        <input id="q" class="textbox grow" type="text" placeholder="start typing..." autocomplete="off" inputmode="search" />
-        <button id="clearBtn" class="clear" type="button" aria-label="Clear search">×</button>
-      </div>
-
-      <div id="results" class="results"></div>
-
-      <div id="selected" class="selected" aria-live="polite" aria-atomic="true">
-        <div class="sel-inner">
-          <div id="selCover" class="sel-cover" aria-hidden="true">♪</div>
-          <div class="sel-text">
-            <p id="selTitle" class="sel-title"></p>
-            <p id="selArtist" class="sel-artist"></p>
-          </div>
-        </div>
-      </div>
-
-      <p id="status" class="status"></p>
-
-      <input type="hidden" id="song_title" />
-      <input type="hidden" id="artist" />
-      <input type="hidden" id="link" />
-
-      <div class="row" style="justify-content:flex-end; margin-top:12px;">
-        <button id="submitBtn" class="btn" type="button" disabled>Submit</button>
-      </div>
-    </div>
+  <div class="row">
+    <label for="yourName">What's your name?</label>
+    <input type="text" id="yourName" autocomplete="name" />
   </div>
 
-  <div class="ty-overlay" id="tyOverlay" role="dialog" aria-live="polite" aria-modal="true">
-    <div class="ty-wrap">
-      <div class="ty-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
-      </div>
-      <h1 class="ty-title">Got it!</h1>
-      <p class="ty-sub">If it fits the flow, we’ll get it on. Let’s party.</p>
-    </div>
+  <div class="row" style="margin-top:8px;">
+    <label for="searchWidget">Search Song, Artist or Lyrics</label>
+    <iframe id="searchWidget" src="widget.html?v=7" title="Song Search"></iframe>
   </div>
+
+  <!-- Hidden fields that the widget fills via postMessage -->
+  <input type="hidden" id="songTitle" />
+  <input type="hidden" id="artist" />
+  <input type="hidden" id="link" />
+
+  <div class="row" style="margin-top:10px;">
+    <button id="submitBtn" class="btn">Submit</button>
+  </div>
+</div>
+
+<!-- Thank You -->
+<div class="ty-overlay" id="tyOverlay" role="dialog" aria-live="polite" aria-modal="true">
+  <div class="ty-wrap">
+    <div class="ty-icon">✓</div>
+    <h1 class="ty-title">Got it!</h1>
+    <p class="ty-sub">If it fits the flow, we’ll get it on. Let’s party.</p>
+  </div>
+</div>
 
 <script>
-/* ------------ Config ------------ */
-const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbx2mhrHbyle8zBZRFn55GisuBfLIxDhBkhiBUbXCgBSJN7ssJtEyGEgwTlCZx1sSiy5vg/exec';
-const REDIRECT_URL = 'https://www.davidcharlesevents.com/song-request';
-const REDIRECT_DELAY_MS = 4000;
+/* ---------------- Config ---------------- */
+const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxZ9ylpDohWZnp1Krsn9THEPEciFv68uBB5unr0a41qNTesaOBkCWsQOeiucY4asIYH5A/exec';
 
-/* ------------ URL / Event code ------------ */
-const params = new URLSearchParams(location.search);
-let EVENT_CODE = (params.get('event') || '').trim();
+/* ---------------- Event code capture ----------------
+   We prefer ?event= from our own URL. If missing (e.g., page is embedded at
+   https://www.davidcharlesevents.com/song-request?event=CODE and THEY iframe us
+   without forwarding the query), we fall back to parsing document.referrer. */
+const urlp = new URLSearchParams(location.search);
+let EVENT_CODE = (urlp.get('event') || '').trim();
 
-/* ------------ Helpers ------------ */
-const $ = s => document.querySelector(s);
-const nameEl = $('#name'), q = $('#q'), resultsEl = $('#results'), statusEl = $('#status'),
-      selBox = $('#selected'), submitBtn = $('#submitBtn'), clearBtn = $('#clearBtn');
-let selCoverEl = $('#selCover'), selTitle = $('#selTitle'), selArtist = $('#selArtist');
-
-const songTitleEl = $('#song_title'), artistEl = $('#artist'), linkEl = $('#link');
-
-const lastSubmits = new Map();
-function spamKey(name, title){ return (name||'').toLowerCase().trim() + '||' + (title||'').toLowerCase().trim(); }
-
-function setStatus(m = '', isErr = false){
-  statusEl.textContent = m;
-  statusEl.style.color = isErr ? '#b00020' : 'var(--muted)';
+if (!EVENT_CODE && document.referrer) {
+  try {
+    const ref = new URL(document.referrer);
+    const refEvent = ref.searchParams.get('event');
+    if (refEvent) EVENT_CODE = refEvent.trim();
+  } catch {}
 }
-function enableSubmitIfReady(){ submitBtn.disabled = !(nameEl.value.trim() && songTitleEl.value.trim()); }
-function clearResults(){ resultsEl.innerHTML = ''; }
-function renderResults(list){
-  clearResults();
-  if(!list.length){ setStatus('No results'); return; }
-  setStatus('');
-  list.forEach(({title, artist, cover, link})=>{
-    const div = document.createElement('div');
-    div.className = 'item'; div.setAttribute('role','button'); div.setAttribute('tabindex','0');
-    const coverHTML = cover ? `<img class="cover" src="${cover}" alt="Album cover">` : `<div class="cover" aria-hidden="true">♪</div>`;
-    div.innerHTML = `${coverHTML}<div class="info"><p class="ttl">${title||'Unknown Title'}</p><p class="art">${artist||'Unknown Artist'}</p></div>`;
-    const choose = ()=>useSong({title, artist, cover, link}, div);
-    div.onclick = choose; div.onkeyup = e=>{ if(e.key==='Enter'||e.key===' ') choose(); };
-    resultsEl.appendChild(div);
-  });
+
+/* ---------------- DOM ---------------- */
+const byId = id => document.getElementById(id);
+const nameInput  = byId('yourName');
+const titleInput = byId('songTitle');
+const artistInput= byId('artist');
+const linkInput  = byId('link');
+const submitBtn  = byId('submitBtn');
+const searchWidget = byId('searchWidget');
+const tyOverlay  = byId('tyOverlay');
+
+/* ---------------- Widget messaging ---------------- */
+function setHiddenField(key, val){
+  if (key==='song_title') titleInput.value = val || '';
+  if (key==='artist')     artistInput.value = val || '';
+  if (key==='link')       linkInput.value = val || '';
 }
-function showSelectedCard({title,artist,cover}){
-  if(cover){
-    const img = document.createElement('img');
-    img.src = cover; img.alt='Album cover'; img.className='sel-cover';
-    if(selCoverEl) selCoverEl.replaceWith(img); selCoverEl = img;
-  }else{
-    if(!selCoverEl || selCoverEl.tagName.toLowerCase()==='img'){
-      const box = document.createElement('div');
-      box.id = 'selCover'; box.className = 'sel-cover'; box.setAttribute('aria-hidden','true'); box.textContent = '♪';
-      if(selCoverEl) selCoverEl.replaceWith(box); selCoverEl = box;
-    }
+function clearHiddenFields(){
+  titleInput.value = '';
+  artistInput.value = '';
+  linkInput.value = '';
+}
+window.addEventListener('message', (e)=>{
+  const msg = e.data; if (!msg || !msg.action) return;
+  if (msg.action === 'setFields' && msg.fields) {
+    const {song_title, artist, link} = msg.fields;
+    if (song_title !== undefined) setHiddenField('song_title', song_title);
+    if (artist     !== undefined) setHiddenField('artist', artist);
+    if (link       !== undefined) setHiddenField('link', link);
   }
-  selTitle.textContent = title || 'Unknown Title';
-  selArtist.textContent = artist || 'Unknown Artist';
-  selBox.style.display='block'; selBox.classList.add('active');
-}
-function hideSelected(){
-  selBox.style.display='none'; selBox.classList.remove('active');
-  if(selCoverEl && selCoverEl.tagName.toLowerCase()==='img'){
-    const box=document.createElement('div');
-    box.id='selCover'; box.className='sel-cover'; box.setAttribute('aria-hidden','true'); box.textContent='♪';
-    selCoverEl.replaceWith(box); selCoverEl=box;
+  if (msg.action === 'clearSelected') {
+    clearHiddenFields();
   }
-  selTitle.textContent=''; selArtist.textContent='';
-}
-function useSong({title, artist, cover, link}, el){
-  document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected')); el?.classList.add('selected');
-  songTitleEl.value = title||''; artistEl.value = artist||''; linkEl.value = link||'';
-  showSelectedCard({title,artist,cover,link}); clearResults(); enableSubmitIfReady();
-}
-
-/* ------------ JSONP helper ------------ */
-function jsonp(url, cbParam='callback'){
-  return new Promise((resolve, reject)=>{
-    const cb='cb_'+Math.random().toString(36).slice(2);
-    const sep=url.includes('?')?'&':'?';
-    const src=`${url}${sep}${cbParam}=${cb}`;
-    const s=document.createElement('script');
-    const kill=setTimeout(()=>{cleanup(); reject(new Error('timeout'));},9000);
-    function cleanup(){ clearTimeout(kill); try{delete window[cb];}catch{} s.parentNode&&s.parentNode.removeChild(s); }
-    window[cb]=(data)=>{ cleanup(); resolve(data); };
-    s.onerror=()=>{ cleanup(); reject(new Error('jsonp error')); };
-    s.src=src; document.body.appendChild(s);
-  });
-}
-async function searchITunes(term){
-  const data = await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=10`, 'callback');
-  return (data?.results||[]).map(t=>({ title:t.trackName, artist:t.artistName, cover:t.artworkUrl100||t.artworkUrl60||'', link:t.trackViewUrl||'' }));
-}
-
-/* ------------ Submit ------------ */
-function openThankYou(){ const ov=document.getElementById('tyOverlay'); if(ov) ov.style.display='flex'; }
-function redirectAfterDelay(){ setTimeout(()=>{ window.location.href=REDIRECT_URL; }, REDIRECT_DELAY_MS); }
-
-async function submitRequest(){
-  const name=nameEl.value.trim();
-  const title=songTitleEl.value.trim();
-  const artist=artistEl.value.trim();
-  const link=linkEl.value.trim();
-  if(!name){ setStatus('Please enter your name.', true); nameEl.focus(); return; }
-  if(!title){ setStatus('Please pick a track from the list.', true); q.focus(); return; }
-
-  const key= (name||'').toLowerCase().trim()+'||'+(title||'').toLowerCase().trim();
-  const now=Date.now(); const prev=lastSubmits.get(key)||0;
-  if(now-prev<60000){ setStatus('Hang tight—just submitted that one.', true); return; }
-  lastSubmits.set(key, now);
-
-  setStatus('Saving your request…');
-  const qs=new URLSearchParams({
-    mode:'write',
-    event:EVENT_CODE,
-    name, song_title:title, artist, link,
-    ua:navigator.userAgent, referer:document.referrer||''
-  });
-  try{
-    const res=await jsonp(`${ENDPOINT_URL}?${qs.toString()}`,'callback');
-    if(res && res.ok){ setStatus('Saved!'); openThankYou(); redirectAfterDelay(); }
-    else{ setStatus('Couldn’t save (server error). Try again?', true); }
-  }catch{ setStatus('Couldn’t reach the server. Are you online?', true); }
-}
-
-/* ------------ On load ------------ */
-let debounce=null,lastTerm='';
-q.addEventListener('input', ()=>{
-  const raw=q.value; clearBtn.style.display = raw.length>=1 ? 'inline-grid' : 'none';
-  const t=raw.trim(); if(t===lastTerm) return; lastTerm=t;
-  clearTimeout(debounce);
-  if(!t){ setStatus(''); clearResults(); enableSubmitIfReady(); return; }
-  setStatus('Searching…');
-  debounce=setTimeout(async ()=>{
-    try{ const list=await searchITunes(t);
-      if(list.length){ renderResults(list); setStatus(''); } else { clearResults(); setStatus('No results'); }
-    }catch{ clearResults(); setStatus('Search failed.', true); }
-  }, 260);
-});
-q.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); const t=q.value.trim(); if(t) lastTerm=''; }});
-clearBtn.addEventListener('click', ()=>{ q.value=''; lastTerm=''; q.focus({preventScroll:true}); clearBtn.style.display='none'; setStatus(''); clearResults(); });
-nameEl.addEventListener('input', enableSubmitIfReady);
-submitBtn.addEventListener('click', submitRequest);
-
-window.addEventListener('load', async ()=>{
-  nameEl?.focus({preventScroll:true});
-  if(!EVENT_CODE){
-    try{
-      const data = await jsonp(`${ENDPOINT_URL}?mode=getevent&key=main`, 'callback');
-      if(data && data.ok){
-        EVENT_CODE = (data.value || '').trim();
-      }
-    }catch{}
+  if (msg.action === 'resize' && typeof msg.height === 'number') {
+    const h = Math.max(60, Math.ceil(msg.height+2));
+    searchWidget.style.height = h + 'px';
   }
 });
+
+/* ---------------- Submit ---------------- */
+function openThankYou(){ tyOverlay.style.display='flex'; }
+function writeRequest(){
+  const nameVal = (nameInput.value || '').trim();
+  const titleVal= (titleInput.value || '').trim();
+  const artistVal=(artistInput.value || '').trim();
+  const linkVal = (linkInput.value || '').trim();
+
+  // Require a title + artist (prevents blank submits when the widget wasn't used)
+  if (!titleVal && !artistVal) { nameInput.focus(); return; }
+
+  const qs = new URLSearchParams({
+    mode: 'write',
+    event: EVENT_CODE || '',   // may be empty if truly no event param
+    name: nameVal,
+    song_title: titleVal,
+    artist: artistVal,
+    link: linkVal,
+    ua: navigator.userAgent,
+    referer: document.referrer || location.href
+  });
+
+  // JSONP submit - create script tag
+  const cb = 'cb_' + Math.random().toString(36).slice(2);
+  window[cb] = (data)=>{ try{ delete window[cb]; }catch{} openThankYou(); };
+  const s = document.createElement('script');
+  s.src = ENDPOINT_URL + '?' + qs.toString() + '&callback=' + cb;
+  s.onerror = ()=>{ try{ delete window[cb]; }catch{} openThankYou(); };
+  document.body.appendChild(s);
+}
+submitBtn.addEventListener('click', writeRequest);
+
+/* Focus on load (optional) */
+window.addEventListener('load', ()=>{ nameInput.focus({preventScroll:true}); });
 </script>
 </body>
 </html>
