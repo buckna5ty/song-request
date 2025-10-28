@@ -6,39 +6,37 @@
 <title>DCE • DJ View</title>
 <style>
   :root{ --ink:#0f172a; --sub:#475569; --border:#e2e8f0; --bg:#f8fafc; --card:#ffffff; --radius:14px; }
-  *{ box-sizing:border-box; }
-  body{ margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
+  *{ box-sizing:border-box; } body{ margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
   .wrap{ max-width:1100px; margin:0 auto; padding:18px 14px 40px; }
-  h1{ margin:0 0 14px; font-size:28px; line-height:1.1; }
-  .sub{ color:var(--sub); margin:4px 0 16px; }
-  .grid{ display:grid; gap:14px; grid-template-columns:1.2fr 1fr; }
-  .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; }
+  h1{ margin:0 0 14px; font-size:28px; }
   .row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+  .card{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; }
+  .grid{ display:grid; gap:14px; grid-template-columns:1.25fr 1fr; }
   .pill{ border:1px solid var(--border); border-radius:999px; padding:6px 10px; background:#fff; font-size:13px; }
+  .muted{ color:#64748b; font-size:12px; }
+  .feed{ max-height:62vh; overflow:auto; padding-right:4px; }
+  .item{ background:#fff; border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; gap:10px; align-items:center; }
+  .title{ font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:56ch; }
+  .btn{ height:36px; padding:0 12px; border:1px solid var(--border); background:#111; color:#fff; border-radius:10px; cursor:pointer; }
+  .btn.secondary{ background:#fff; color:#111; }
+  details{ background:#fff; border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
+  details > summary{ cursor:pointer; font-weight:600; }
   table{ width:100%; border-collapse:separate; border-spacing:0 8px; }
   th{ text-align:left; font-size:12px; color:var(--sub); font-weight:600; }
   td{ background:#fff; border:1px solid var(--border); padding:10px 12px; }
-  td:first-child{ border-radius:10px 0 0 10px; }
-  td:last-child{ border-radius:0 10px 10px 0; }
+  td:first-child{ border-radius:10px 0 0 10px; } td:last-child{ border-radius:0 10px 10px 0; }
   .badge{ display:inline-block; min-width:26px; text-align:center; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background:#fff; font-size:12px; }
-  .mono{ font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace; color:#334155; }
-  .muted{ color:#64748b; font-size:12px; }
-  .feed{ max-height:62vh; overflow:auto; padding-right:4px; }
-  button{ height:40px; padding:0 14px; border:1px solid var(--border); background:#111; color:#fff; border-radius:10px; cursor:pointer; }
-  button.secondary{ background:#fff; color:#111; }
-  select{ height:40px; border:1px solid var(--border); border-radius:10px; padding:0 10px; }
+  select{ height:36px; border:1px solid var(--border); border-radius:10px; padding:0 10px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>DJ View</h1>
-  <p class="sub">Pick an active event and I’ll show requests (de-duped per person+song). Use <span class="mono">?event=CODE</span> to preselect on load.</p>
 
   <div class="row">
     <label for="eventSelect" class="muted">Active Event</label>
     <select id="eventSelect"><option value="">(loading active events…)</option></select>
-    <button id="refresh">Refresh</button>
-    <button id="auto" class="secondary">Auto: Off</button>
+    <button id="refresh" class="btn secondary">Refresh</button>
     <span id="status" class="muted" style="margin-left:auto;"></span>
   </div>
 
@@ -46,6 +44,16 @@
     <div class="card">
       <div class="row"><div class="pill" id="countPill">0 unique requests</div></div>
       <div class="feed" id="feed"></div>
+
+      <details id="playedBox" style="margin-top:10px;">
+        <summary>Played songs</summary>
+        <div id="playedList" class="feed" style="max-height:32vh;"></div>
+      </details>
+
+      <details id="spamBox" style="margin-top:10px;">
+        <summary>Spammed requests (duplicates from same person)</summary>
+        <div id="spamList" class="feed" style="max-height:32vh;"></div>
+      </details>
     </div>
 
     <div class="card">
@@ -59,140 +67,133 @@
 </div>
 
 <script>
-/* ------------ Config ------------ */
-const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbx2mhrHbyle8zBZRFn55GisuBfLIxDhBkhiBUbXCgBSJN7ssJtEyGEgwTlCZx1sSiy5vg/exec';
-
-/* ------------ URL / Preselect ------------ */
+const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxZ9ylpDohWZnp1Krsn9THEPEciFv68uBB5unr0a41qNTesaOBkCWsQOeiucY4asIYH5A/exec';
 const urlp = new URLSearchParams(location.search);
 const PRESELECT_EVENT = (urlp.get('event') || '').trim();
 
-/* ------------ DOM & helpers ------------ */
-const $ = s=>document.querySelector(s);
-const eventSelect = $('#eventSelect'), feedEl = $('#feed'),
-      topSongsEl = $('#topSongs tbody'), topArtistsEl = $('#topArtists tbody'),
-      statusEl=$('#status'), countPill=$('#countPill');
-const btnRefresh = $('#refresh'), btnAuto=$('#auto');
+const $=s=>document.querySelector(s);
+const eventSelect=$('#eventSelect'), feedEl=$('#feed'),
+      playedList=$('#playedList'), spamList=$('#spamList'),
+      topSongsEl=$('#topSongs tbody'), topArtistsEl=$('#topArtists tbody'),
+      statusEl=$('#status'), countPill=$('#countPill'),
+      btnRefresh=$('#refresh');
 
 function setStatus(m){ statusEl.textContent = m || ''; }
-function jsonp(url, cbParam='callback'){
-  return new Promise((resolve, reject)=>{
+function jsonp(url){
+  return new Promise((resolve,reject)=>{
     const cb='cb_'+Math.random().toString(36).slice(2);
-    const sep = url.includes('?') ? '&' : '?';
-    const src=`${url}${sep}${cbParam}=${cb}`;
-    const s=document.createElement('script');
+    const s=document.createElement('script'); s.src = url + (url.includes('?')?'&':'?') + 'callback=' + cb;
     const kill=setTimeout(()=>{cleanup(); reject(new Error('timeout'));},9000);
-    function cleanup(){ clearTimeout(kill); try{delete window[cb];}catch{} s.parentNode&&s.parentNode.removeChild(s); }
+    function cleanup(){ clearTimeout(kill); try{delete window[cb];}catch{} s.remove(); }
     window[cb]=(data)=>{ cleanup(); resolve(data); };
     s.onerror=()=>{ cleanup(); reject(new Error('jsonp error')); };
-    s.src=src; document.body.appendChild(s);
+    document.body.appendChild(s);
   });
 }
-function dedupeByPersonSong(rows){
-  const seen = new Set(), out=[];
+function dedupe(rows){
+  const seen=new Set(), uniq=[], spam=[];
   for(const r of rows){
-    const key = (r.name||'').trim().toLowerCase() + '||' + (r.song_title||'').trim().toLowerCase();
-    if(seen.has(key)) continue;
-    seen.add(key); out.push(r);
+    const key=(r.name||'').trim().toLowerCase()+'||'+(r.song_title||'').trim().toLowerCase();
+    if(seen.has(key)){ spam.push(r); continue; }
+    seen.add(key); uniq.push(r);
   }
-  return out;
+  return {uniq, spam};
 }
 function groupCounts(items, keyFn){
-  const map = new Map();
-  for(const it of items){ const k=keyFn(it); map.set(k,(map.get(k)||0)+1); }
+  const map=new Map(); for(const it of items){ const k=keyFn(it); map.set(k,(map.get(k)||0)+1); }
   return Array.from(map.entries()).sort((a,b)=>b[1]-a[1]);
 }
-function renderFeed(rows){
-  feedEl.innerHTML='';
-  for(const r of rows){
-    const row = document.createElement('div');
-    row.style.marginBottom='8px';
-    row.innerHTML = `
-      <div><strong>${r.song_title || 'Unknown'}</strong> — ${r.artist || ''}</div>
-      <div class="muted">${r.name || 'anon'} • <span class="mono">${r.timestamp||''}</span></div>
-    `;
-    feedEl.appendChild(row);
+function elItem(r, controls=true){
+  const div=document.createElement('div'); div.className='item';
+  div.innerHTML=`<div class="title">${r.song_title||'Unknown'} — ${r.artist||''}</div>
+                 <div class="muted" style="margin-left:auto;">${r.name||'anon'}</div>`;
+  if(controls){
+    const btn=document.createElement('button'); btn.className='btn secondary'; btn.textContent='Mark as played';
+    btn.addEventListener('click', ()=> setPlayed(r.id, 1));
+    div.appendChild(btn);
+  }else{
+    const btn=document.createElement('button'); btn.className='btn secondary'; btn.textContent='Mark as unplayed';
+    btn.addEventListener('click', ()=> setPlayed(r.id, 0));
+    div.appendChild(btn);
   }
+  return div;
 }
-function renderTopSongs(rows){
-  topSongsEl.innerHTML='';
-  const counts = groupCounts(rows, r => (r.song_title||'').trim().toLowerCase() + ' | ' + (r.artist||'').trim().toLowerCase());
-  counts.slice(0,10).forEach(([k,c],i)=>{
-    const [song, artist] = k.split(' | ');
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${i+1}</td><td>${song}</td><td>${artist}</td><td><span class="badge">${c}</span></td>`;
-    topSongsEl.appendChild(tr);
+function renderLists(all){
+  // split played vs not
+  const notPlayed = all.filter(r=>!r.played);
+  const played    = all.filter(r=> r.played);
+
+  const {uniq, spam} = dedupe(notPlayed);
+
+  // main feed
+  feedEl.innerHTML=''; uniq.forEach(r=> feedEl.appendChild(elItem(r, true)));
+  countPill.textContent = `${uniq.length} unique requests`;
+
+  // played list
+  playedList.innerHTML=''; played.forEach(r=> playedList.appendChild(elItem(r, false)));
+
+  // spam list
+  spamList.innerHTML=''; spam.forEach(r=>{
+    const d=document.createElement('div'); d.className='item';
+    d.innerHTML = `<div class="title">${r.song_title||'Unknown'} — ${r.artist||''}</div>
+                   <div class="muted" style="margin-left:auto;">${r.name||'anon'} (duplicate)</div>`;
+    spamList.appendChild(d);
   });
-}
-function renderTopArtists(rows){
-  topArtistsEl.innerHTML='';
-  const counts = groupCounts(rows, r => (r.artist||'').trim().toLowerCase());
-  counts.slice(0,10).forEach(([artist,c],i)=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${i+1}</td><td>${artist}</td><td><span class="badge">${c}</span></td>`;
-    topArtistsEl.appendChild(tr);
-  });
+
+  // top sections from unique only
+  topSongsEl.innerHTML=''; topArtistsEl.innerHTML='';
+  groupCounts(uniq, r=>(r.song_title||'').trim().toLowerCase()+' | '+(r.artist||'').trim().toLowerCase())
+    .slice(0,10).forEach(([k,c],i)=>{ const [song,artist]=k.split(' | '); const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${song}</td><td>${artist}</td><td><span class="badge">${c}</span></td>`; topSongsEl.appendChild(tr); });
+  groupCounts(uniq, r=>(r.artist||'').trim().toLowerCase())
+    .slice(0,10).forEach(([artist,c],i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${artist}</td><td><span class="badge">${c}</span></td>`; topArtistsEl.appendChild(tr); });
 }
 
-/* ------------ Active events dropdown ------------ */
 async function loadActiveEvents(){
   eventSelect.innerHTML = `<option value="">(loading…)</option>`;
   try{
-    const data = await jsonp(`${ENDPOINT_URL}?mode=events_list&active=1`, 'callback');
+    const data = await jsonp(`${ENDPOINT_URL}?mode=events_list&active=1`);
     const list = (data && data.ok && Array.isArray(data.events)) ? data.events : [];
     if(!list.length){ eventSelect.innerHTML = `<option value="">(no active events)</option>`; return; }
     eventSelect.innerHTML = '';
-    list.forEach(ev=>{
-      const opt = document.createElement('option');
-      opt.value = ev.code; opt.textContent = ev.name ? `${ev.name} (${ev.code})` : ev.code;
-      eventSelect.appendChild(opt);
-    });
-    // Preselect if requested
-    if(PRESELECT_EVENT){
-      const found = Array.from(eventSelect.options).some(o=>o.value===PRESELECT_EVENT);
-      if(found) eventSelect.value = PRESELECT_EVENT;
-    }
-    // If nothing selected and only one event, auto-select it
-    if(!eventSelect.value && eventSelect.options.length === 1){
-      eventSelect.selectedIndex = 0;
-    }
-  }catch{
-    eventSelect.innerHTML = `<option value="">(failed to load)</option>`;
-  }
+    list.forEach(ev=>{ const o=document.createElement('option'); o.value=ev.code; o.textContent=ev.name?`${ev.name} (${ev.code})`:ev.code; eventSelect.appendChild(o); });
+    if(PRESELECT_EVENT && Array.from(eventSelect.options).some(o=>o.value===PRESELECT_EVENT)) eventSelect.value = PRESELECT_EVENT;
+    if(!eventSelect.value && eventSelect.options.length===1) eventSelect.selectedIndex=0;
+  }catch{ eventSelect.innerHTML=`<option value="">(failed to load)</option>`; }
 }
 
-/* ------------ Refresh data ------------ */
 async function refresh(){
-  const code = eventSelect.value.trim();
+  const code = (eventSelect.value||'').trim();
   if(!code){ setStatus('Select an active event.'); return; }
-  const qs = new URLSearchParams({ mode:'read', limit:'500', event:code });
   setStatus('Loading…');
   try{
-    const data = await jsonp(`${ENDPOINT_URL}?${qs.toString()}`, 'callback');
+    const data = await jsonp(`${ENDPOINT_URL}?mode=read&limit=1000&event=${encodeURIComponent(code)}`);
     if(!data || !data.ok){ setStatus('Server error.'); return; }
-    const rows = Array.isArray(data.rows) ? data.rows : [];
-    const uniq = dedupeByPersonSong(rows);
-    countPill.textContent = `${uniq.length} unique requests`;
-    renderFeed(uniq); renderTopSongs(uniq); renderTopArtists(uniq);
+    renderLists(Array.isArray(data.rows)?data.rows:[]);
     setStatus(`Updated ${new Date().toLocaleTimeString()}`);
-  }catch(e){ setStatus('Fetch failed.'); }
+  }catch{ setStatus('Fetch failed.'); }
 }
+
+async function setPlayed(id, played){
+  if(!id) return;
+  try{
+    const res = await jsonp(`${ENDPOINT_URL}?mode=set_played&id=${encodeURIComponent(id)}&played=${played?1:0}`);
+    if(res && res.ok){ refresh(); }
+    else{ setStatus('Failed to update played state.'); }
+  }catch{ setStatus('Network error while updating played.'); }
+}
+
+// Always auto-pull every 10s
+let timer=null;
+function startAuto(){ if(timer) clearInterval(timer); timer=setInterval(refresh, 10000); }
+
 btnRefresh.addEventListener('click', refresh);
-eventSelect.addEventListener('change', refresh);
+eventSelect.addEventListener('change', ()=>{ refresh(); });
 
-let auto=false, timer=null;
-btnAuto.addEventListener('click', ()=>{
-  auto=!auto;
-  if(auto){ btnAuto.textContent='Auto: On'; refresh(); timer=setInterval(refresh, 10000); }
-  else{ btnAuto.textContent='Auto: Off'; clearInterval(timer); timer=null; }
-});
-
-/* ------------ Init ------------ */
 window.addEventListener('load', async ()=>{
   await loadActiveEvents();
-  if(eventSelect.value){ refresh(); }
+  if(eventSelect.value) refresh();
+  startAuto();
 });
 </script>
 </body>
 </html>
-
-
