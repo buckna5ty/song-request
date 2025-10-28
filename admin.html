@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DCE • Event Admin</title>
+<style>
+  :root{ --ink:#0f172a; --sub:#475569; --border:#e2e8f0; --bg:#f8fafc; --card:#ffffff; --accent:#111; --radius:14px; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
+  .wrap{ max-width:720px; margin:0 auto; padding:22px 14px 44px; }
+  h1{ margin:0 0 10px; font-size:28px; line-height:1.1; }
+  .sub{ color:var(--sub); margin:2px 0 16px; }
+  .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+  label{ display:block; font-size:13px; color:var(--sub); margin:12px 0 6px; }
+  input[type="text"], input[type="date"], input[type="password"]{
+    width:100%; height:44px; border:1px solid var(--border); border-radius:10px; padding:0 12px; font-size:15px;
+  }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .half{ flex:1 1 260px; }
+  .btn{ height:44px; padding:0 16px; border:1px solid var(--border); background:var(--accent); color:#fff; border-radius:10px; cursor:pointer; }
+  .btn.secondary{ background:#fff; color:#111; }
+  .muted{ color:#64748b; font-size:12px; }
+  .mono{ font-family:ui-monospace, Menlo, Consolas, monospace; }
+  .pill{ display:inline-block; padding:6px 10px; border:1px solid var(--border); border-radius:999px; background:#fff; font-size:13px; }
+  .out{ margin-top:10px; font-size:14px; }
+  .ok{ color:#0a7c2f; } .err{ color:#b00020; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Event Admin</h1>
+  <p class="sub">Set the <strong>current</strong> event code used by the public request page and DJ view (so your QR never changes).</p>
+
+  <div class="card">
+    <div class="row">
+      <div class="half">
+        <label for="eventDate">Event date</label>
+        <input type="date" id="eventDate" />
+      </div>
+      <div class="half">
+        <label for="eventName">Event name</label>
+        <input type="text" id="eventName" placeholder="e.g., Lake House Wedding" />
+      </div>
+    </div>
+
+    <label for="eventCode">Generated event code (you can edit)</label>
+    <input type="text" id="eventCode" placeholder="Will auto-generate from date + name" />
+
+    <div class="row" style="margin-top:12px; align-items:center;">
+      <div class="half">
+        <label for="adminKey">Admin key</label>
+        <input type="password" id="adminKey" placeholder="Your ADMIN_KEY from Code.gs" />
+        <div class="muted" style="margin-top:4px;">Not stored anywhere; required to save.</div>
+      </div>
+      <div class="half" style="display:flex; gap:10px; align-items:flex-end; justify-content:flex-end;">
+        <button class="btn secondary" id="btnPreview">Preview code</button>
+        <button class="btn" id="btnSave">Set as current event</button>
+      </div>
+    </div>
+
+    <div class="out" id="status"></div>
+    <div class="out"><span class="pill">Current event:</span> <span id="current" class="mono muted">(loading…)</span></div>
+  </div>
+
+  <p class="muted" style="margin-top:12px;">
+    Public page uses the current code automatically. You can still override with <span class="mono">?event=Code</span> on either page.
+  </p>
+</div>
+
+<script>
+/* ------------ Config ------------ */
+const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbzRjQFNePsGmd5c-edTvgrzfLrtn21b1ZZBZKcKQ0OeIEwo1jeIpRCMAjxP6zHtJ1u9rg/exec';
+
+/* ------------ DOM ------------ */
+const $ = s => document.querySelector(s);
+const eventDate = $('#eventDate');
+const eventName = $('#eventName');
+const eventCode = $('#eventCode');
+const adminKey = $('#adminKey');
+const statusEl = $('#status');
+const currentEl = $('#current');
+const btnPreview = $('#btnPreview');
+const btnSave = $('#btnSave');
+
+/* ------------ Helpers ------------ */
+function setStatus(msg, ok=null){
+  statusEl.textContent = msg || '';
+  statusEl.className = 'out ' + (ok===true ? 'ok' : ok===false ? 'err' : '');
+}
+function slugify(str){
+  return (str || '')
+    .normalize('NFKD')           // separate accents
+    .replace(/[\u0300-\u036f]/g,'') // drop diacritics
+    .replace(/[^a-zA-Z0-9]+/g,'_')  // non-alnum -> underscore
+    .replace(/^_+|_+$/g,'')         // trim underscores
+    .replace(/_{2,}/g,'_');         // compress
+}
+function makeCode(){
+  const d = eventDate.value; // yyyy-mm-dd
+  const n = eventName.value;
+  if(!d && !n) return '';
+  let ymd = '';
+  if(d && /^\d{4}-\d{2}-\d{2}$/.test(d)){ ymd = d.replaceAll('-',''); } // yyyymmdd
+  const slug = slugify(n);
+  return [slug, ymd].filter(Boolean).join('_'); // e.g., Lake_House_Wedding_20251027
+}
+function jsonp(url, cbParam='callback'){
+  return new Promise((resolve, reject)=>{
+    const cb='cb_'+Math.random().toString(36).slice(2);
+    const sep = url.includes('?') ? '&' : '?';
+    const src=`${url}${sep}${cbParam}=${cb}`;
+    const s=document.createElement('script');
+    const kill=setTimeout(()=>{cleanup(); reject(new Error('timeout'));},9000);
+    function cleanup(){ clearTimeout(kill); try{delete window[cb];}catch{} s.parentNode&&s.parentNode.removeChild(s); }
+    window[cb]=(data)=>{ cleanup(); resolve(data); };
+    s.onerror=()=>{ cleanup(); reject(new Error('jsonp error')); };
+    s.src=src; document.body.appendChild(s);
+  });
+}
+async function loadCurrent(){
+  try{
+    const data = await jsonp(`${ENDPOINT_URL}?mode=getevent&key=main`, 'callback');
+    if(data && data.ok){ currentEl.textContent = data.value || '(none)'; currentEl.classList.remove('muted'); }
+    else{ currentEl.textContent = '(error)'; }
+  }catch{ currentEl.textContent = '(failed)'; }
+}
+
+/* ------------ Events ------------ */
+btnPreview.addEventListener('click', (e)=>{ e.preventDefault(); eventCode.value = makeCode(); setStatus('Generated code. You can edit before saving.'); });
+btnSave.addEventListener('click', async (e)=>{
+  e.preventDefault();
+  // build code if field empty
+  let code = (eventCode.value || makeCode() || '').trim();
+  const key = (adminKey.value || '').trim();
+  if(!code){ setStatus('Please provide a date/name to generate a code, or type a code.', false); return; }
+  if(!key){ setStatus('Please enter your Admin Key.', false); return; }
+
+  setStatus('Saving…');
+  const qs = new URLSearchParams({ mode:'setevent', key:'main', value:code, admin:key });
+  try{
+    const data = await jsonp(`${ENDPOINT_URL}?${qs.toString()}`, 'callback');
+    if(data && data.ok){
+      setStatus('Current event updated.', true);
+      currentEl.textContent = code;
+      currentEl.classList.remove('muted');
+    }else{
+      setStatus('Unauthorized or server error. Check your Admin Key.', false);
+    }
+  }catch{
+    setStatus('Failed to reach server. Check your connection.', false);
+  }
+});
+
+/* ------------ Init ------------ */
+window.addEventListener('load', ()=>{ loadCurrent(); });
+</script>
+</body>
+</html>
