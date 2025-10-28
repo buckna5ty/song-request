@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Song Request • David Charles Events</title>
-
 <link rel="preconnect" href="https://itunes.apple.com" crossorigin>
 <style>
   :root{ --field-w:640px; --teal:#0ea5a6; --ring:rgba(14,165,166,.25); --border:#e5e7eb; --radius:8px; --bg:#fff; --ink:#111; --muted:#616161; }
@@ -32,8 +31,7 @@
   .sel-cover{ width:72px;height:72px;border-radius:10px;object-fit:cover;background:#e9eef0;color:#7a8a8d;display:grid;place-items:center;font-size:14px; }
   .sel-title{ margin:0 0 2px; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .sel-artist{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .status{ margin-top:6px; font-size:13px; color:var(--muted); min-height:0; }
-  .status:empty{ margin-top:0; }
+  .status{ margin-top:6px; font-size:13px; color:#muted; min-height:0; }
   .btn{ background:#111; color:#fff; text-transform:uppercase; font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; letter-spacing:.04em; border-radius:10px; border:1px solid #111; padding:14px 28px; height:auto; cursor:pointer; }
   .btn:hover{ filter:brightness(.92); }
   .btn:active{ transform:translateY(1px); }
@@ -105,9 +103,9 @@ const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbzRjQFNePsGmd5c-ed
 const REDIRECT_URL = 'https://www.davidcharlesevents.com/song-request';
 const REDIRECT_DELAY_MS = 4000;
 
-/* ------------ URL params ------------ */
+/* ------------ URL / Event code ------------ */
 const params = new URLSearchParams(location.search);
-const EVENT_CODE = (params.get('event') || '').trim();
+let EVENT_CODE = (params.get('event') || '').trim();
 
 /* ------------ Helpers ------------ */
 const $ = s => document.querySelector(s);
@@ -117,7 +115,6 @@ let selCoverEl = $('#selCover'), selTitle = $('#selTitle'), selArtist = $('#selA
 
 const songTitleEl = $('#song_title'), artistEl = $('#artist'), linkEl = $('#link');
 
-// anti-spam cache: block same name+song for 60s
 const lastSubmits = new Map();
 function spamKey(name, title){ return (name||'').toLowerCase().trim() + '||' + (title||'').toLowerCase().trim(); }
 
@@ -125,9 +122,7 @@ function setStatus(m = '', isErr = false){
   statusEl.textContent = m;
   statusEl.style.color = isErr ? '#b00020' : 'var(--muted)';
 }
-function enableSubmitIfReady(){
-  submitBtn.disabled = !(nameEl.value.trim() && songTitleEl.value.trim());
-}
+function enableSubmitIfReady(){ submitBtn.disabled = !(nameEl.value.trim() && songTitleEl.value.trim()); }
 function clearResults(){ resultsEl.innerHTML = ''; }
 function renderResults(list){
   clearResults();
@@ -143,66 +138,49 @@ function renderResults(list){
     resultsEl.appendChild(div);
   });
 }
-
-/* ✅ FIXED showSelectedCard (the buggy lines are corrected here) */
 function showSelectedCard({title,artist,cover}){
   if(cover){
     const img = document.createElement('img');
-    img.src = cover;
-    img.alt = 'Album cover';
-    img.className = 'sel-cover';
-    if(selCoverEl) selCoverEl.replaceWith(img);
-    selCoverEl = img;
+    img.src = cover; img.alt='Album cover'; img.className='sel-cover';
+    if(selCoverEl) selCoverEl.replaceWith(img); selCoverEl = img;
   }else{
-    if(!selCoverEl || selCoverEl.tagName.toLowerCase() === 'img'){
+    if(!selCoverEl || selCoverEl.tagName.toLowerCase()==='img'){
       const box = document.createElement('div');
-      box.id = 'selCover';
-      box.className = 'sel-cover';
-      box.setAttribute('aria-hidden','true');
-      box.textContent = '♪';
-      if(selCoverEl) selCoverEl.replaceWith(box);
-      selCoverEl = box;
+      box.id = 'selCover'; box.className = 'sel-cover'; box.setAttribute('aria-hidden','true'); box.textContent = '♪';
+      if(selCoverEl) selCoverEl.replaceWith(box); selCoverEl = box;
     }
   }
   selTitle.textContent = title || 'Unknown Title';
   selArtist.textContent = artist || 'Unknown Artist';
-  selBox.style.display = 'block';
-  selBox.classList.add('active');
+  selBox.style.display='block'; selBox.classList.add('active');
 }
-
 function hideSelected(){
   selBox.style.display='none'; selBox.classList.remove('active');
   if(selCoverEl && selCoverEl.tagName.toLowerCase()==='img'){
-    const box = document.createElement('div');
-    box.id = 'selCover';
-    box.className = 'sel-cover';
-    box.setAttribute('aria-hidden','true');
-    box.textContent = '♪';
-    selCoverEl.replaceWith(box);
-    selCoverEl = box;
+    const box=document.createElement('div');
+    box.id='selCover'; box.className='sel-cover'; box.setAttribute('aria-hidden','true'); box.textContent='♪';
+    selCoverEl.replaceWith(box); selCoverEl=box;
   }
-  selTitle.textContent = ''; selArtist.textContent = '';
+  selTitle.textContent=''; selArtist.textContent='';
 }
-
 function useSong({title, artist, cover, link}, el){
   document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected')); el?.classList.add('selected');
   songTitleEl.value = title||''; artistEl.value = artist||''; linkEl.value = link||'';
-  showSelectedCard({title,artist,cover,link});
-  clearResults(); enableSubmitIfReady();
+  showSelectedCard({title,artist,cover,link}); clearResults(); enableSubmitIfReady();
 }
 
-/* ------------ iTunes Search (JSONP) ------------ */
+/* ------------ JSONP helper ------------ */
 function jsonp(url, cbParam='callback'){
   return new Promise((resolve, reject)=>{
-    const cb = 'cb_' + Math.random().toString(36).slice(2);
-    const sep = url.includes('?') ? '&' : '?';
-    const src = `${url}${sep}${cbParam}=${cb}`;
-    const s = document.createElement('script');
-    const kill = setTimeout(()=>{ cleanup(); reject(new Error('timeout')); }, 9000);
-    function cleanup(){ clearTimeout(kill); try{ delete window[cb]; }catch{} s.parentNode && s.parentNode.removeChild(s); }
-    window[cb] = (data)=>{ cleanup(); resolve(data); };
-    s.onerror = ()=>{ cleanup(); reject(new Error('jsonp error')); };
-    s.src = src; document.body.appendChild(s);
+    const cb='cb_'+Math.random().toString(36).slice(2);
+    const sep=url.includes('?')?'&':'?';
+    const src=`${url}${sep}${cbParam}=${cb}`;
+    const s=document.createElement('script');
+    const kill=setTimeout(()=>{cleanup(); reject(new Error('timeout'));},9000);
+    function cleanup(){ clearTimeout(kill); try{delete window[cb];}catch{} s.parentNode&&s.parentNode.removeChild(s); }
+    window[cb]=(data)=>{ cleanup(); resolve(data); };
+    s.onerror=()=>{ cleanup(); reject(new Error('jsonp error')); };
+    s.src=src; document.body.appendChild(s);
   });
 }
 async function searchITunes(term){
@@ -210,72 +188,67 @@ async function searchITunes(term){
   return (data?.results||[]).map(t=>({ title:t.trackName, artist:t.artistName, cover:t.artworkUrl100||t.artworkUrl60||'', link:t.trackViewUrl||'' }));
 }
 
-/* ------------ Submit to Google Sheet (JSONP) ------------ */
-function openThankYou(){ const ov = document.getElementById('tyOverlay'); if(ov) ov.style.display='flex'; }
-function redirectAfterDelay(){ setTimeout(()=>{ window.location.href = REDIRECT_URL; }, REDIRECT_DELAY_MS); }
+/* ------------ Submit ------------ */
+function openThankYou(){ const ov=document.getElementById('tyOverlay'); if(ov) ov.style.display='flex'; }
+function redirectAfterDelay(){ setTimeout(()=>{ window.location.href=REDIRECT_URL; }, REDIRECT_DELAY_MS); }
 
 async function submitRequest(){
-  const name = nameEl.value.trim();
-  const title = songTitleEl.value.trim();
-  const artist = artistEl.value.trim();
-  const link = linkEl.value.trim();
-
+  const name=nameEl.value.trim();
+  const title=songTitleEl.value.trim();
+  const artist=artistEl.value.trim();
+  const link=linkEl.value.trim();
   if(!name){ setStatus('Please enter your name.', true); nameEl.focus(); return; }
   if(!title){ setStatus('Please pick a track from the list.', true); q.focus(); return; }
 
-  // Anti-spam: block same name+song for 60s
-  const key = spamKey(name, title);
-  const now = Date.now();
-  const prev = lastSubmits.get(key) || 0;
-  if(now - prev < 60000){ setStatus('Hang tight—just submitted that one.', true); return; }
+  const key= (name||'').toLowerCase().trim()+'||'+(title||'').toLowerCase().trim();
+  const now=Date.now(); const prev=lastSubmits.get(key)||0;
+  if(now-prev<60000){ setStatus('Hang tight—just submitted that one.', true); return; }
   lastSubmits.set(key, now);
 
   setStatus('Saving your request…');
-
-  const qs = new URLSearchParams({
-    mode: 'write',
-    event: EVENT_CODE,
-    name,
-    song_title: title,
-    artist,
-    link,
-    ua: navigator.userAgent,
-    referer: document.referrer || ''
+  const qs=new URLSearchParams({
+    mode:'write',
+    event:EVENT_CODE,
+    name, song_title:title, artist, link,
+    ua:navigator.userAgent, referer:document.referrer||''
   });
-
   try{
-    const res = await jsonp(`${ENDPOINT_URL}?${qs.toString()}`, 'callback');
-    if(res && res.ok){
-      setStatus('Saved!');
-      openThankYou(); redirectAfterDelay();
-    }else{
-      setStatus('Couldn’t save (server error). Try again?', true);
-    }
-  }catch{
-    setStatus('Couldn’t reach the server. Are you online?', true);
-  }
+    const res=await jsonp(`${ENDPOINT_URL}?${qs.toString()}`,'callback');
+    if(res && res.ok){ setStatus('Saved!'); openThankYou(); redirectAfterDelay(); }
+    else{ setStatus('Couldn’t save (server error). Try again?', true); }
+  }catch{ setStatus('Couldn’t reach the server. Are you online?', true); }
 }
 
-/* ------------ Events ------------ */
-let debounce = null, lastTerm = '';
+/* ------------ On load ------------ */
+let debounce=null,lastTerm='';
 q.addEventListener('input', ()=>{
-  const raw = q.value; clearBtn.style.display = raw.length>=1 ? 'inline-grid' : 'none';
-  const t = raw.trim(); if(t===lastTerm) return; lastTerm=t;
+  const raw=q.value; clearBtn.style.display = raw.length>=1 ? 'inline-grid' : 'none';
+  const t=raw.trim(); if(t===lastTerm) return; lastTerm=t;
   clearTimeout(debounce);
-  if(!t){ setStatus(''); clearResults(); /* keep card */ enableSubmitIfReady(); return; }
+  if(!t){ setStatus(''); clearResults(); enableSubmitIfReady(); return; }
   setStatus('Searching…');
-  debounce = setTimeout(async ()=>{
-    try{
-      const list = await searchITunes(t);
+  debounce=setTimeout(async ()=>{
+    try{ const list=await searchITunes(t);
       if(list.length){ renderResults(list); setStatus(''); } else { clearResults(); setStatus('No results'); }
     }catch{ clearResults(); setStatus('Search failed.', true); }
   }, 260);
 });
 q.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); const t=q.value.trim(); if(t) lastTerm=''; }});
-clearBtn.addEventListener('click', ()=>{ q.value=''; lastTerm=''; q.focus({preventScroll:true}); clearBtn.style.display='none'; setStatus(''); clearResults(); /* leave selection */ });
+clearBtn.addEventListener('click', ()=>{ q.value=''; lastTerm=''; q.focus({preventScroll:true}); clearBtn.style.display='none'; setStatus(''); clearResults(); });
 nameEl.addEventListener('input', enableSubmitIfReady);
 submitBtn.addEventListener('click', submitRequest);
-window.addEventListener('load', ()=>{ nameEl?.focus({preventScroll:true}); });
+
+window.addEventListener('load', async ()=>{
+  nameEl?.focus({preventScroll:true});
+  if(!EVENT_CODE){
+    try{
+      const data = await jsonp(`${ENDPOINT_URL}?mode=getevent&key=main`, 'callback');
+      if(data && data.ok){
+        EVENT_CODE = (data.value || '').trim();
+      }
+    }catch{}
+  }
+});
 </script>
 </body>
 </html>
