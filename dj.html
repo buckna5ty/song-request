@@ -42,7 +42,10 @@
 
   <div class="grid">
     <div class="card">
-      <div class="row"><div class="pill" id="countPill">0 unique requests</div><div class="pill" id="dbgPill" style="margin-left:8px; display:none;"></div></div>
+      <div class="row">
+        <div class="pill" id="countPill">0 unique requests</div>
+        <div class="pill" id="dbgPill" style="margin-left:8px; display:none;"></div>
+      </div>
       <div class="feed" id="feed"></div>
 
       <details id="playedBox" style="margin-top:10px;">
@@ -97,6 +100,18 @@ function jsonp(url){
   });
 }
 
+/* ---- normalize event: accept full URLs or plain codes ---- */
+function extractCode(v){
+  const s = (v==null?'':String(v)).trim();
+  if (!s) return '';
+  try {
+    const u = new URL(s);
+    const ev = (u.searchParams.get('event') || '').trim();
+    if (ev) return ev.toLowerCase();
+  } catch(_) {}
+  return s.toLowerCase();
+}
+
 /* Utilities */
 function dedupe(rows){
   const seen=new Set(), uniq=[], spam=[];
@@ -145,7 +160,7 @@ function renderLists(all){
     .slice(0,10).forEach(([artist,c],i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${artist}</td><td><span class="badge">${c}</span></td>`; topArtistsEl.appendChild(tr); });
 }
 
-/* ----- Events list ----- */
+/* ----- Active events ----- */
 async function loadActiveEvents(){
   const prev = eventSelect.value;
   try{
@@ -180,9 +195,11 @@ async function loadActiveEvents(){
   }
 }
 
-/* ----- Robust reader that matches many backends ----- */
+/* ----- Robust reader + client filter ----- */
 async function fetchRequestsFor(code){
-  // Try several server-side filters…
+  const codeNorm = code.trim().toLowerCase();
+
+  // Try several server-side filters first…
   const attempts = [
     `${ENDPOINT_URL}?mode=read&event=${encodeURIComponent(code)}&limit=2000`,
     `${ENDPOINT_URL}?mode=read&code=${encodeURIComponent(code)}&limit=2000`,
@@ -193,18 +210,20 @@ async function fetchRequestsFor(code){
     try{
       const d = await jsonp(u);
       if (d && d.ok && Array.isArray(d.rows) && d.rows.length){
-        showDbg(`server-filter ok (${new URL(u).searchParams.get('mode')}) • ${d.rows.length} rows`);
-        return d.rows;
+        // still normalize, just in case
+        const rows = d.rows.filter(r => extractCode(r.event) === codeNorm);
+        showDbg(`server-filter ok • ${rows.length} rows`);
+        return rows;
       }
     }catch(_e){}
   }
+
   // Fallback: pull all and filter on client
   try{
     const d = await jsonp(`${ENDPOINT_URL}?mode=read&limit=5000`);
     if (d && d.ok && Array.isArray(d.rows)){
       const rows = d.rows;
-      const norm = s => String(s||'').trim().toLowerCase();
-      const filtered = rows.filter(r => norm(r.event) === norm(code));
+      const filtered = rows.filter(r => extractCode(r.event) === codeNorm);
       showDbg(`client-filter (${rows.length}→${filtered.length})`);
       return filtered;
     }
