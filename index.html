@@ -6,15 +6,17 @@
 <title>Song Request • David Charles Events</title>
 <style>
   :root{
-    /* Dark theme tokens (per your colors) */
+    /* Dark theme tokens */
     --bg:#212121;           /* page background */
     --surface:#303030;      /* inputs & cards */
-    --surface-2:#2a2a2a;    /* results items/secondary surface */
+    --surface-2:#343434;    /* results items/secondary surface (lightened) */
+    --surface-2-hover:#3d3d3d;
     --ink:#f2f2f2;          /* primary text */
     --muted:#bdbdbd;        /* secondary text */
     --border:#3a3a3a;       /* strokes */
-    --teal:#14b8a6;         /* accent */
-    --ring:rgba(20,184,166,.30);
+    --accent:#14b8a6;       /* still used for button */
+    --focus:#e6e6e6;        /* focus border for inputs */
+    --ring:rgba(255,255,255,.22); /* subtle white glow */
     --radius:12px;
     --field-max:640px;
   }
@@ -27,7 +29,6 @@
   html,body{ margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
   .wrap{ width:100%; max-width:960px; margin:0 auto; padding:16px 12px 48px; }
   .dce-logo{text-align:center; margin:14px 0 6px;}
-  /* keep same size behavior as before */
   .dce-logo img{ max-width:min(220px,60vw); height:auto; }
 
   .app-title{
@@ -45,9 +46,13 @@
     border:1px solid var(--border); border-radius:var(--radius);
     background:var(--surface); color:var(--ink);
     font-size:16px; outline:none;
+    transition: box-shadow .12s ease, border-color .12s ease;
   }
   input[type="text"]::placeholder{ color:#9e9e9e; }
-  input[type="text"]:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
+  input[type="text"]:focus{
+    border-color:var(--focus);
+    box-shadow:0 0 0 3px var(--ring);
+  }
 
   /* search field + clear button */
   .field{ position:relative; }
@@ -55,13 +60,17 @@
     width:100%; height:52px; padding:0 42px 0 14px;
     border:1px solid var(--border); border-radius:var(--radius);
     background:var(--surface); color:var(--ink); font-size:16px;
+    transition: box-shadow .12s ease, border-color .12s ease;
   }
   .search::placeholder{ color:#9e9e9e; }
-  .search:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
+  .search:focus{
+    border-color:var(--focus);
+    box-shadow:0 0 0 3px var(--ring);
+  }
   .clear{
     position:absolute; right:8px; top:50%; transform:translateY(-50%);
     width:32px; height:32px; border-radius:50%; display:none; align-items:center; justify-content:center;
-    border:1px solid var(--border); background:var(--surface-2); color:#e0e0e0; cursor:pointer; user-select:none; line-height:1; font-size:18px;
+    border:1px solid var(--border); background:#2b2b2b; color:#e0e0e0; cursor:pointer; user-select:none; line-height:1; font-size:18px;
   }
   .clear.show{ display:flex; }
   .clear:active{ transform:translateY(-50%) scale(0.98); }
@@ -74,15 +83,15 @@
     padding:10px; border:1px solid var(--border); border-radius:12px;
     background:var(--surface-2); transition:background .15s,transform .06s,border-color .15s; cursor:pointer; margin-bottom:8px;
   }
-  .item:hover{ background:#353535; } .item:active{ transform:scale(.995); }
+  .item:hover{ background:var(--surface-2-hover); } .item:active{ transform:scale(.995); }
   .cover{ width:56px;height:56px;border-radius:10px;object-fit:cover;background:#1f1f1f; color:#9aa6b2; display:grid; place-items:center; font-size:12px; }
   .info{ min-width:0; }
   .ttl{ margin:0 0 2px; font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
   .art{ margin:0; color:#cfcfcf; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
   /* selected card */
-  .selected{ margin-top:6px; border:1px solid var(--border); border-radius:12px; background:var(--surface); display:none; }
-  .selected.active{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
+  .selected{ margin-top:6px; border:1px solid var(--border); border-radius:12px; background:var(--surface); display:none; transition: box-shadow .12s ease, border-color .12s ease; }
+  .selected.active{ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring); }
   .sel-inner{ display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center; padding:10px; }
   .sel-cover{ width:72px;height:72px;border-radius:12px;object-fit:cover;background:#1f1f1f;color:#9aa6b2;display:grid;place-items:center;font-size:14px; }
   .sel-text{ min-width:0; }
@@ -95,7 +104,7 @@
   /* submit */
   .actions{ width:100%; max-width:var(--field-max); margin:12px auto 0; }
   .btn{
-    width:100%; height:54px; border:1px solid var(--teal); background:var(--teal); color:#062c2a; border-radius:14px;
+    width:100%; height:54px; border:1px solid var(--accent); background:var(--accent); color:#062c2a; border-radius:14px;
     cursor:pointer; font-weight:800; letter-spacing:.03em; font-size:16px; display:inline-flex; align-items:center; justify-content:center;
     transform:translateZ(0); transition:transform .06s, filter .15s, opacity .15s, background .15s;
   }
@@ -122,7 +131,7 @@
 
   /* optional: debug pill (shown with ?debug=1) */
   .dbg{ display:none; width:100%; max-width:var(--field-max); margin:10px auto 0;
-        color:#0f766e; background:rgba(15,118,110,.15); border:1px solid rgba(45,212,191,.35);
+        color:#a7f3d0; background:rgba(45,212,191,.12); border:1px solid rgba(45,212,191,.35);
         border-radius:999px; padding:6px 12px; font-size:12px; }
   .dbg.show{ display:block; }
 </style>
@@ -130,7 +139,6 @@
 <body>
 <div class="wrap">
   <div class="dce-logo">
-    <!-- use your new file path -->
     <img src="assets/dce-logo.png" alt="David Charles Events" onerror="this.style.display='none'">
   </div>
   <div class="app-title">SONG REQUEST</div>
@@ -218,7 +226,7 @@ const nameInput=$('#yourName'), q=$('#q'), clearBtn=$('#clearBtn'), resultsEl=$(
       selectedBox=$('#selected'), statusEl=$('#status'), submitBtn=$('#submitBtn'),
       selTitle=$('#selTitle'), selArtist=$('#selArtist'); let selCoverEl=$('#selCover');
 const titleInput=$('#songTitle'), artistInput=$('#artist'), linkInput=$('#link');
-const tyOverlay=$('#tyOverlay'); const btnTxt=$('.btntxt'); const btnSpin=$('.spin');
+const tyOverlay=$('#tyOverlay'); const btnTxt=document.querySelector('.btntxt'); const btnSpin=document.querySelector('.spin');
 
 function showDebug(){
   const pill=document.getElementById('debugPill');
@@ -260,7 +268,6 @@ async function searchITunes(term){
       return (data?.results||[]).map(t=>({title:t.trackName, artist:t.artistName, cover:t.artworkUrl100||t.artworkUrl60, link:t.trackViewUrl}));
     }
   }catch(_e){}
-  // JSONP fallback
   try{
     const data = await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=8`, 'callback');
     return (data?.results||[]).map(t=>({title:t.trackName, artist:t.artistName, cover:t.artworkUrl100||t.artworkUrl60, link:t.trackViewUrl}));
@@ -281,8 +288,8 @@ async function searchMB(term){
     if(!r.ok) return [];
     const data=await r.json();
     return (data.recordings||[]).map(rec=>{
-      const ac=rec['artist-credit']; const artist=ac && ac[0] && ac[0].name ? ac[0] : null;
-      return {title:rec.title, artist:artist?artist.name:'', cover:'', link:`https://musicbrainz.org/recording/${rec.id}`};
+      const ac=rec['artist-credit']; const artist=ac && ac[0] && ac[0].name ? ac[0].name : '';
+      return {title:rec.title, artist, cover:'', link:`https://musicbrainz.org/recording/${rec.id}`};
     });
   }catch(_e){ return []; }
 }
@@ -398,10 +405,10 @@ function writeRequest(){
 
   // Fire-and-forget JSONP; we do not block UX on response
   const cb = 'cb_' + Math.random().toString(36).slice(2);
-  window[cb] = (data)=>{ try{ delete window[cb]; }catch{} /* no-op */ };
+  window[cb] = (data)=>{ try{ delete window[cb]; }catch{} };
   const s = document.createElement('script');
   s.src = ENDPOINT_URL + '?' + qs.toString() + '&callback=' + cb + '&t=' + Date.now();
-  s.onerror = ()=>{ try{ delete window[cb]; }catch{} /* no-op */ };
+  s.onerror = ()=>{ try{ delete window[cb]; }catch{} };
   document.body.appendChild(s);
 
   // Reset and redirect back to same page (keeping ?event=)
