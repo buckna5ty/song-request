@@ -6,8 +6,17 @@
 <title>Song Request • David Charles Events</title>
 <style>
   :root{
-    --teal:#0ea5a6; --ring:rgba(14,165,166,.25); --border:#e5e7eb; --radius:12px;
-    --bg:#f3f2ff; --ink:#111; --muted:#616161; --field-max:640px;
+    /* Dark theme tokens */
+    --bg:#0b0f14;           /* page background */
+    --surface:#121826;      /* cards/fields */
+    --surface-2:#0f1623;    /* deeper surface */
+    --ink:#e5e7eb;          /* primary text */
+    --muted:#9aa6b2;        /* secondary text */
+    --border:#243041;       /* strokes */
+    --teal:#14b8a6;         /* accent (submit/focus) */
+    --ring:rgba(20,184,166,.35);
+    --radius:12px;
+    --field-max:640px;
   }
   @font-face{
     font-family:"TexGyreAdventorBold";
@@ -18,31 +27,39 @@
   html,body{ margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
   .wrap{ width:100%; max-width:960px; margin:0 auto; padding:16px 12px 48px; }
   .dce-logo{text-align:center; margin:14px 0 6px;}
-  .dce-logo img{ max-width:min(220px,60vw); height:auto; }
+  .dce-logo img{ max-width:min(220px,60vw); height:auto; filter:brightness(.9) contrast(1.1); }
   .app-title{
-    text-align:center; margin:0 auto 26px; /* increased spacing */
+    text-align:center; margin:0 auto 26px;
     font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    letter-spacing:.06em; line-height:1.05; font-size:clamp(22px,6vw,38px); color:#111;
+    letter-spacing:.06em; line-height:1.05; font-size:clamp(22px,6vw,38px); color:#fff;
   }
 
   /* form rows */
   .row{ width:100%; max-width:var(--field-max); margin:0 auto; }
-  label{ display:block; font-size:14px; color:#475569; margin:10px 0 6px; }
+  label{ display:block; font-size:14px; color:var(--muted); margin:10px 0 6px; }
 
   input[type="text"]{
-    width:100%; height:52px; padding:0 14px; border:1px solid var(--border); border-radius:var(--radius); background:#fff;
+    width:100%; height:52px; padding:0 14px;
+    border:1px solid var(--border); border-radius:var(--radius);
+    background:var(--surface); color:var(--ink);
     font-size:16px; outline:none;
   }
+  input[type="text"]::placeholder{ color:#748295; }
   input[type="text"]:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
 
   /* search field + clear button */
   .field{ position:relative; }
-  .search{ width:100%; height:52px; padding:0 42px 0 14px; border:1px solid var(--border); border-radius:var(--radius); background:#fff; font-size:16px; }
+  .search{
+    width:100%; height:52px; padding:0 42px 0 14px;
+    border:1px solid var(--border); border-radius:var(--radius);
+    background:var(--surface); color:var(--ink); font-size:16px;
+  }
+  .search::placeholder{ color:#748295; }
   .search:focus{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
   .clear{
     position:absolute; right:8px; top:50%; transform:translateY(-50%);
     width:32px; height:32px; border-radius:50%; display:none; align-items:center; justify-content:center;
-    border:1px solid var(--border); background:#fafafa; color:#555; cursor:pointer; user-select:none; line-height:1; font-size:18px;
+    border:1px solid var(--border); background:var(--surface-2); color:#cbd5e1; cursor:pointer; user-select:none; line-height:1; font-size:18px;
   }
   .clear.show{ display:flex; }
   .clear:active{ transform:translateY(-50%) scale(0.98); }
@@ -53,46 +70,46 @@
   .item{
     display:grid; grid-template-columns:56px 1fr; align-items:center; gap:12px;
     padding:10px; border:1px solid var(--border); border-radius:12px;
-    background:#fff; transition:background .15s,transform .06s,border-color .15s; cursor:pointer; margin-bottom:8px;
+    background:var(--surface-2); transition:background .15s,transform .06s,border-color .15s; cursor:pointer; margin-bottom:8px;
   }
-  .item:hover{ background:#f8fafc; } .item:active{ transform:scale(.995); }
-  .cover{ width:56px;height:56px;border-radius:10px;object-fit:cover;background:#e9eef0; color:#7a8a8d; display:grid; place-items:center; font-size:12px; }
+  .item:hover{ background:#152033; } .item:active{ transform:scale(.995); }
+  .cover{ width:56px;height:56px;border-radius:10px;object-fit:cover;background:#1f2937; color:#7a8a8d; display:grid; place-items:center; font-size:12px; }
   .info{ min-width:0; }
-  .ttl{ margin:0 0 2px; font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .art{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ttl{ margin:0 0 2px; font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
+  .art{ margin:0; color:#b6c2d1; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
   /* selected card */
-  .selected{ margin-top:6px; border:1px solid var(--border); border-radius:12px; background:#fff; display:none; }
+  .selected{ margin-top:6px; border:1px solid var(--border); border-radius:12px; background:var(--surface); display:none; }
   .selected.active{ border-color:var(--teal); box-shadow:0 0 0 4px var(--ring); }
   .sel-inner{ display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center; padding:10px; }
-  .sel-cover{ width:72px;height:72px;border-radius:12px;object-fit:cover;background:#e9eef0;color:#7a8a8d;display:grid;place-items:center;font-size:14px; }
+  .sel-cover{ width:72px;height:72px;border-radius:12px;object-fit:cover;background:#1f2937;color:#7a8a8d;display:grid;place-items:center;font-size:14px; }
   .sel-text{ min-width:0; }
-  .sel-title{ margin:0 0 2px; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .sel-artist{ margin:0; color:#555; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sel-title{ margin:0 0 2px; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
+  .sel-artist{ margin:0; color:#b6c2d1; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-  .status{ margin-top:6px; font-size:13px; color:#616161; min-height:0; }
+  .status{ margin-top:6px; font-size:13px; color:var(--muted); min-height:0; }
   .status:empty{ margin-top:0; }
 
   /* submit */
   .actions{ width:100%; max-width:var(--field-max); margin:12px auto 0; }
   .btn{
-    width:100%; height:54px; border:1px solid #111; background:#111; color:#fff; border-radius:14px;
+    width:100%; height:54px; border:1px solid var(--teal); background:var(--teal); color:#042827; border-radius:14px;
     cursor:pointer; font-weight:800; letter-spacing:.03em; font-size:16px; display:inline-flex; align-items:center; justify-content:center;
-    transform:translateZ(0); transition:transform .06s, filter .15s, opacity .15s;
+    transform:translateZ(0); transition:transform .06s, filter .15s, opacity .15s, background .15s;
   }
-  .btn:hover{ filter:brightness(.96); }
+  .btn:hover{ filter:brightness(1.05); }
   .btn:active{ transform:scale(0.985); }
-  .btn[disabled]{ opacity:.65; cursor:not-allowed; }
-  .btn .spin{ width:18px; height:18px; margin-right:10px; border-radius:50%; border:2px solid rgba(255,255,255,.5); border-top-color:#fff; animation:spin .8s linear infinite; display:none; }
+  .btn[disabled]{ opacity:.7; cursor:not-allowed; }
+  .btn .spin{ width:18px; height:18px; margin-right:10px; border-radius:50%; border:2px solid rgba(4,40,39,.4); border-top-color:#042827; animation:spin .8s linear infinite; display:none; }
   .btn.loading .spin{ display:inline-block; }
   @keyframes spin{ to{ transform:rotate(360deg);} }
 
-  /* thank-you overlay */
-  .ty-overlay{ position:fixed; inset:0; background:#fff; display:none; align-items:center; justify-content:center; z-index:9999; }
-  .ty-wrap{ text-align:center; padding:24px; max-width:92vw; }
-  .ty-icon{ width:96px; height:96px; margin:0 auto 22px; display:grid; place-items:center; border-radius:50%; background:#22c55e; box-shadow:0 6px 18px rgba(34,197,94,.35); color:#fff; font-size:52px; }
-  .ty-title{ font-family:"TexGyreAdventorBold", Inter, system-ui; font-size:clamp(28px,7.8vw,56px); line-height:1.05; margin:0 0 8px; color:#0f172a;}
-  .ty-sub{ font:500 16px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#64748b; margin:0;}
+  /* thank-you overlay (dark) */
+  .ty-overlay{ position:fixed; inset:0; background:rgba(11,15,20,.98); display:none; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(2px); }
+  .ty-wrap{ text-align:center; padding:24px; max-width:92vw; color:#e6ffe6; }
+  .ty-icon{ width:96px; height:96px; margin:0 auto 22px; display:grid; place-items:center; border-radius:50%; background:#22c55e; box-shadow:0 6px 18px rgba(34,197,94,.35); color:#052911; font-size:52px; }
+  .ty-title{ font-family:"TexGyreAdventorBold", Inter, system-ui; font-size:clamp(28px,7.8vw,56px); line-height:1.05; margin:0 0 8px; color:#d1fae5;}
+  .ty-sub{ font:500 16px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#b7f7d9; margin:0;}
 
   /* mobile tweaks */
   @media (max-width:480px){
@@ -102,7 +119,9 @@
   }
 
   /* optional: debug pill (shown with ?debug=1) */
-  .dbg{ display:none; width:100%; max-width:var(--field-max); margin:10px auto 0; color:#0f766e; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:999px; padding:6px 12px; font-size:12px; }
+  .dbg{ display:none; width:100%; max-width:var(--field-max); margin:10px auto 0;
+        color:#0f766e; background:rgba(15,118,110,.15); border:1px solid rgba(45,212,191,.35);
+        border-radius:999px; padding:6px 12px; font-size:12px; }
   .dbg.show{ display:block; }
 </style>
 </head>
@@ -115,13 +134,13 @@
 
   <div class="row">
     <label for="yourName">What's your name?</label>
-    <input type="text" id="yourName" autocomplete="name" />
+    <input type="text" id="yourName" autocomplete="name" placeholder="Your name" />
   </div>
 
   <div class="row" style="margin-top:8px;">
     <label for="q">Search Song, Artist or Lyrics</label>
     <div class="field">
-      <input id="q" class="search" type="text" placeholder="start typing..." autocomplete="off" inputmode="search" />
+      <input id="q" class="search" type="text" placeholder="Start typing…" autocomplete="off" inputmode="search" />
       <button id="clearBtn" class="clear" type="button" aria-label="Clear search">×</button>
     </div>
 
@@ -203,7 +222,7 @@ function showDebug(){
 }
 if (DEBUG) showDebug();
 
-function setStatus(m='',err=false){ statusEl.textContent=m; statusEl.style.color=err?'#b00020':'#616161'; }
+function setStatus(m='',err=false){ statusEl.textContent=m; statusEl.style.color=err?'#fda4af':var(--muted); }
 function clearResults(){ resultsEl.innerHTML=''; }
 function showResults(){ resultsEl.classList.remove('hidden'); }
 function hideResults(){ resultsEl.classList.add('hidden'); clearResults(); }
