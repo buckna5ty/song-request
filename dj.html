@@ -22,7 +22,7 @@
   details{ background:#fff; border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
   details > summary{ cursor:pointer; font-weight:600; }
   table{ width:100%; border-collapse:separate; border-spacing:0 8px; }
-  th{ text-align:left; font-size:12px; color:var(--sub); font-weight:600; }
+  th{ text-align:left; font-size:12px; color:#475569; font-weight:600; }
   td{ background:#fff; border:1px solid var(--border); padding:10px 12px; }
   td:first-child{ border-radius:10px 0 0 10px; } td:last-child{ border-radius:0 10px 10px 0; }
   .badge{ display:inline-block; min-width:26px; text-align:center; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background:#fff; font-size:12px; }
@@ -42,7 +42,7 @@
 
   <div class="grid">
     <div class="card">
-      <div class="row"><div class="pill" id="countPill">0 unique requests</div></div>
+      <div class="row"><div class="pill" id="countPill">0 unique requests</div><div class="pill" id="dbgPill" style="margin-left:8px; display:none;"></div></div>
       <div class="feed" id="feed"></div>
 
       <details id="playedBox" style="margin-top:10px;">
@@ -67,7 +67,10 @@
 </div>
 
 <script>
+/* -------- CONFIG -------- */
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxZ9ylpDohWZnp1Krsn9THEPEciFv68uBB5unr0a41qNTesaOBkCWsQOeiucY4asIYH5A/exec';
+/* ------------------------ */
+
 const urlp = new URLSearchParams(location.search);
 const PRESELECT_EVENT = (urlp.get('event') || '').trim();
 
@@ -75,10 +78,13 @@ const $=s=>document.querySelector(s);
 const eventSelect=$('#eventSelect'), feedEl=$('#feed'),
       playedList=$('#playedList'), spamList=$('#spamList'),
       topSongsEl=$('#topSongs tbody'), topArtistsEl=$('#topArtists tbody'),
-      statusEl=$('#status'), countPill=$('#countPill'),
+      statusEl=$('#status'), countPill=$('#countPill'), dbgPill=$('#dbgPill'),
       btnRefresh=$('#refresh');
 
 function setStatus(m){ statusEl.textContent = m || ''; }
+function showDbg(m){ dbgPill.style.display='inline-block'; dbgPill.textContent=m; }
+
+/* JSONP helper */
 function jsonp(url){
   return new Promise((resolve,reject)=>{
     const cb='cb_'+Math.random().toString(36).slice(2);
@@ -90,6 +96,8 @@ function jsonp(url){
     document.body.appendChild(s);
   });
 }
+
+/* Utilities */
 function dedupe(rows){
   const seen=new Set(), uniq=[], spam=[];
   for(const r of rows){
@@ -137,21 +145,34 @@ function renderLists(all){
     .slice(0,10).forEach(([artist,c],i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${artist}</td><td><span class="badge">${c}</span></td>`; topArtistsEl.appendChild(tr); });
 }
 
+/* ----- Events list ----- */
 async function loadActiveEvents(){
   const prev = eventSelect.value;
   try{
     const data = await jsonp(`${ENDPOINT_URL}?mode=events_list&active=1`);
     const list = (data && data.ok && Array.isArray(data.events)) ? data.events : [];
     eventSelect.innerHTML = '';
-    if(!list.length){ eventSelect.innerHTML = `<option value="">(no active events)</option>`; return; }
-    list.forEach(ev=>{ const o=document.createElement('option'); o.value=ev.code; o.textContent=ev.name?`${ev.name} (${ev.code})`:ev.code; eventSelect.appendChild(o); });
-
-    // prefer URL param, else keep previous selection if still present, else first item
+    if(!list.length){ eventSelect.innerHTML = `<option value="">(no active events)</option>`; }
+    else{
+      list.forEach(ev=>{
+        const o=document.createElement('option');
+        o.value=ev.code;
+        o.textContent=ev.name?`${ev.name} (${ev.code})`:ev.code;
+        eventSelect.appendChild(o);
+      });
+    }
+    // ensure URL param shows up even if not marked active
+    if (PRESELECT_EVENT && !Array.from(eventSelect.options).some(o=>o.value===PRESELECT_EVENT)) {
+      const extra=document.createElement('option');
+      extra.value = PRESELECT_EVENT;
+      extra.textContent = `${PRESELECT_EVENT} (from URL)`;
+      eventSelect.appendChild(extra);
+    }
     if (PRESELECT_EVENT && Array.from(eventSelect.options).some(o=>o.value===PRESELECT_EVENT)) {
       eventSelect.value = PRESELECT_EVENT;
     } else if (prev && Array.from(eventSelect.options).some(o=>o.value===prev)) {
       eventSelect.value = prev;
-    } else if (!eventSelect.value) {
+    } else if (!eventSelect.value && eventSelect.options.length) {
       eventSelect.selectedIndex = 0;
     }
   }catch{
@@ -159,17 +180,50 @@ async function loadActiveEvents(){
   }
 }
 
+/* ----- Robust reader that matches many backends ----- */
+async function fetchRequestsFor(code){
+  // Try several server-side filters…
+  const attempts = [
+    `${ENDPOINT_URL}?mode=read&event=${encodeURIComponent(code)}&limit=2000`,
+    `${ENDPOINT_URL}?mode=read&code=${encodeURIComponent(code)}&limit=2000`,
+    `${ENDPOINT_URL}?mode=list&event=${encodeURIComponent(code)}&limit=2000`,
+    `${ENDPOINT_URL}?mode=read_by_event&event=${encodeURIComponent(code)}&limit=2000`
+  ];
+  for (const u of attempts){
+    try{
+      const d = await jsonp(u);
+      if (d && d.ok && Array.isArray(d.rows) && d.rows.length){
+        showDbg(`server-filter ok (${new URL(u).searchParams.get('mode')}) • ${d.rows.length} rows`);
+        return d.rows;
+      }
+    }catch(_e){}
+  }
+  // Fallback: pull all and filter on client
+  try{
+    const d = await jsonp(`${ENDPOINT_URL}?mode=read&limit=5000`);
+    if (d && d.ok && Array.isArray(d.rows)){
+      const rows = d.rows;
+      const norm = s => String(s||'').trim().toLowerCase();
+      const filtered = rows.filter(r => norm(r.event) === norm(code));
+      showDbg(`client-filter (${rows.length}→${filtered.length})`);
+      return filtered;
+    }
+  }catch(_e){}
+  showDbg('no rows');
+  return [];
+}
+
+/* ----- Refresh + played toggle ----- */
 async function refresh(){
   const code = (eventSelect.value||'').trim();
   if(!code){ setStatus('Select an active event.'); return; }
   try{
-    const data = await jsonp(`${ENDPOINT_URL}?mode=read&limit=1000&event=${encodeURIComponent(code)}`);
-    if(!data || !data.ok){ setStatus('Server error.'); return; }
-    renderLists(Array.isArray(data.rows)?data.rows:[]);
-    setStatus(`Updated ${new Date().toLocaleTimeString()}`);
+    setStatus(`Reading event: ${code} …`);
+    const rows = await fetchRequestsFor(code);
+    renderLists(rows);
+    setStatus(`Event: ${code} — updated ${new Date().toLocaleTimeString()}`);
   }catch{ setStatus('Fetch failed.'); }
 }
-
 async function setPlayed(id, played){
   if(!id) return;
   try{
@@ -179,7 +233,7 @@ async function setPlayed(id, played){
   }catch{ setStatus('Network error while updating played.'); }
 }
 
-// Timers: requests every 10s; active events every 30s (to catch newly-added events)
+/* ----- Timers ----- */
 let reqTimer=null, evTimer=null;
 function startTimers(){
   if (reqTimer) clearInterval(reqTimer);
