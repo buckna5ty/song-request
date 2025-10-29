@@ -87,11 +87,12 @@ const eventSelect=$('#eventSelect'), feedEl=$('#feed'),
 function setStatus(m){ statusEl.textContent = m || ''; }
 function showDbg(m){ dbgPill.style.display='inline-block'; dbgPill.textContent=m; }
 
-/* JSONP helper */
+/* JSONP helper with cache buster */
 function jsonp(url){
   return new Promise((resolve,reject)=>{
     const cb='cb_'+Math.random().toString(36).slice(2);
-    const s=document.createElement('script'); s.src = url + (url.includes('?')?'&':'?') + 'callback=' + cb;
+    const u = url + (url.includes('?')?'&':'?') + 'callback=' + cb + '&t=' + Date.now();
+    const s=document.createElement('script'); s.src = u;
     const kill=setTimeout(()=>{cleanup(); reject(new Error('timeout'));},9000);
     function cleanup(){ clearTimeout(kill); try{delete window[cb];}catch{} s.remove(); }
     window[cb]=(data)=>{ cleanup(); resolve(data); };
@@ -110,6 +111,26 @@ function extractCode(v){
     if (ev) return ev.toLowerCase();
   } catch(_) {}
   return s.toLowerCase();
+}
+
+/* Does this row belong to code? */
+function rowMatches(r, codeNorm){
+  const candidates = [
+    r.event,
+    r.name,
+    r.code,
+    r.ev,
+    r.evt,
+    r.event_code
+  ];
+  for (const c of candidates){
+    const x = extractCode(c);
+    if (x && x === codeNorm) return true;
+  }
+  // loose substring fallbacks
+  if ((r.event||'').toLowerCase().includes(codeNorm)) return true;
+  if ((r.name||'').toLowerCase().includes(codeNorm)) return true;
+  return false;
 }
 
 /* Utilities */
@@ -132,7 +153,8 @@ function elItem(r, controls=true){
                  <div class="muted" style="margin-left:auto;">${r.name||'anon'}</div>`;
   const btn=document.createElement('button'); btn.className='btn secondary';
   btn.textContent = controls ? 'Mark as played' : 'Mark as unplayed';
-  btn.addEventListener('click', ()=> setPlayed(r.id, controls ? 1 : 0));
+  btn.disabled = !r.id; // disable if we have no id to update
+  btn.addEventListener('click', ()=> r.id && setPlayed(r.id, controls ? 1 : 0));
   div.appendChild(btn);
   return div;
 }
@@ -195,41 +217,14 @@ async function loadActiveEvents(){
   }
 }
 
-/* ----- Robust reader + client filter ----- */
+/* ----- Fetch everything, then match client-side ----- */
 async function fetchRequestsFor(code){
   const codeNorm = code.trim().toLowerCase();
-
-  // Try several server-side filters first…
-  const attempts = [
-    `${ENDPOINT_URL}?mode=read&event=${encodeURIComponent(code)}&limit=2000`,
-    `${ENDPOINT_URL}?mode=read&code=${encodeURIComponent(code)}&limit=2000`,
-    `${ENDPOINT_URL}?mode=list&event=${encodeURIComponent(code)}&limit=2000`,
-    `${ENDPOINT_URL}?mode=read_by_event&event=${encodeURIComponent(code)}&limit=2000`
-  ];
-  for (const u of attempts){
-    try{
-      const d = await jsonp(u);
-      if (d && d.ok && Array.isArray(d.rows) && d.rows.length){
-        // still normalize, just in case
-        const rows = d.rows.filter(r => extractCode(r.event) === codeNorm);
-        showDbg(`server-filter ok • ${rows.length} rows`);
-        return rows;
-      }
-    }catch(_e){}
-  }
-
-  // Fallback: pull all and filter on client
-  try{
-    const d = await jsonp(`${ENDPOINT_URL}?mode=read&limit=5000`);
-    if (d && d.ok && Array.isArray(d.rows)){
-      const rows = d.rows;
-      const filtered = rows.filter(r => extractCode(r.event) === codeNorm);
-      showDbg(`client-filter (${rows.length}→${filtered.length})`);
-      return filtered;
-    }
-  }catch(_e){}
-  showDbg('no rows');
-  return [];
+  const d = await jsonp(`${ENDPOINT_URL}?mode=read&limit=5000`);
+  const rows = (d && d.ok && Array.isArray(d.rows)) ? d.rows : [];
+  const matched = rows.filter(r => rowMatches(r, codeNorm));
+  showDbg(`client-filter (${rows.length} → ${matched.length})`);
+  return matched;
 }
 
 /* ----- Refresh + played toggle ----- */
