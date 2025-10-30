@@ -83,7 +83,7 @@
     display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap;
   }
   .event-title{ margin:0; font-weight:800; color:#fff; font-size:16px; }
-  .event-sub{ margin:0; color:var(--muted); font-size:12px; display:none; } /* hidden per your request */
+  .event-sub{ margin:0; color:var(--muted); font-size:12px; display:none; }
 
   .event-actions{
     display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;
@@ -182,20 +182,29 @@ const pinInput = document.getElementById('pin');
 const pinGo = document.getElementById('pinGo');
 const pinErr = document.getElementById('pinErr');
 
+function focusPinSoon(){ setTimeout(()=>{ try{ pinInput.focus({preventScroll:true}); }catch{} }, 30); }
+
 function unlockIfValid(pin){
   if (String(pin).trim() === ADMIN_PIN) {
     try{ localStorage.setItem('dce_admin_ok','1'); }catch{}
     gate.style.display='none';
   } else {
     pinErr.textContent = 'Incorrect PIN.';
+    focusPinSoon();
   }
 }
 pinGo.addEventListener('click', ()=> unlockIfValid(pinInput.value));
 pinInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') unlockIfValid(pinInput.value); });
 
 try{
-  if (localStorage.getItem('dce_admin_ok') === '1') gate.style.display='none';
-}catch{}
+  if (localStorage.getItem('dce_admin_ok') === '1') {
+    gate.style.display='none';
+  } else {
+    focusPinSoon();
+  }
+}catch{
+  focusPinSoon();
+}
 
 /* ---------- Helpers ---------- */
 const $ = (s)=>document.querySelector(s);
@@ -253,16 +262,13 @@ async function createEvent(){
   btnCreate.setAttribute('disabled','disabled');
 
   try{
-    // Backend: assumes mode=createEvent (or 'adminCreate'), active=1 → add to active list
+    // Backend: create & mark active
     const qs = j2qs({ mode:'createEvent', name, date, code, active:'1' });
     const r = await jsonp(`${ENDPOINT_URL}?${qs}`);
     if (r && r.ok){
       createStatus.textContent = 'Created!';
-      // Optimistic add
       upsertEvent({code, name, date, active:true}, /*optimistic=*/true);
-      // Background refresh to ensure parity
-      setTimeout(loadEvents, 1200);
-      // clear inputs
+      setTimeout(loadEvents, 1200); // background parity refresh
       evtName.value=''; evtDate.value='';
     }else{
       createStatus.textContent = (r && r.error) ? r.error : 'Failed to create event.';
@@ -277,8 +283,8 @@ btnCreate.addEventListener('click', createEvent);
 
 /* ---------- Events List ---------- */
 const eventsEl = $('#events');
-// Preserve which QR is open across refreshes
-const qrOpen = new Set();
+const qrOpen = new Set(); // remember which QR blocks are open
+const eventsMap = new Map(); // code -> event
 
 function renderEvents(events){
   if (!events || !events.length){
@@ -287,7 +293,6 @@ function renderEvents(events){
   }
   eventsEl.innerHTML = '';
   events.forEach(ev=>{
-    // title: "Event Date - Event Name"
     const title = `${prettyDate(ev.date)} - ${ev.name}`;
 
     const card = document.createElement('div');
@@ -299,7 +304,6 @@ function renderEvents(events){
     h.innerHTML = `<h3 class="event-title">${title}</h3>`;
     card.appendChild(h);
 
-    // actions
     const actions = document.createElement('div');
     actions.className = 'event-actions';
 
@@ -328,7 +332,6 @@ function renderEvents(events){
       qrC.classList.toggle('show');
       if (qrC.classList.contains('show')) {
         qrOpen.add(ev.code);
-        // render QR image
         const url = encodeURIComponent(guestUrlFor(ev.code));
         qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${url}`;
         qrImg.alt = `QR for ${ev.name}`;
@@ -363,7 +366,6 @@ function renderEvents(events){
     qrC.append(qrInner, helper);
     card.appendChild(qrC);
 
-    // restore open state after re-render
     if (qrOpen.has(ev.code)) {
       qrC.classList.add('show');
       const url = encodeURIComponent(guestUrlFor(ev.code));
@@ -375,28 +377,24 @@ function renderEvents(events){
   });
 }
 
-// In-memory map by code for fast upsert
-const eventsMap = new Map();
-
 function upsertEvent(ev, optimistic=false){
   eventsMap.set(ev.code, ev);
-  // Re-render list from map to avoid flicker; keep order by date desc
   const list = [...eventsMap.values()].sort((a,b)=> new Date(b.date)-new Date(a.date));
   renderEvents(list);
-  if (!optimistic) {
-    // ensured already in map
-  }
 }
 
 async function loadEvents(){
   eventsEl.innerHTML = `<div class="status">Loading…</div>`;
   try{
-    // Backend: assumes mode=listEvents returns {ok:true, events:[{code,name,date,active}]}
-    const qs = j2qs({ mode:'listEvents' });
+    // IMPORTANT: use listActive so it matches DJ
+    const qs = j2qs({ mode:'listActive' });
     const r = await jsonp(`${ENDPOINT_URL}?${qs}`);
     if (r && r.ok && Array.isArray(r.events)){
       eventsMap.clear();
       r.events.forEach(ev=> upsertEvent(ev));
+      if (r.events.length === 0){
+        eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
+      }
     }else{
       eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
     }
@@ -406,38 +404,25 @@ async function loadEvents(){
 }
 document.getElementById('btnRefresh').addEventListener('click', loadEvents);
 
-/* ---------- CSV Download (client-side build) ---------- */
+/* ---------- CSV Download ---------- */
 async function downloadCSV(code, filename='requests.csv'){
   try{
-    // Backend should return rows for this event.
-    // We’ll use mode=read&event=... which previously returned { ok:true, rows:[...] }
     const qs = j2qs({ mode:'read', event: code });
     const r = await jsonp(`${ENDPOINT_URL}?${qs}`);
     if (!r || !r.ok){ alert('No data.'); return; }
     const rows = Array.isArray(r.rows) ? r.rows : [];
-    // Build CSV
     const headers = ['Timestamp','Name','Song Title','Artist','Link','Event','ID','Played'];
     const lines = [headers.join(',')];
     rows.forEach(obj=>{
-      // normalise keys (support your sheet columns)
       const t = (obj.timestamp||'').toString().replace(/,/g,' ');
       const n = (obj.name||'').toString().replace(/"/g,'""');
-      const st= (obj.song_title||'').toString().replace(/"/g,'"\"');
+      const st= (obj.song_title||'').toString().replace(/"/g,'""');
       const ar= (obj.artist||'').toString().replace(/"/g,'""');
       const lk= (obj.link||'').toString().replace(/"/g,'""');
       const ev= (obj.event||code).toString().replace(/"/g,'""');
       const id= (obj.id||'').toString().replace(/"/g,'""');
       const pl= (obj.played===true || obj.played==='TRUE' || obj.played==='true') ? 'TRUE' : '';
-      lines.push([
-        `"${t}"`,
-        `"${n}"`,
-        `"${st}"`,
-        `"${ar}"`,
-        `"${lk}"`,
-        `"${ev}"`,
-        `"${id}"`,
-        `"${pl}"`
-      ].join(','));
+      lines.push([`"${t}"`,`"${n}"`,`"${st}"`,`"${ar}"`,`"${lk}"`,`"${ev}"`,`"${id}"`,`"${pl}"`].join(','));
     });
     const csv = lines.join('\r\n');
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
@@ -456,7 +441,6 @@ async function deleteEvent(code, cardEl){
   const sure = confirm('Delete this event and all of its rows? This cannot be undone.');
   if (!sure) return;
   try{
-    // Backend: mode=deleteEvent&event=...&wipe=1  (wipe instructs server to delete matching sheet rows)
     const qs = j2qs({ mode:'deleteEvent', event: code, wipe:'1' });
     const r = await jsonp(`${ENDPOINT_URL}?${qs}`);
     if (r && r.ok){
