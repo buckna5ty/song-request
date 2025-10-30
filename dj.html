@@ -2,269 +2,313 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>DCE • DJ View</title>
 <style>
-  :root{ --ink:#0f172a; --sub:#475569; --border:#e2e8f0; --bg:#f8fafc; --card:#ffffff; --radius:14px; }
-  *{ box-sizing:border-box; } body{ margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
-  .wrap{ max-width:1100px; margin:0 auto; padding:18px 14px 40px; }
-  h1{ margin:0 0 14px; font-size:28px; }
-  .row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
-  .card{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; }
-  .grid{ display:grid; gap:14px; grid-template-columns:1.25fr 1fr; }
-  .pill{ border:1px solid var(--border); border-radius:999px; padding:6px 10px; background:#fff; font-size:13px; }
-  .muted{ color:#64748b; font-size:12px; }
-  .feed{ max-height:62vh; overflow:auto; padding-right:4px; }
-  .item{ background:#fff; border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; gap:10px; align-items:center; }
-  .title{ font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:56ch; }
-  .btn{ height:36px; padding:0 12px; border:1px solid var(--border); background:#111; color:#fff; border-radius:10px; cursor:pointer; }
-  .btn.secondary{ background:#fff; color:#111; }
-  details{ background:#fff; border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
-  details > summary{ cursor:pointer; font-weight:600; }
-  table{ width:100%; border-collapse:separate; border-spacing:0 8px; }
-  th{ text-align:left; font-size:12px; color:#475569; font-weight:600; }
-  td{ background:#fff; border:1px solid var(--border); padding:10px 12px; }
-  td:first-child{ border-radius:10px 0 0 10px; } td:last-child{ border-radius:0 10px 10px 0; }
-  .badge{ display:inline-block; min-width:26px; text-align:center; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background:#fff; font-size:12px; }
-  select{ height:36px; border:1px solid var(--border); border-radius:10px; padding:0 10px; }
+  :root{
+    --bg:#212121;
+    --surface:#303030;
+    --surface-2:#343434;
+    --surface-3:#3d3d3d;
+    --ink:#f2f2f2;
+    --muted:#bdbdbd;
+    --border:#3a3a3a;
+    --accent:#1dcec9;
+    --focus:#e6e6e6;
+    --ring:rgba(255,255,255,.22);
+    --radius:14px;
+    --radius-sm:10px;
+    --w:1100px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
+  .wrap{ max-width:var(--w); margin:0 auto; padding:16px 12px 64px; }
+  h1{ margin:6px 0 14px; font-size:clamp(22px,5.2vw,34px); letter-spacing:.02em; }
+
+  .toolbar{
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:12px;
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px;
+  }
+  .select{
+    height:44px; min-width:260px; max-width:100%; padding:0 10px;
+    background:#2b2b2b; color:var(--ink); border:1px solid var(--border); border-radius:10px; font-size:15px;
+  }
+  .btn{
+    height:44px; padding:0 14px; border:1px solid var(--accent); background:var(--accent); color:#000;
+    border-radius:12px; font-weight:800; letter-spacing:.03em; cursor:pointer; user-select:none;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    transition:transform .06s ease, filter .15s ease, box-shadow .06s ease;
+    box-shadow:0 2px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.15);
+  }
+  .btn:hover{ filter:brightness(1.05); }
+  .btn:active{ transform:translateY(1px); box-shadow:inset 0 2px 0 rgba(0,0,0,.25); }
+  .btn.secondary{
+    background:var(--surface-2); color:#fff; border-color:#4a4a4a;
+  }
+
+  .pill{ margin-left:auto; font-size:12px; color:#a7f3d0; background:rgba(45,212,191,.12); border:1px solid rgba(45,212,191,.35);
+         border-radius:999px; padding:6px 10px; display:none; }
+  .pill.show{ display:inline-block; }
+
+  .grid{ display:grid; grid-template-columns:1fr; gap:12px; }
+  @media(min-width:900px){ .grid{ grid-template-columns:1fr 1fr; } }
+
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:12px;
+  }
+  .card h2{ margin:0 0 8px; font-size:18px; }
+  .section{ margin-top:8px; }
+  .rows{ display:flex; flex-direction:column; gap:8px; }
+  .row{
+    display:flex; align-items:flex-start; gap:10px; padding:10px;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:12px;
+  }
+  .meta{ color:var(--muted); font-size:12px; }
+  .title{ margin:0; font-weight:800; color:#fff; }
+  .artist{ margin:2px 0 0; color:#d8d8d8; font-size:13px; }
+  .name{ margin:0; color:#bfbfbf; font-size:12px; }
+  .row-actions{ margin-left:auto; display:flex; gap:8px; }
+  .small{ height:36px; padding:0 10px; border-radius:10px; font-weight:700; }
+
+  details{ background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:10px; }
+  details > summary{ cursor:pointer; font-weight:700; }
+  details[open]{ background:var(--surface-3); }
+
+  .status{ color:var(--muted); font-size:13px; min-height:18px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>DJ View</h1>
 
-  <div class="row">
-    <label for="eventSelect" class="muted">Active Event</label>
-    <select id="eventSelect"><option value="">(loading active events…)</option></select>
-    <button id="refresh" class="btn secondary">Refresh</button>
-    <span id="status" class="muted" style="margin-left:auto;"></span>
+  <div class="toolbar">
+    <select id="eventSel" class="select"></select>
+    <button id="refreshBtn" class="btn secondary">Refresh</button>
+    <span id="debugPill" class="pill"></span>
   </div>
 
   <div class="grid">
-    <div class="card">
-      <div class="row">
-        <div class="pill" id="countPill">0 unique requests</div>
-        <div class="pill" id="dbgPill" style="margin-left:8px; display:none;"></div>
-      </div>
-      <div class="feed" id="feed"></div>
+    <section class="card">
+      <h2>Requests</h2>
+      <div id="reqStatus" class="status"></div>
+      <div id="reqRows" class="rows"></div>
+    </section>
 
-      <details id="playedBox" style="margin-top:10px;">
-        <summary>Played songs</summary>
-        <div id="playedList" class="feed" style="max-height:32vh;"></div>
+    <section class="card">
+      <details id="playedBox">
+        <summary>Played Songs</summary>
+        <div id="playedRows" class="rows section"></div>
       </details>
 
-      <details id="spamBox" style="margin-top:10px;">
-        <summary>Spammed requests (duplicates from same person)</summary>
-        <div id="spamList" class="feed" style="max-height:32vh;"></div>
+      <details id="spamBox" style="margin-top:12px;">
+        <summary>Spammed Requests</summary>
+        <div id="spamRows" class="rows section"></div>
       </details>
-    </div>
-
-    <div class="card">
-      <h3 style="margin:6px 0 10px;">Top Songs</h3>
-      <table id="topSongs"><thead><tr><th>#</th><th>Song</th><th>Artist</th><th>Reqs</th></tr></thead><tbody></tbody></table>
-
-      <h3 style="margin:16px 0 10px;">Top Artists</h3>
-      <table id="topArtists"><thead><tr><th>#</th><th>Artist</th><th>Reqs</th></tr></thead><tbody></tbody></table>
-    </div>
+    </section>
   </div>
 </div>
 
 <script>
-/* -------- CONFIG -------- */
+/* ===================== CONFIG ===================== */
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxT9ELlP_dJ9myw2Z5_kNYIPlJIlHQbbho9L6BehI68DTpOJNSPgxCd9MSPL_Y5PKm-5g/exec';
-/* ------------------------ */
+const POLL_MS = 5000;
+/* ================================================== */
 
 const urlp = new URLSearchParams(location.search);
-const PRESELECT_EVENT = (urlp.get('event') || '').trim();
+const DEBUG = urlp.get('debug') === '1';
+let CURRENT_EVENT = (urlp.get('event') || '').trim();
 
-const $=s=>document.querySelector(s);
-const eventSelect=$('#eventSelect'), feedEl=$('#feed'),
-      playedList=$('#playedList'), spamList=$('#spamList'),
-      topSongsEl=$('#topSongs tbody'), topArtistsEl=$('#topArtists tbody'),
-      statusEl=$('#status'), countPill=$('#countPill'), dbgPill=$('#dbgPill'),
-      btnRefresh=$('#refresh');
+const $ = (s)=>document.querySelector(s);
+const eventSel = $('#eventSel');
+const refreshBtn = $('#refreshBtn');
+const reqRows = $('#reqRows');
+const playedRows = $('#playedRows');
+const spamRows = $('#spamRows');
+const reqStatus = $('#reqStatus');
+const debugPill = $('#debugPill');
 
-function setStatus(m){ statusEl.textContent = m || ''; }
-function showDbg(m){ dbgPill.style.display='inline-block'; dbgPill.textContent=m; }
-
-/* JSONP helper with cache buster */
-function jsonp(url){
-  return new Promise((resolve,reject)=>{
+/* ------------- helpers ------------- */
+function j2qs(o){ return new URLSearchParams(o).toString(); }
+function jsonp(url, cbParam='callback'){
+  return new Promise((res,rej)=>{
     const cb='cb_'+Math.random().toString(36).slice(2);
-    const u = url + (url.includes('?')?'&':'?') + 'callback=' + cb + '&t=' + Date.now();
-    const s=document.createElement('script'); s.src = u;
-    const kill=setTimeout(()=>{cleanup(); reject(new Error('timeout'));},9000);
-    function cleanup(){ clearTimeout(kill); try{delete window[cb];}catch{} s.remove(); }
-    window[cb]=(data)=>{ cleanup(); resolve(data); };
-    s.onerror=()=>{ cleanup(); reject(new Error('jsonp error')); };
+    const s=document.createElement('script');
+    s.src = url + (url.includes('?')?'&':'?') + cbParam + '=' + cb + '&t=' + Date.now();
+    const kill=setTimeout(()=>{ cleanup(); rej(new Error('timeout')); }, 9000);
+    function cleanup(){ clearTimeout(kill); try{ delete window[cb]; }catch{} s.remove(); }
+    window[cb]=(data)=>{ cleanup(); res(data); };
+    s.onerror=()=>{ cleanup(); rej(new Error('jsonp error')); };
     document.body.appendChild(s);
   });
 }
-
-/* ---- normalize event: accept full URLs or plain codes ---- */
-function extractCode(v){
-  const s = (v==null?'':String(v)).trim();
-  if (!s) return '';
-  try {
-    const u = new URL(s);
-    const ev = (u.searchParams.get('event') || '').trim();
-    if (ev) return ev.toLowerCase();
-  } catch(_) {}
-  return s.toLowerCase();
+function showDebug(msg){
+  if (!DEBUG) return;
+  debugPill.classList.add('show');
+  debugPill.textContent = msg;
+}
+function fmtTime(iso){
+  try{ const d=new Date(iso); return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }catch{ return iso; }
 }
 
-/* Does this row belong to code? */
-function rowMatches(r, codeNorm){
-  const candidates = [
-    r.event,
-    r.name,
-    r.code,
-    r.ev,
-    r.evt,
-    r.event_code
-  ];
-  for (const c of candidates){
-    const x = extractCode(c);
-    if (x && x === codeNorm) return true;
+/* ------------- events list ------------- */
+async function loadActiveEvents(){
+  showDebug('Loading events…');
+  try{
+    const qs = j2qs({ mode:'listActive' });
+    const r = await jsonp(`${ENDPOINT_URL}?${qs}`);
+    if (!r || !r.ok){ eventSel.innerHTML=''; return; }
+    const events = Array.isArray(r.events) ? r.events : [];
+    eventSel.innerHTML = '';
+    events.forEach(ev=>{
+      const opt=document.createElement('option');
+      opt.value = ev.code;
+      opt.textContent = `${new Date(ev.date).toLocaleDateString()} — ${ev.name}`;
+      eventSel.appendChild(opt);
+    });
+    if (events.length === 0){
+      CURRENT_EVENT = '';
+      showRequests([]);
+      return;
+    }
+    if (!CURRENT_EVENT || !events.some(e=>e.code===CURRENT_EVENT)){
+      CURRENT_EVENT = events[0].code;
+    }
+    eventSel.value = CURRENT_EVENT;
+    showDebug(`Endpoint ok • Event=${CURRENT_EVENT}`);
+    await loadRequests();
+  }catch(e){
+    showDebug('Events load failed');
   }
-  // loose substring fallbacks
-  if ((r.event||'').toLowerCase().includes(codeNorm)) return true;
-  if ((r.name||'').toLowerCase().includes(codeNorm)) return true;
-  return false;
 }
+eventSel.addEventListener('change', ()=>{
+  CURRENT_EVENT = eventSel.value;
+  const sp = new URLSearchParams(location.search);
+  if (CURRENT_EVENT) sp.set('event', CURRENT_EVENT); else sp.delete('event');
+  history.replaceState(null, '', location.pathname + '?' + sp.toString());
+  loadRequests();
+});
 
-/* Utilities */
-function dedupe(rows){
-  const seen=new Set(), uniq=[], spam=[];
-  for(const r of rows){
-    const key=(r.name||'').trim().toLowerCase()+'||'+(r.song_title||'').trim().toLowerCase();
-    if(seen.has(key)){ spam.push(r); continue; }
-    seen.add(key); uniq.push(r);
-  }
-  return {uniq, spam};
-}
-function groupCounts(items, keyFn){
-  const map=new Map(); for(const it of items){ const k=keyFn(it); map.set(k,(map.get(k)||0)+1); }
-  return Array.from(map.entries()).sort((a,b)=>b[1]-a[1]);
-}
-function elItem(r, controls=true){
-  const div=document.createElement('div'); div.className='item';
-  div.innerHTML=`<div class="title">${r.song_title||'Unknown'} — ${r.artist||''}</div>
-                 <div class="muted" style="margin-left:auto;">${r.name||'anon'}</div>`;
-  const btn=document.createElement('button'); btn.className='btn secondary';
-  btn.textContent = controls ? 'Mark as played' : 'Mark as unplayed';
-  btn.disabled = !r.id; // disable if we have no id to update
-  btn.addEventListener('click', ()=> r.id && setPlayed(r.id, controls ? 1 : 0));
-  div.appendChild(btn);
-  return div;
-}
-function renderLists(all){
-  const notPlayed = all.filter(r=>!r.played);
-  const played    = all.filter(r=> r.played);
-  const {uniq, spam} = dedupe(notPlayed);
+/* ------------- requests ------------- */
+function showRequests(rows){
+  reqRows.innerHTML = '';
+  playedRows.innerHTML = '';
+  spamRows.innerHTML = '';
 
-  feedEl.innerHTML=''; uniq.forEach(r=> feedEl.appendChild(elItem(r, true)));
-  countPill.textContent = `${uniq.length} unique requests`;
+  const seen = new Map(); // name+title
+  const spamList = [];
 
-  playedList.innerHTML=''; played.forEach(r=> playedList.appendChild(elItem(r, false)));
-
-  spamList.innerHTML=''; spam.forEach(r=>{
-    const d=document.createElement('div'); d.className='item';
-    d.innerHTML = `<div class="title">${r.song_title||'Unknown'} — ${r.artist||''}</div>
-                   <div class="muted" style="margin-left:auto;">${r.name||'anon'} (duplicate)</div>`;
-    spamList.appendChild(d);
+  rows.forEach(r=>{
+    const key = `${(r.name||'').trim().toLowerCase()}|${(r.song_title||'').trim().toLowerCase()}`;
+    if (seen.has(key)) spamList.push(r);
+    else seen.set(key, r);
   });
 
-  topSongsEl.innerHTML=''; topArtistsEl.innerHTML='';
-  groupCounts(uniq, r=>(r.song_title||'').trim().toLowerCase()+' | '+(r.artist||'').trim().toLowerCase())
-    .slice(0,10).forEach(([k,c],i)=>{ const [song,artist]=k.split(' | '); const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${song}</td><td>${artist}</td><td><span class="badge">${c}</span></td>`; topSongsEl.appendChild(tr); });
-  groupCounts(uniq, r=>(r.artist||'').trim().toLowerCase())
-    .slice(0,10).forEach(([artist,c],i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${artist}</td><td><span class="badge">${c}</span></td>`; topArtistsEl.appendChild(tr); });
+  const unplayed = [];
+  const played = [];
+  seen.forEach((r)=>{ (String(r.played).toUpperCase()==='TRUE' ? played : unplayed).push(r); });
+
+  const makeRow = (r, includeActions=true)=>{
+    const el = document.createElement('div');
+    el.className = 'row';
+    const text = document.createElement('div');
+    const t = document.createElement('p'); t.className='title'; t.textContent = r.song_title || '(Unknown Title)';
+    const a = document.createElement('p'); a.className='artist'; a.textContent = r.artist || '(Unknown Artist)';
+    const n = document.createElement('p'); n.className='name'; n.textContent = r.name ? `Requested by ${r.name}` : '';
+    text.append(t,a,n);
+    el.appendChild(text);
+
+    if (includeActions){
+      const act = document.createElement('div');
+      act.className = 'row-actions';
+      const markBtn = document.createElement('button');
+      markBtn.className = 'btn secondary small';
+      markBtn.textContent = 'Mark as Played';
+      markBtn.onclick = ()=> togglePlayed(r, true);
+      act.appendChild(markBtn);
+      el.appendChild(act);
+    }
+    return el;
+  };
+
+  const makeSpamRow = (r)=>{
+    const el = document.createElement('div');
+    el.className = 'row';
+    const text = document.createElement('div');
+    const t = document.createElement('p'); t.className='title'; t.textContent = r.song_title || '(Unknown Title)';
+    const a = document.createElement('p'); a.className='artist'; a.textContent = r.artist || '(Unknown Artist)';
+    const n = document.createElement('p'); n.className = 'name'; n.textContent = r.name ? `Spammed by ${r.name}` : '';
+    text.append(t,a,n);
+    el.appendChild(text);
+    return el;
+  };
+
+  unplayed.forEach(r=> reqRows.appendChild(makeRow(r, true)));
+  played.forEach(r=>{
+    const row = makeRow(r, false);
+    const act = document.createElement('div');
+    act.className = 'row-actions';
+    const unBtn = document.createElement('button');
+    unBtn.className = 'btn secondary small';
+    unBtn.textContent = 'Mark as Unplayed';
+    unBtn.onclick = ()=> togglePlayed(r, false);
+    act.appendChild(unBtn);
+    row.appendChild(act);
+    playedRows.appendChild(row);
+  });
+  spamList.forEach(r=> spamRows.appendChild(makeSpamRow(r)));
+
+  reqStatus.textContent = rows.length ? `Loaded ${rows.length} rows (${unplayed.length} unique)` : 'No requests yet.';
 }
 
-/* ----- Active events ----- */
-async function loadActiveEvents(){
-  const prev = eventSelect.value;
+async function loadRequests(){
+  if (!CURRENT_EVENT){ showRequests([]); return; }
   try{
-    const data = await jsonp(`${ENDPOINT_URL}?mode=events_list&active=1`);
-    const list = (data && data.ok && Array.isArray(data.events)) ? data.events : [];
-    eventSelect.innerHTML = '';
-    if(!list.length){ eventSelect.innerHTML = `<option value="">(no active events)</option>`; }
-    else{
-      list.forEach(ev=>{
-        const o=document.createElement('option');
-        o.value=ev.code;
-        o.textContent=ev.name?`${ev.name} (${ev.code})`:ev.code;
-        eventSelect.appendChild(o);
-      });
-    }
-    // ensure URL param shows up even if not marked active
-    if (PRESELECT_EVENT && !Array.from(eventSelect.options).some(o=>o.value===PRESELECT_EVENT)) {
-      const extra=document.createElement('option');
-      extra.value = PRESELECT_EVENT;
-      extra.textContent = `${PRESELECT_EVENT} (from URL)`;
-      eventSelect.appendChild(extra);
-    }
-    if (PRESELECT_EVENT && Array.from(eventSelect.options).some(o=>o.value===PRESELECT_EVENT)) {
-      eventSelect.value = PRESELECT_EVENT;
-    } else if (prev && Array.from(eventSelect.options).some(o=>o.value===prev)) {
-      eventSelect.value = prev;
-    } else if (!eventSelect.value && eventSelect.options.length) {
-      eventSelect.selectedIndex = 0;
-    }
+    showDebug(`Fetching rows for ${CURRENT_EVENT}`);
+    const qs = j2qs({ mode:'read', event: CURRENT_EVENT });
+    const r = await jsonp(`${ENDPOINT_URL}?${qs}`);
+    if (!r || !r.ok) { reqStatus.textContent='Load failed.'; return; }
+    const rows = Array.isArray(r.rows) ? r.rows : [];
+    showRequests(rows);
   }catch{
-    if (!eventSelect.options.length) eventSelect.innerHTML=`<option value="">(failed to load)</option>`;
+    reqStatus.textContent='Load failed.';
   }
 }
 
-/* ----- Fetch everything, then match client-side ----- */
-async function fetchRequestsFor(code){
-  const codeNorm = code.trim().toLowerCase();
-  const d = await jsonp(`${ENDPOINT_URL}?mode=read&limit=5000`);
-  const rows = (d && d.ok && Array.isArray(d.rows)) ? d.rows : [];
-  const matched = rows.filter(r => rowMatches(r, codeNorm));
-  showDbg(`client-filter (${rows.length} → ${matched.length})`);
-  return matched;
-}
-
-/* ----- Refresh + played toggle ----- */
-async function refresh(){
-  const code = (eventSelect.value||'').trim();
-  if(!code){ setStatus('Select an active event.'); return; }
+/* ------------- mark played/unplayed ------------- */
+/* Requires backend handler:
+   mode=setPlayed&id=ROW_ID&played=1|0
+   If you need it, I can drop the Code.gs patch in next. */
+async function togglePlayed(row, toPlayed){
+  if (!row.id){ alert('Missing row ID; cannot update.'); return; }
   try{
-    setStatus(`Reading event: ${code} …`);
-    const rows = await fetchRequestsFor(code);
-    renderLists(rows);
-    setStatus(`Event: ${code} — updated ${new Date().toLocaleTimeString()}`);
-  }catch{ setStatus('Fetch failed.'); }
-}
-async function setPlayed(id, played){
-  if(!id) return;
-  try{
-    const res = await jsonp(`${ENDPOINT_URL}?mode=set_played&id=${encodeURIComponent(id)}&played=${played?1:0}`);
-    if(res && res.ok){ refresh(); }
-    else{ setStatus('Failed to update played state.'); }
-  }catch{ setStatus('Network error while updating played.'); }
+    const qs = j2qs({ mode:'setPlayed', id: row.id, played: toPlayed ? '1':'0' });
+    const r = await jsonp(`${ENDPOINT_URL}?${qs}`);
+    if (r && r.ok) {
+      await loadRequests();
+    } else {
+      alert('Could not update Played.');
+    }
+  }catch{
+    alert('Network error.');
+  }
 }
 
-/* ----- Timers ----- */
-let reqTimer=null, evTimer=null;
-function startTimers(){
-  if (reqTimer) clearInterval(reqTimer);
-  if (evTimer)  clearInterval(evTimer);
-  reqTimer = setInterval(refresh, 10000);
-  evTimer  = setInterval(async ()=>{ await loadActiveEvents(); }, 30000);
+/* ------------- polling ------------- */
+let timer = null;
+function startPoll(){
+  stopPoll();
+  timer = setInterval(loadRequests, POLL_MS);
 }
+function stopPoll(){ if (timer) { clearInterval(timer); timer=null; } }
 
-btnRefresh.addEventListener('click', refresh);
-eventSelect.addEventListener('change', ()=>{ refresh(); });
+refreshBtn.addEventListener('click', loadRequests);
 
+/* ------------- init ------------- */
 window.addEventListener('load', async ()=>{
   await loadActiveEvents();
-  if(eventSelect.value) await refresh();
-  startTimers();
+  startPoll();
 });
 </script>
 </body>
 </html>
-
