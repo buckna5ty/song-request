@@ -6,113 +6,61 @@
 <title>DCE • Admin</title>
 <style>
   :root{
-    --bg:#212121;
-    --surface:#303030;
-    --surface-2:#343434;
-    --surface-3:#3d3d3d;
-    --ink:#f2f2f2;
-    --muted:#bdbdbd;
-    --border:#3a3a3a;
-    --accent:#1dcec9;
-    --focus:#e6e6e6;
-    --ring:rgba(255,255,255,.22);
-    --radius:14px;
-    --radius-sm:10px;
-    --w:980px;
+    --bg:#212121; --surface:#303030; --surface-2:#343434; --surface-3:#3d3d3d;
+    --ink:#f2f2f2; --muted:#bdbdbd; --border:#3a3a3a;
+    --accent:#1dcec9; --focus:#e6e6e6; --ring:rgba(255,255,255,.22);
+    --radius:14px; --radius-sm:10px; --w:980px;
+  }
+  @font-face{
+    font-family:"TexGyreAdventorRegular";
+    src:url("texgyreadventor-regular.otf") format("opentype");
+    font-weight:400; font-style:normal; font-display:swap;
   }
   *{ box-sizing:border-box; }
   html,body{ margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background:var(--bg); color:var(--ink); }
   .wrap{ max-width:var(--w); margin:0 auto; padding:18px 12px 64px; }
-
-  .title{
-    text-align:center; margin:8px 0 18px;
-    font-weight:800; letter-spacing:.04em; font-size:clamp(22px,5.4vw,36px);
-  }
-
+  .title{ text-align:center; margin:8px 0 18px; font-weight:800; letter-spacing:.04em; font-size:clamp(22px,5.4vw,36px); }
   .grid{ display:grid; grid-template-columns:1fr; gap:16px; }
   @media(min-width:900px){ .grid{ grid-template-columns:1fr 1fr; } }
-
-  .card{
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    padding:16px;
-    box-shadow:0 4px 14px rgba(0,0,0,.25);
-  }
-  .card h2{
-    margin:0 0 12px; font-size:18px; letter-spacing:.02em; color:#fff;
-  }
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:0 4px 14px rgba(0,0,0,.25); }
+  .card h2{ margin:0 0 12px; font-size:18px; letter-spacing:.02em; color:#fff; }
   .field{ margin-bottom:10px; }
   .label{ display:block; font-size:13px; color:var(--muted); margin:0 0 6px; }
   .input, .date{
     width:100%; height:48px; padding:0 14px; border:1px solid var(--border); border-radius:var(--radius-sm);
-    background:#2b2b2b; color:var(--ink); outline:none; font-size:16px;
-    transition: box-shadow .12s ease, border-color .12s ease;
+    background:#2b2b2b; color:var(--ink); outline:none; font-size:16px; transition: box-shadow .12s ease, border-color .12s ease;
   }
   .input:focus, .date:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring); }
-
   .row{ display:flex; gap:10px; }
   .row > *{ flex:1; }
-
   .btn{
     height:44px; padding:0 14px; border:1px solid var(--accent); background:var(--accent); color:#000;
     border-radius:12px; font-weight:800; letter-spacing:.03em; cursor:pointer; user-select:none;
     display:inline-flex; align-items:center; justify-content:center; gap:8px;
     transition:transform .06s ease, filter .15s ease, box-shadow .06s ease;
     box-shadow:0 2px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.15);
+    font-family:"TexGyreAdventorRegular", Inter, system-ui, sans-serif;
   }
   .btn:hover{ filter:brightness(1.05); }
   .btn:active{ transform:translateY(1px); box-shadow:inset 0 2px 0 rgba(0,0,0,.25); }
-
-  .btn.secondary{
-    background:var(--surface-2); color:#fff; border-color:#4a4a4a;
-  }
-  .btn.secondary:hover{ filter:brightness(1.03); }
-  .btn.secondary:active{ transform:translateY(1px); box-shadow:inset 0 2px 0 rgba(0,0,0,.35); }
-
-  .btn.warn{
-    background:#ef4444; border-color:#ef4444; color:#fff;
-  }
-
+  .btn.secondary{ background:var(--surface-2); color:#fff; border-color:#4a4a4a; }
+  .btn.warn{ background:#ef4444; border-color:#ef4444; color:#fff; }
   .small{ height:38px; padding:0 12px; border-radius:10px; font-weight:700; }
-
   .events{ display:flex; flex-direction:column; gap:12px; }
-  .event{
-    border:1px solid var(--border); border-radius:12px; background:var(--surface-2);
-    padding:12px;
-  }
-  .event-h{
-    display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap;
-  }
+  .event{ border:1px solid var(--border); border-radius:12px; background:var(--surface-2); padding:12px; }
+  .event-h{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; }
   .event-title{ margin:0; font-weight:800; color:#fff; font-size:16px; }
-  .event-sub{ margin:0; color:var(--muted); font-size:12px; display:none; }
-
-  .event-actions{
-    display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;
-  }
+  .event-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
   .qr-wrap{ margin-top:10px; display:none; }
   .qr-wrap.show{ display:block; }
-  .qr{
-    background:#fff; border-radius:12px; padding:8px; display:inline-block;
-  }
+  .qr{ background:#fff; border-radius:12px; padding:8px; display:inline-block; }
   .help{ font-size:12px; color:var(--muted); margin-top:6px; }
-
   .status{ font-size:13px; color:var(--muted); min-height:18px; margin-top:8px; }
-
-  /* PIN gate */
-  .gate{
-    position:fixed; inset:0; background:rgba(33,33,33, .98); display:flex; align-items:center; justify-content:center; z-index:9999;
-    backdrop-filter:blur(2px);
-  }
-  .gate-card{
-    width:min(420px, 90vw); background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px;
-    text-align:center; box-shadow:0 12px 32px rgba(0,0,0,.35);
-  }
+  .gate{ position:fixed; inset:0; background:rgba(33,33,33,.98); display:flex; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(2px); }
+  .gate-card{ width:min(420px,90vw); background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; text-align:center; box-shadow:0 12px 32px rgba(0,0,0,.35); }
   .gate-card h1{ margin:6px 0 12px; font-size:20px; }
-  .pin-input{
-    width:100%; letter-spacing:0.35em; text-align:center; font-weight:800; font-size:20px;
-  }
+  .pin-input{ width:100%; letter-spacing:0.35em; text-align:center; font-weight:800; font-size:20px; }
   .err{ color:#ffb4b4; font-size:13px; min-height:16px; margin-top:6px; }
-
-  /* util */
   .flex{ display:flex; gap:8px; flex-wrap:wrap; }
   .right{ margin-left:auto; }
 </style>
@@ -134,10 +82,8 @@
   <div class="title">Admin</div>
 
   <div class="grid">
-    <!-- Create Event -->
     <section class="card">
       <h2>Create Event</h2>
-
       <div class="field">
         <label class="label" for="evtDate">Event Date</label>
         <input id="evtDate" class="date" type="date" />
@@ -146,21 +92,16 @@
         <label class="label" for="evtName">Event Name</label>
         <input id="evtName" class="input" type="text" placeholder="e.g., Holbert / Scally Wedding" />
       </div>
-
       <div class="row" style="margin-top:8px;">
         <button id="btnCreate" class="btn">Create Event</button>
         <button id="btnClear" class="btn secondary">Clear</button>
       </div>
-
       <div id="createStatus" class="status"></div>
     </section>
 
-    <!-- Active Events -->
     <section class="card">
       <h2>Active Events</h2>
-      <div id="events" class="events">
-        <div class="status">Loading…</div>
-      </div>
+      <div id="events" class="events"><div class="status">Loading…</div></div>
       <div class="row" style="margin-top:10px;">
         <button id="btnRefresh" class="btn secondary">Refresh</button>
       </div>
@@ -172,60 +113,46 @@
 <script>
 /* ===================== CONFIG ===================== */
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxT9ELlP_dJ9myw2Z5_kNYIPlJIlHQbbho9L6BehI68DTpOJNSPgxCd9MSPL_Y5PKm-5g/exec';
-const GUEST_BASE = 'https://requests.davidcharlesevents.com/'; // change if you host elsewhere
+const GUEST_BASE = 'https://requests.davidcharlesevents.com/';
 const ADMIN_PIN = '9453';
 /* ================================================== */
 
-/* ---------- PIN Gate ---------- */
+/* PIN gate */
 const gate = document.getElementById('gate');
 const pinInput = document.getElementById('pin');
 const pinGo = document.getElementById('pinGo');
 const pinErr = document.getElementById('pinErr');
-
 function focusPinSoon(){ setTimeout(()=>{ try{ pinInput.focus({preventScroll:true}); }catch{} }, 30); }
-
 function unlockIfValid(pin){
-  if (String(pin).trim() === ADMIN_PIN) {
-    try{ localStorage.setItem('dce_admin_ok','1'); }catch{}
-    gate.style.display='none';
-  } else {
-    pinErr.textContent = 'Incorrect PIN.';
-    focusPinSoon();
-  }
+  if (String(pin).trim() === ADMIN_PIN) { try{ localStorage.setItem('dce_admin_ok','1'); }catch{} gate.style.display='none'; }
+  else { pinErr.textContent = 'Incorrect PIN.'; focusPinSoon(); }
 }
 pinGo.addEventListener('click', ()=> unlockIfValid(pinInput.value));
 pinInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') unlockIfValid(pinInput.value); });
+try{ if (localStorage.getItem('dce_admin_ok') === '1') gate.style.display='none'; else focusPinSoon(); }catch{ focusPinSoon(); }
 
-try{
-  if (localStorage.getItem('dce_admin_ok') === '1') {
-    gate.style.display='none';
-  } else {
-    focusPinSoon();
-  }
-}catch{
-  focusPinSoon();
-}
-
-/* ---------- Helpers ---------- */
-const $ = (s)=>document.querySelector(s);
-function j2qs(obj){ return new URLSearchParams(obj).toString(); }
+/* Helpers */
+const $ = s=>document.querySelector(s);
+function j2qs(o){ return new URLSearchParams(o).toString(); }
 function jsonp(url, cbParam='callback'){
   return new Promise((res,rej)=>{
-    const cb = 'cb_'+Math.random().toString(36).slice(2);
-    const s = document.createElement('script');
+    const cb='cb_'+Math.random().toString(36).slice(2);
+    const s=document.createElement('script');
     s.src = url + (url.includes('?')?'&':'?') + cbParam + '=' + cb + '&t=' + Date.now();
-    const kill = setTimeout(()=>{ cleanup(); rej(new Error('timeout')); }, 9000);
+    const kill=setTimeout(()=>{ cleanup(); rej(new Error('timeout')); }, 9000);
     function cleanup(){ clearTimeout(kill); try{ delete window[cb]; }catch{} s.remove(); }
-    window[cb] = (data)=>{ cleanup(); res(data); };
-    s.onerror = ()=>{ cleanup(); rej(new Error('jsonp error')); };
+    window[cb]=(data)=>{ cleanup(); res(data); };
+    s.onerror=()=>{ cleanup(); rej(new Error('jsonp error')); };
     document.body.appendChild(s);
   });
 }
-function prettyDate(d){
-  try{
-    const dt = new Date(d);
-    return dt.toLocaleDateString(undefined,{weekday:'short', year:'numeric', month:'short', day:'numeric'});
-  }catch{ return d; }
+function fmtAdminTitle(dateIso, name){
+  const d = new Date(dateIso);
+  const dow = d.toLocaleDateString(undefined,{weekday:'short'}); // Wed
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${dow} ${mm}.${dd}.${yy} - ${name}`;
 }
 function slugify(name, dateStr){
   const d = dateStr ? new Date(dateStr) : new Date();
@@ -233,137 +160,58 @@ function slugify(name, dateStr){
   const base = (name||'event').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
   return `${base}_${y}${m}${da}`;
 }
-function guestUrlFor(code){
-  const u = new URL(GUEST_BASE);
-  u.searchParams.set('event', code);
-  return u.toString();
-}
+function guestUrlFor(code){ const u=new URL(GUEST_BASE); u.searchParams.set('event',code); return u.toString(); }
 
-/* ---------- Create Event ---------- */
-const evtDate = $('#evtDate');
-const evtName = $('#evtName');
-const btnCreate = $('#btnCreate');
-const btnClear  = $('#btnClear');
-const createStatus = $('#createStatus');
+/* Create Event */
+const evtDate=$('#evtDate'), evtName=$('#evtName'), btnCreate=$('#btnCreate'), btnClear=$('#btnClear'), createStatus=$('#createStatus');
+btnClear.addEventListener('click', ()=>{ evtDate.value=''; evtName.value=''; createStatus.textContent=''; });
 
-btnClear.addEventListener('click', ()=>{
-  evtDate.value = '';
-  evtName.value = '';
-  createStatus.textContent = '';
-});
+const eventsEl=$('#events');
+const eventsMap=new Map(); // code->ev
+const qrOpen=new Set();
 
-async function createEvent(){
-  const name = (evtName.value||'').trim();
-  const date = (evtDate.value||'').trim();
-  if (!name || !date){ createStatus.textContent='Please enter date and name.'; return; }
-  const code = slugify(name, date);
-
-  createStatus.textContent = 'Creating…';
-  btnCreate.setAttribute('disabled','disabled');
-
-  try{
-    // Backend: create & mark active
-    const qs = j2qs({ mode:'createEvent', name, date, code, active:'1' });
-    const r = await jsonp(`${ENDPOINT_URL}?${qs}`);
-    if (r && r.ok){
-      createStatus.textContent = 'Created!';
-      upsertEvent({code, name, date, active:true}, /*optimistic=*/true);
-      setTimeout(loadEvents, 1200); // background parity refresh
-      evtName.value=''; evtDate.value='';
-    }else{
-      createStatus.textContent = (r && r.error) ? r.error : 'Failed to create event.';
-    }
-  }catch(e){
-    createStatus.textContent = 'Network error.';
-  }finally{
-    btnCreate.removeAttribute('disabled');
-  }
-}
-btnCreate.addEventListener('click', createEvent);
-
-/* ---------- Events List ---------- */
-const eventsEl = $('#events');
-const qrOpen = new Set(); // remember which QR blocks are open
-const eventsMap = new Map(); // code -> event
-
-function renderEvents(events){
-  if (!events || !events.length){
-    eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
-    return;
-  }
-  eventsEl.innerHTML = '';
-  events.forEach(ev=>{
-    const title = `${prettyDate(ev.date)} - ${ev.name}`;
-
-    const card = document.createElement('div');
-    card.className = 'event';
-    card.dataset.code = ev.code;
-
-    const h = document.createElement('div');
-    h.className = 'event-h';
-    h.innerHTML = `<h3 class="event-title">${title}</h3>`;
+function renderEvents(list){
+  if (!list || !list.length){ eventsEl.innerHTML = `<div class="status">No Active Events.</div>`; return; }
+  eventsEl.innerHTML='';
+  list.forEach(ev=>{
+    const card=document.createElement('div'); card.className='event'; card.dataset.code = ev.code;
+    const h=document.createElement('div'); h.className='event-h';
+    h.innerHTML = `<h3 class="event-title">${fmtAdminTitle(ev.date, ev.name)}</h3>`;
     card.appendChild(h);
 
-    const actions = document.createElement('div');
-    actions.className = 'event-actions';
+    const actions=document.createElement('div'); actions.className='event-actions';
 
-    const btnPreview = document.createElement('button');
-    btnPreview.className = 'btn secondary small';
-    btnPreview.textContent = 'Preview Request Page';
-    btnPreview.onclick = ()=> window.open(guestUrlFor(ev.code), '_blank', 'noopener');
+    const btnPrev=document.createElement('button'); btnPrev.className='btn secondary small'; btnPrev.textContent='Preview Request Page';
+    btnPrev.onclick=()=> window.open(guestUrlFor(ev.code),'_blank','noopener');
 
-    const btnCopy = document.createElement('button');
-    btnCopy.className = 'btn secondary small';
-    btnCopy.textContent = 'Copy Link';
-    btnCopy.onclick = async ()=>{
-      try{
-        await navigator.clipboard.writeText(guestUrlFor(ev.code));
-        btnCopy.textContent = 'Copied!';
-        setTimeout(()=> btnCopy.textContent='Copy Link', 900);
-      }catch{
-        alert(guestUrlFor(ev.code));
-      }
-    };
+    const btnCopy=document.createElement('button'); btnCopy.className='btn secondary small'; btnCopy.textContent='Copy Link';
+    btnCopy.onclick=async()=>{ try{ await navigator.clipboard.writeText(guestUrlFor(ev.code)); btnCopy.textContent='Copied!'; setTimeout(()=>btnCopy.textContent='Copy Link',900);}catch{ alert(guestUrlFor(ev.code)); }};
 
-    const btnQR = document.createElement('button');
-    btnQR.className = 'btn secondary small';
-    btnQR.textContent = 'Show QR';
-    btnQR.onclick = ()=>{
+    const btnQR=document.createElement('button'); btnQR.className='btn secondary small'; btnQR.textContent='Show/Hide QR';
+    const qrC=document.createElement('div'); qrC.className='qr-wrap';
+    const qrInner=document.createElement('div'); qrInner.className='qr';
+    const qrImg=document.createElement('img'); qrImg.width=240; qrImg.height=240; qrImg.decoding='async'; qrImg.loading='lazy';
+    qrInner.appendChild(qrImg);
+    const helper=document.createElement('div'); helper.className='help'; helper.textContent='Scan to open the guest request page for this event.';
+    qrC.append(qrInner, helper);
+    btnQR.onclick=()=>{
       qrC.classList.toggle('show');
       if (qrC.classList.contains('show')) {
         qrOpen.add(ev.code);
         const url = encodeURIComponent(guestUrlFor(ev.code));
         qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${url}`;
         qrImg.alt = `QR for ${ev.name}`;
-      } else {
-        qrOpen.delete(ev.code);
-      }
+      } else { qrOpen.delete(ev.code); }
     };
 
-    const btnCSV = document.createElement('button');
-    btnCSV.className = 'btn secondary small';
-    btnCSV.textContent = 'Download CSV';
-    btnCSV.onclick = ()=> downloadCSV(ev.code, `${ev.code}.csv`);
+    const btnCSV=document.createElement('button'); btnCSV.className='btn secondary small'; btnCSV.textContent='Download CSV';
+    btnCSV.onclick=()=> downloadCSV(ev.code, `${ev.code}.csv`);
 
-    const btnDel = document.createElement('button');
-    btnDel.className = 'btn warn small right';
-    btnDel.textContent = 'Delete Event';
-    btnDel.onclick = ()=> deleteEvent(ev.code, card);
+    const btnDel=document.createElement('button'); btnDel.className='btn warn small right'; btnDel.textContent='Delete Event';
+    btnDel.onclick=()=> deleteEvent(ev.code, card);
 
-    actions.append(btnPreview, btnCopy, btnQR, btnCSV, btnDel);
+    actions.append(btnPrev, btnCopy, btnQR, btnCSV, btnDel);
     card.appendChild(actions);
-
-    const qrC = document.createElement('div');
-    qrC.className = 'qr-wrap';
-    const qrInner = document.createElement('div');
-    qrInner.className = 'qr';
-    const qrImg = document.createElement('img');
-    qrImg.width = 240; qrImg.height = 240; qrImg.decoding = 'async'; qrImg.loading='lazy';
-    qrInner.appendChild(qrImg);
-    const helper = document.createElement('div');
-    helper.className = 'help';
-    helper.textContent = 'Scan to open the guest request page for this event.';
-    qrC.append(qrInner, helper);
     card.appendChild(qrC);
 
     if (qrOpen.has(ev.code)) {
@@ -377,24 +225,64 @@ function renderEvents(events){
   });
 }
 
-function upsertEvent(ev, optimistic=false){
+function upsertEvent(ev){
   eventsMap.set(ev.code, ev);
-  const list = [...eventsMap.values()].sort((a,b)=> new Date(b.date)-new Date(a.date));
+  const list=[...eventsMap.values()].sort((a,b)=> new Date(b.date)-new Date(a.date));
   renderEvents(list);
 }
+
+async function createEvent(){
+  const name=(evtName.value||'').trim(); const date=(evtDate.value||'').trim();
+  if (!name || !date){ createStatus.textContent='Please enter date and name.'; return; }
+  const code=slugify(name, date);
+  createStatus.textContent='Creating…'; btnCreate.setAttribute('disabled','disabled');
+  try{
+    // Call backend
+    const qs=j2qs({ mode:'createEvent', name, date, code, active:'1' });
+    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
+    if (r && r.ok){
+      // Show immediately (no flicker)
+      upsertEvent({code, name, date: r.date || new Date(date).toISOString(), active:true});
+      createStatus.textContent='Created!';
+      // Background confirm without removing optimistic row if temporarily missing
+      setTimeout(confirmEventExists, 800, code);
+      // Clear inputs
+      evtName.value=''; evtDate.value='';
+    }else{
+      createStatus.textContent = (r && r.error) ? r.error : 'Failed to create event.';
+    }
+  }catch{ createStatus.textContent='Network error.'; }
+  finally{ btnCreate.removeAttribute('disabled'); }
+}
+btnCreate.addEventListener('click', createEvent);
+
+async function confirmEventExists(code){
+  try{
+    const qs=j2qs({ mode:'listActive' });
+    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
+    if (r && r.ok && Array.isArray(r.events)){
+      // Merge server list with our current map; do not remove our optimistic event unless the server repeatedly says it's gone
+      const server = new Map(r.events.map(e=>[e.code, e]));
+      // If server has it, update; if not, keep ours (no flicker)
+      server.forEach((v,k)=> eventsMap.set(k,v));
+      upsertEvent(eventsMap.get(code));
+    }
+  }catch{}
+}
+
+document.getElementById('btnRefresh').addEventListener('click', loadEvents);
 
 async function loadEvents(){
   eventsEl.innerHTML = `<div class="status">Loading…</div>`;
   try{
-    // IMPORTANT: use listActive so it matches DJ
-    const qs = j2qs({ mode:'listActive' });
-    const r = await jsonp(`${ENDPOINT_URL}?${qs}`);
+    const qs=j2qs({ mode:'listActive' });
+    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
     if (r && r.ok && Array.isArray(r.events)){
       eventsMap.clear();
-      r.events.forEach(ev=> upsertEvent(ev));
-      if (r.events.length === 0){
-        eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
-      }
+      r.events.forEach(ev=> eventsMap.set(ev.code, ev));
+      const list=[...eventsMap.values()].sort((a,b)=> new Date(b.date)-new Date(a.date));
+      renderEvents(list);
+      if (list.length===0) eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
     }else{
       eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
     }
@@ -402,64 +290,60 @@ async function loadEvents(){
     eventsEl.innerHTML = `<div class="status">Unable to load events.</div>`;
   }
 }
-document.getElementById('btnRefresh').addEventListener('click', loadEvents);
 
-/* ---------- CSV Download ---------- */
+/* CSV */
 async function downloadCSV(code, filename='requests.csv'){
   try{
-    const qs = j2qs({ mode:'read', event: code });
-    const r = await jsonp(`${ENDPOINT_URL}?${qs}`);
+    const qs=j2qs({ mode:'read', event: code });
+    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
     if (!r || !r.ok){ alert('No data.'); return; }
-    const rows = Array.isArray(r.rows) ? r.rows : [];
-    const headers = ['Timestamp','Name','Song Title','Artist','Link','Event','ID','Played'];
-    const lines = [headers.join(',')];
+    const rows=Array.isArray(r.rows)?r.rows:[];
+    const headers=['Timestamp','Name','Song Title','Artist','Link','Event','ID','Played'];
+    const lines=[headers.join(',')];
     rows.forEach(obj=>{
-      const t = (obj.timestamp||'').toString().replace(/,/g,' ');
-      const n = (obj.name||'').toString().replace(/"/g,'""');
-      const st= (obj.song_title||'').toString().replace(/"/g,'""');
-      const ar= (obj.artist||'').toString().replace(/"/g,'""');
-      const lk= (obj.link||'').toString().replace(/"/g,'""');
-      const ev= (obj.event||code).toString().replace(/"/g,'""');
-      const id= (obj.id||'').toString().replace(/"/g,'""');
-      const pl= (obj.played===true || obj.played==='TRUE' || obj.played==='true') ? 'TRUE' : '';
+      const t=(obj.timestamp||'').toString().replace(/,/g,' ');
+      const n=(obj.name||'').toString().replace(/"/g,'""');
+      const st=(obj.song_title||'').toString().replace(/"/g,'""');
+      const ar=(obj.artist||'').toString().replace(/"/g,'""');
+      const lk=(obj.link||'').toString().replace(/"/g,'""');
+      const ev=(obj.event||code).toString().replace(/"/g,'""');
+      const id=(obj.id||'').toString().replace(/"/g,'""');
+      const pl=(String(obj.played).toUpperCase()==='TRUE')?'TRUE':'';
       lines.push([`"${t}"`,`"${n}"`,`"${st}"`,`"${ar}"`,`"${lk}"`,`"${ev}"`,`"${id}"`,`"${pl}"`].join(','));
     });
-    const csv = lines.join('\r\n');
-    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=> URL.revokeObjectURL(a.href), 1000);
-  }catch(e){
-    alert('Could not generate CSV.');
-  }
+    const csv=lines.join('\r\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }catch{ alert('Could not generate CSV.'); }
 }
 
-/* ---------- Delete Event (and rows) ---------- */
+/* Delete */
 async function deleteEvent(code, cardEl){
-  const sure = confirm('Delete this event and all of its rows? This cannot be undone.');
-  if (!sure) return;
+  const sure=confirm('Delete this event and all of its rows? This cannot be undone.');
+  if(!sure) return;
+  // Instant remove (feels fast)
+  cardEl.remove(); eventsMap.delete(code);
+  if (!eventsEl.children.length) eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
   try{
-    const qs = j2qs({ mode:'deleteEvent', event: code, wipe:'1' });
-    const r = await jsonp(`${ENDPOINT_URL}?${qs}`);
-    if (r && r.ok){
-      eventsMap.delete(code);
-      cardEl.remove();
-      if (!eventsEl.children.length) eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
-    }else{
+    const qs=j2qs({ mode:'deleteEvent', event: code, wipe:'1' });
+    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
+    if (!(r && r.ok)){
+      // If server failed, restore card
+      eventsMap.set(code, {code, name:'(Unknown)', date:new Date().toISOString(), active:true});
+      upsertEvent(eventsMap.get(code));
       alert(r && r.error ? r.error : 'Failed to delete.');
+    } else {
+      // Silent confirm refresh a bit later
+      setTimeout(loadEvents, 1200);
     }
-  }catch(e){
+  }catch{
     alert('Network error.');
   }
 }
 
-/* ---------- Init ---------- */
-window.addEventListener('load', ()=>{
-  loadEvents();
-});
+/* Init */
+window.addEventListener('load', ()=>{ loadEvents(); });
 </script>
 </body>
 </html>
-
