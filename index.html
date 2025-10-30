@@ -6,109 +6,60 @@
 <title>Song Request • David Charles Events</title>
 <style>
   :root{
-    /* Dark theme tokens */
-    --bg:#212121;           /* page background */
-    --surface:#303030;      /* inputs & cards */
-    --surface-2:#343434;    /* results items/secondary surface (lightened) */
-    --surface-2-hover:#3d3d3d;
-    --ink:#f2f2f2;          /* primary text */
-    --muted:#bdbdbd;        /* secondary text */
-    --border:#3a3a3a;       /* strokes */
-    --accent:#1dcec9;       /* submit button background */
-    --focus:#e6e6e6;        /* focus border for inputs */
-    --ring:rgba(255,255,255,.22); /* subtle white glow */
-    --radius:12px;
-    --field-max:640px;
+    --bg:#212121; --surface:#303030; --surface-2:#343434; --surface-2-hover:#3d3d3d;
+    --ink:#f2f2f2; --muted:#bdbdbd; --border:#3a3a3a;
+    --accent:#1dcec9; --focus:#e6e6e6; --ring:rgba(255,255,255,.22);
+    --radius:12px; --field-max:640px;
   }
   @font-face{
-    font-family:"TexGyreAdventorBold";
-    src:url("texgyreadventor-bold.otf") format("opentype");
-    font-weight:700; font-style:normal; font-display:swap;
+    font-family:"TexGyreAdventorRegular";
+    src:url("texgyreadventor-regular.otf") format("opentype");
+    font-weight:400; font-style:normal; font-display:swap;
   }
   *{ box-sizing:border-box; }
   html,body{ margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
   .wrap{ width:100%; max-width:960px; margin:0 auto; padding:16px 12px 48px; }
   .dce-logo{text-align:center; margin:14px 0 6px;}
   .dce-logo img{ max-width:min(220px,60vw); height:auto; }
-
-  .app-title{
-    text-align:center; margin:0 auto 26px;
-    font-family:"TexGyreAdventorBold", Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    letter-spacing:.06em; line-height:1.05; font-size:clamp(22px,6vw,38px); color:#fff;
-  }
-
-  /* form rows */
+  .app-title{ text-align:center; margin:0 auto 26px; font-weight:800; letter-spacing:.06em; line-height:1.05; font-size:clamp(22px,6vw,38px); color:#fff; }
   .row{ width:100%; max-width:var(--field-max); margin:0 auto; }
   label{ display:block; font-size:14px; color:var(--muted); margin:10px 0 6px; }
-
   input[type="text"]{
-    width:100%; height:52px; padding:0 14px;
-    border:1px solid var(--border); border-radius:var(--radius);
-    background:var(--surface); color:var(--ink);
-    font-size:16px; outline:none;
-    transition: box-shadow .12s ease, border-color .12s ease;
+    width:100%; height:52px; padding:0 14px; border:1px solid var(--border); border-radius:var(--radius);
+    background:var(--surface); color:var(--ink); font-size:16px; outline:none; transition: box-shadow .12s ease, border-color .12s ease;
   }
   input[type="text"]::placeholder{ color:#9e9e9e; }
-  input[type="text"]:focus{
-    border-color:var(--focus);
-    box-shadow:0 0 0 3px var(--ring);
-  }
-
-  /* search field + clear button */
+  input[type="text"]:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring); }
   .field{ position:relative; }
-  .search{
-    width:100%; height:52px; padding:0 42px 0 14px;
-    border:1px solid var(--border); border-radius:var(--radius);
-    background:var(--surface); color:var(--ink); font-size:16px;
-    transition: box-shadow .12s ease, border-color .12s ease;
-  }
+  .search{ width:100%; height:52px; padding:0 42px 0 14px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); color:var(--ink); font-size:16px; transition: box-shadow .12s ease, border-color .12s ease; }
   .search::placeholder{ color:#9e9e9e; }
-  .search:focus{
-    border-color:var(--focus);
-    box-shadow:0 0 0 3px var(--ring);
-  }
-  .clear{
-    position:absolute; right:8px; top:50%; transform:translateY(-50%);
-    width:32px; height:32px; border-radius:50%; display:none; align-items:center; justify-content:center;
-    border:1px solid var(--border); background:#2b2b2b; color:#e0e0e0; cursor:pointer; user-select:none; line-height:1; font-size:18px;
-  }
+  .search:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring); }
+  .clear{ position:absolute; right:8px; top:50%; transform:translateY(-50%); width:32px; height:32px; border-radius:50%; display:none; align-items:center; justify-content:center; border:1px solid var(--border); background:#2b2b2b; color:#e0e0e0; cursor:pointer; user-select:none; line-height:1; font-size:18px; }
   .clear.show{ display:flex; }
   .clear:active{ transform:translateY(-50%) scale(0.98); }
-
-  /* results */
   .results{ margin-top:6px; }
   .hidden{ display:none !important; }
-  .item{
-    display:grid; grid-template-columns:56px 1fr; align-items:center; gap:12px;
-    padding:10px; border:1px solid var(--border); border-radius:12px;
-    background:var(--surface-2); transition:background .15s,transform .06s,border-color .15s; cursor:pointer; margin-bottom:8px;
-  }
+  .item{ display:grid; grid-template-columns:56px 1fr; align-items:center; gap:12px; padding:10px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2); transition:background .15s,transform .06s,border-color .15s; cursor:pointer; margin-bottom:8px; }
   .item:hover{ background:var(--surface-2-hover); } .item:active{ transform:scale(.995); }
   .cover{ width:56px;height:56px;border-radius:10px;object-fit:cover;background:#1f1f1f; color:#9aa6b2; display:grid; place-items:center; font-size:12px; }
   .info{ min-width:0; }
   .ttl{ margin:0 0 2px; font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
   .art{ margin:0; color:#cfcfcf; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-  /* selected card */
-  .selected{ margin-top:6px; border:1px solid var(--border); border-radius:12px; background:var(--surface); display:none; transition: box-shadow .12s ease, border-color .12s ease; }
+  .selected{ margin-top:6px; border:1px solid var(--border); border-radius:12px; background:var(--surface); display:none; }
   .selected.active{ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring); }
   .sel-inner{ display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center; padding:10px; }
   .sel-cover{ width:72px;height:72px;border-radius:12px;object-fit:cover;background:#1f1f1f;color:#9aa6b2;display:grid;place-items:center;font-size:14px; }
   .sel-text{ min-width:0; }
   .sel-title{ margin:0 0 2px; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
   .sel-artist{ margin:0; color:#cfcfcf; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
   .status{ margin-top:6px; font-size:13px; color:var(--muted); min-height:0; }
-  .status:empty{ margin-top:0; }
-
-  /* submit */
   .actions{ width:100%; max-width:var(--field-max); margin:12px auto 0; }
   .btn{
     width:100%; height:54px; border:1px solid var(--accent); background:var(--accent); color:#000000;
-    border-radius:14px; cursor:pointer; font-weight:800; letter-spacing:.03em; font-size:16px;
-    text-transform:uppercase;  /* FORCE ALL CAPS */
-    display:inline-flex; align-items:center; justify-content:center;
-    transform:translateZ(0); transition:transform .06s, filter .15s, opacity .15s, background .15s;
+    border-radius:14px; cursor:pointer; font-weight:800; letter-spacing:.03em; font-size:16px; text-transform:uppercase;
+    display:inline-flex; align-items:center; justify-content:center; transform:translateZ(0); transition:transform .06s, filter .15s, opacity .15s, background .15s;
+    box-shadow:0 2px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.15);
+    font-family:"TexGyreAdventorRegular", Inter, system-ui, sans-serif;
   }
   .btn:hover{ filter:brightness(1.05); }
   .btn:active{ transform:scale(0.985); }
@@ -116,37 +67,20 @@
   .btn .spin{ width:18px; height:18px; margin-right:10px; border-radius:50%; border:2px solid rgba(6,44,42,.4); border-top-color:#062c2a; animation:spin .8s linear infinite; display:none; }
   .btn.loading .spin{ display:inline-block; }
   @keyframes spin{ to{ transform:rotate(360deg);} }
-
-  /* thank-you overlay (dark) */
   .ty-overlay{ position:fixed; inset:0; background:rgba(33,33,33,.98); display:none; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(2px); }
-  .ty-wrap{ text-align:center; padding:24px; max-width:92vw; color:#ffffff; }     /* force white text */
-  .ty-icon{ width:96px; height:96px; margin:0 auto 22px; display:grid; place-items:center; border-radius:50%;
-            background:#1dcec9; /* updated circle color */
-            box-shadow:0 6px 18px rgba(29,206,201,.35); color:#052911; font-size:52px; } /* leave check color alone */
-  .ty-title{ font-family:"TexGyreAdventorBold", Inter, system-ui; font-size:clamp(28px,7.8vw,56px); line-height:1.05; margin:0 0 8px; color:#ffffff;}
+  .ty-wrap{ text-align:center; padding:24px; max-width:92vw; color:#ffffff; }
+  .ty-icon{ width:96px; height:96px; margin:0 auto 22px; display:grid; place-items:center; border-radius:50%; background:#1dcec9; box-shadow:0 6px 18px rgba(29,206,201,.35); color:#052911; font-size:52px; }
+  .ty-title{ font-weight:800; font-size:clamp(28px,7.8vw,56px); line-height:1.05; margin:0 0 8px; color:#ffffff;}
   .ty-sub{ font:500 16px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#ffffff; margin:0;}
-
-  /* mobile tweaks */
-  @media (max-width:480px){
-    .wrap{ padding-left:10px; padding-right:10px; }
-    .sel-inner{ grid-template-columns:64px 1fr; }
-    .sel-cover{ width:64px; height:64px; }
-  }
-
-  /* optional: debug pill (shown with ?debug=1) */
-  .dbg{ display:none; width:100%; max-width:var(--field-max); margin:10px auto 0;
-        color:#a7f3d0; background:rgba(45,212,191,.12); border:1px solid rgba(45,212,191,.35);
-        border-radius:999px; padding:6px 12px; font-size:12px; }
+  @media (max-width:480px){ .wrap{ padding-left:10px; padding-right:10px; } .sel-inner{ grid-template-columns:64px 1fr; } .sel-cover{ width:64px; height:64px; } }
+  .dbg{ display:none; width:100%; max-width:var(--field-max); margin:10px auto 0; color:#a7f3d0; background:rgba(45,212,191,.12); border:1px solid rgba(45,212,191,.35); border-radius:999px; padding:6px 12px; font-size:12px; }
   .dbg.show{ display:block; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="dce-logo">
-    <img src="assets/dce-logo.png" alt="David Charles Events" onerror="this.style.display='none'">
-  </div>
+  <div class="dce-logo"><img src="assets/dce-logo.png" alt="David Charles Events" onerror="this.style.display='none'"></div>
   <div class="app-title">SONG REQUEST</div>
-
   <div id="debugPill" class="dbg"></div>
 
   <div class="row">
@@ -160,9 +94,7 @@
       <input id="q" class="search" type="text" placeholder="Start typing…" autocomplete="off" inputmode="search" />
       <button id="clearBtn" class="clear" type="button" aria-label="Clear search">×</button>
     </div>
-
     <div id="results" class="results"></div>
-
     <div id="selected" class="selected" aria-live="polite" aria-atomic="true">
       <div class="sel-inner">
         <div id="selCover" class="sel-cover" aria-hidden="true">♪</div>
@@ -172,11 +104,9 @@
         </div>
       </div>
     </div>
-
     <div id="status" class="status"></div>
   </div>
 
-  <!-- hidden fields for selected track -->
   <input type="hidden" id="songTitle" />
   <input type="hidden" id="artist" />
   <input type="hidden" id="link" />
@@ -186,7 +116,6 @@
   </div>
 </div>
 
-<!-- Thank you -->
 <div class="ty-overlay" id="tyOverlay" role="dialog" aria-live="polite" aria-modal="true">
   <div class="ty-wrap">
     <div class="ty-icon">✓</div>
@@ -196,47 +125,20 @@
 </div>
 
 <script>
-/* ===================== CONFIG ===================== */
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxT9ELlP_dJ9myw2Z5_kNYIPlJIlHQbbho9L6BehI68DTpOJNSPgxCd9MSPL_Y5PKm-5g/exec';
-const REDIRECT_DELAY_MS = 2200; // after thank-you, go back to the same page with ?event=...
-/* ================================================== */
+const REDIRECT_DELAY_MS = 2200;
 
-/* Event code: URL (?event=) → referrer (if any) → (optional) postMessage */
 const urlp = new URLSearchParams(location.search);
 const DEBUG = urlp.get('debug') === '1';
 let EVENT_CODE = (urlp.get('event') || '').trim();
+if (!EVENT_CODE && document.referrer) { try{ const ref=new URL(document.referrer); const refEvent=ref.searchParams.get('event'); if(refEvent) EVENT_CODE=refEvent.trim(); }catch{} }
 
-if (!EVENT_CODE && document.referrer) {
-  try { const ref = new URL(document.referrer); const refEvent = ref.searchParams.get('event'); if (refEvent) EVENT_CODE = refEvent.trim(); } catch {}
-}
-
-function setEventCode(code){
-  if (!code) return;
-  EVENT_CODE = String(code).trim();
-  if (DEBUG) showDebug();
-}
-// Parent can override
-window.addEventListener('message', (e)=>{
-  const msg = e.data || {};
-  if (msg && msg.action === 'setEvent' && msg.event) setEventCode(msg.event);
-});
-window.addEventListener('load', ()=>{
-  if (!EVENT_CODE) { try{ parent.postMessage({action:'needEvent'}, '*'); }catch{} }
-});
-
-/* DOM refs */
-const $=(s)=>document.querySelector(s);
-const nameInput=$('#yourName'), q=$('#q'), clearBtn=$('#clearBtn'), resultsEl=$('#results'),
-      selectedBox=$('#selected'), statusEl=$('#status'), submitBtn=$('#submitBtn'),
-      selTitle=$('#selTitle'), selArtist=$('#selArtist'); let selCoverEl=$('#selCover');
+const $=s=>document.querySelector(s);
+const nameInput=$('#yourName'), q=$('#q'), clearBtn=$('#clearBtn'), resultsEl=$('#results'), selectedBox=$('#selected'), statusEl=$('#status'), submitBtn=$('#submitBtn'), selTitle=$('#selTitle'), selArtist=$('#selArtist'); let selCoverEl=$('#selCover');
 const titleInput=$('#songTitle'), artistInput=$('#artist'), linkInput=$('#link');
 const tyOverlay=$('#tyOverlay'); const btnTxt=document.querySelector('.btntxt'); const btnSpin=document.querySelector('.spin');
 
-function showDebug(){
-  const pill=document.getElementById('debugPill');
-  pill.classList.add('show');
-  pill.textContent = EVENT_CODE ? `Event detected: ${EVENT_CODE}` : 'No event detected (writes may not appear in DJ view)';
-}
+function showDebug(){ const pill=document.getElementById('debugPill'); pill.classList.add('show'); pill.textContent = EVENT_CODE ? `Event detected: ${EVENT_CODE}` : 'No event detected'; }
 if (DEBUG) showDebug();
 
 function setStatus(m='',err=false){ statusEl.textContent=m; statusEl.style.color=err?'#ffb4b4':'var(--muted)'; }
@@ -249,7 +151,7 @@ function hideSelected(){
   selTitle.textContent=''; selArtist.textContent='';
 }
 
-/* JSONP helper */
+/* JSONP */
 function jsonp(url, cbParam='callback'){
   return new Promise((res,rej)=>{
     const cb='cb_'+Math.random().toString(36).slice(2);
@@ -257,8 +159,8 @@ function jsonp(url, cbParam='callback'){
     s.src = url + (url.includes('?')?'&':'?') + cbParam + '=' + cb + '&t=' + Date.now();
     const kill=setTimeout(()=>{ cleanup(); rej(new Error('timeout')); }, 9000);
     function cleanup(){ clearTimeout(kill); try{ delete window[cb]; }catch{} s.remove(); }
-    window[cb] = (data)=>{ cleanup(); res(data); };
-    s.onerror  = ()=>{ cleanup(); rej(new Error('jsonp error')); };
+    window[cb]=(data)=>{ cleanup(); res(data); };
+    s.onerror=()=>{ cleanup(); rej(new Error('jsonp error')); };
     document.body.appendChild(s);
   });
 }
@@ -299,7 +201,7 @@ async function searchMB(term){
   }catch(_e){ return []; }
 }
 
-/* Render helpers */
+/* Render */
 function render(list){
   clearResults(); if(!list.length){ setStatus('No results'); return; } setStatus('');
   showResults();
@@ -312,31 +214,19 @@ function render(list){
     resultsEl.appendChild(div);
   });
 }
-
 function showSelectedCard({title,artist,cover}){
-  if(cover){
-    const img=document.createElement('img'); img.src=cover; img.alt='Album cover'; img.className='sel-cover'; img.loading='lazy'; img.decoding='async';
-    if(selCoverEl) selCoverEl.replaceWith(img); selCoverEl=img;
-  }else{
-    if(!selCoverEl || selCoverEl.tagName.toLowerCase()==='img'){
-      const box=document.createElement('div'); box.id='selCover'; box.className='sel-cover'; box.setAttribute('aria-hidden','true'); box.textContent='♪';
-      if(selCoverEl) selCoverEl.replaceWith(box); selCoverEl=box;
-    }
-  }
-  selTitle.textContent=title||'Unknown Title';
-  selArtist.textContent=artist||'Unknown Artist';
+  if(cover){ const img=document.createElement('img'); img.src=cover; img.alt='Album cover'; img.className='sel-cover'; img.loading='lazy'; img.decoding='async'; if(selCoverEl) selCoverEl.replaceWith(img); selCoverEl=img; }
+  else{ if(!selCoverEl || selCoverEl.tagName.toLowerCase()==='img'){ const box=document.createElement('div'); box.id='selCover'; box.className='sel-cover'; box.setAttribute('aria-hidden','true'); box.textContent='♪'; if(selCoverEl) selCoverEl.replaceWith(box); selCoverEl=box; } }
+  selTitle.textContent=title||'Unknown Title'; selArtist.textContent=artist||'Unknown Artist';
   selectedBox.style.display='block'; selectedBox.classList.add('active');
 }
-
 function useSong({title,artist,cover,link}, el){
   document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected')); el?.classList.add('selected');
-  titleInput.value = title || '';
-  artistInput.value = artist || '';
-  linkInput.value   = link || '';
+  titleInput.value = title || ''; artistInput.value = artist || ''; linkInput.value = link || '';
   showSelectedCard({title,artist,cover,link}); hideResults();
 }
 
-/* search events */
+/* Search events */
 let debounce=null,lastTerm='';
 q.addEventListener('input', ()=>{
   const raw=q.value; if(raw.length>=1) clearBtn.classList.add('show'); else clearBtn.classList.remove('show');
@@ -366,73 +256,32 @@ q.addEventListener('keydown', e=>{
 });
 clearBtn.addEventListener('click', ()=>{
   q.value=''; lastTerm=''; clearBtn.classList.remove('show'); setStatus(''); hideResults(); hideSelected();
-  titleInput.value=''; artistInput.value=''; linkInput.value='';
-  q.focus({preventScroll:true});
+  titleInput.value=''; artistInput.value=''; linkInput.value=''; q.focus({preventScroll:true});
 });
 
-/* submit UX */
+/* Submit */
 function openThankYou(){ tyOverlay.style.display='flex'; }
 function setBtnLoading(on){
   if(on){ submitBtn.classList.add('loading'); submitBtn.setAttribute('disabled','disabled'); btnTxt.textContent='Sending…'; }
   else{ submitBtn.classList.remove('loading'); submitBtn.removeAttribute('disabled'); btnTxt.textContent='SUBMIT'; }
 }
 function redirectBack(){
-  const base = location.origin + location.pathname;
-  const params = new URLSearchParams();
-  if (EVENT_CODE) params.set('event', EVENT_CODE);
-  const next = params.toString() ? `${base}?${params.toString()}` : base;
-  location.replace(next);
+  const base=location.origin+location.pathname; const params=new URLSearchParams(); if (EVENT_CODE) params.set('event',EVENT_CODE);
+  const next=params.toString()?`${base}?${params.toString()}`:base; location.replace(next);
 }
-
 function writeRequest(){
-  const nameVal = (nameInput.value || '').trim();
-  const titleVal= (titleInput.value || '').trim();
-  const artistVal=(artistInput.value || '').trim();
-  const linkVal = (linkInput.value || '').trim();
-
-  if (!titleVal && !artistVal) { setStatus('Pick a song first.'); q.focus(); return; }
-  if (!EVENT_CODE) { setStatus('No event detected on this page. Add ?event=CODE to the URL.', true); if (DEBUG) showDebug(); }
-
-  // Optimistic UX: show feedback immediately
-  setBtnLoading(true);
-  openThankYou();
-
-  const qs = new URLSearchParams({
-    mode: 'write',
-    event: EVENT_CODE || '',
-    name: nameVal,
-    song_title: titleVal,
-    artist: artistVal,
-    link: linkVal,
-    ua: navigator.userAgent,
-    referer: document.referrer || location.href
-  });
-
-  // Fire-and-forget JSONP; we do not block UX on response
-  const cb = 'cb_' + Math.random().toString(36).slice(2);
-  window[cb] = (data)=>{ try{ delete window[cb]; }catch{} };
-  const s = document.createElement('script');
-  s.src = ENDPOINT_URL + '?' + qs.toString() + '&callback=' + cb + '&t=' + Date.now();
-  s.onerror = ()=>{ try{ delete window[cb]; }catch{} };
+  const nameVal=(nameInput.value||'').trim(), titleVal=(titleInput.value||'').trim(), artistVal=(artistInput.value||'').trim(), linkVal=(linkInput.value||'').trim();
+  if (!titleVal && !artistVal){ setStatus('Pick a song first.'); q.focus(); return; }
+  setBtnLoading(true); openThankYou();
+  const qs=new URLSearchParams({ mode:'write', event:EVENT_CODE||'', name:nameVal, song_title:titleVal, artist:artistVal, link:linkVal, ua:navigator.userAgent, referer:document.referrer||location.href });
+  const cb='cb_'+Math.random().toString(36).slice(2); window[cb]=(data)=>{ try{ delete window[cb]; }catch{} };
+  const s=document.createElement('script'); s.src=ENDPOINT_URL+'?'+qs.toString()+'&callback='+cb+'&t='+Date.now(); s.onerror=()=>{ try{ delete window[cb]; }catch{} };
   document.body.appendChild(s);
-
-  // Reset and redirect back to same page (keeping ?event=)
-  setTimeout(()=>{
-    setBtnLoading(false);
-    nameInput.value='';
-    q.value=''; lastTerm=''; clearBtn.classList.remove('show'); setStatus('');
-    hideResults(); hideSelected();
-    redirectBack();
-  }, REDIRECT_DELAY_MS);
+  setTimeout(()=>{ setBtnLoading(false); nameInput.value=''; q.value=''; lastTerm=''; clearBtn.classList.remove('show'); setStatus(''); hideResults(); hideSelected(); redirectBack(); }, REDIRECT_DELAY_MS);
 }
-
 submitBtn.addEventListener('click', writeRequest);
 
-/* Init */
-window.addEventListener('load', ()=>{
-  if (DEBUG) showDebug();
-  nameInput.focus({preventScroll:true});
-});
+window.addEventListener('load', ()=>{ if (DEBUG) showDebug(); nameInput.focus({preventScroll:true}); });
 </script>
 </body>
 </html>
