@@ -14,7 +14,7 @@
     --ink:#f2f2f2;          /* primary text */
     --muted:#bdbdbd;        /* secondary text */
     --border:#3a3a3a;       /* strokes */
-    --accent:#14b8a6;       /* button background */
+    --accent:#1dcec9;       /* submit button background (updated) */
     --focus:#e6e6e6;        /* focus border for inputs */
     --ring:rgba(255,255,255,.22); /* subtle white glow */
     --radius:12px;
@@ -118,10 +118,12 @@
 
   /* thank-you overlay (dark) */
   .ty-overlay{ position:fixed; inset:0; background:rgba(33,33,33,.98); display:none; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(2px); }
-  .ty-wrap{ text-align:center; padding:24px; max-width:92vw; color:#e6ffe6; }
-  .ty-icon{ width:96px; height:96px; margin:0 auto 22px; display:grid; place-items:center; border-radius:50%; background:#22c55e; box-shadow:0 6px 18px rgba(34,197,94,.35); color:#052911; font-size:52px; }
-  .ty-title{ font-family:"TexGyreAdventorBold", Inter, system-ui; font-size:clamp(28px,7.8vw,56px); line-height:1.05; margin:0 0 8px; color:#d1fae5;}
-  .ty-sub{ font:500 16px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#b7f7d9; margin:0;}
+  .ty-wrap{ text-align:center; padding:24px; max-width:92vw; color:#ffffff; }     /* force white text */
+  .ty-icon{ width:96px; height:96px; margin:0 auto 22px; display:grid; place-items:center; border-radius:50%;
+            background:#1dcec9; /* updated circle color */
+            box-shadow:0 6px 18px rgba(29,206,201,.35); color:#052911; font-size:52px; } /* leave check color alone */
+  .ty-title{ font-family:"TexGyreAdventorBold", Inter, system-ui; font-size:clamp(28px,7.8vw,56px); line-height:1.05; margin:0 0 8px; color:#ffffff;}
+  .ty-sub{ font:500 16px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#ffffff; margin:0;}
 
   /* mobile tweaks */
   @media (max-width:480px){
@@ -151,7 +153,7 @@
     <input type="text" id="yourName" autocomplete="name" placeholder="Your name" />
   </div>
 
-  <div class="row" style="margin-top:20px;">
+  <div class="row" style="margin-top:16px;">
     <label for="q">Search Song, Artist or Lyrics</label>
     <div class="field">
       <input id="q" class="search" type="text" placeholder="Start typing…" autocomplete="off" inputmode="search" />
@@ -179,7 +181,7 @@
   <input type="hidden" id="link" />
 
   <div class="actions">
-    <button id="submitBtn" class="btn"><span class="spin" aria-hidden="true"></span><span class="btntxt">SUBMIT</span></button>
+    <button id="submitBtn" class="btn"><span class="spin" aria-hidden="true"></span><span class="btntxt">Submit</span></button>
   </div>
 </div>
 
@@ -194,6 +196,7 @@
 
 <script>
 /* ===================== CONFIG ===================== */
+/* Keep your current endpoint here if it's different in your repo */
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxZ9ylpDohWZnp1Krsn9THEPEciFv68uBB5unr0a41qNTesaOBkCWsQOeiucY4asIYH5A/exec';
 const REDIRECT_DELAY_MS = 2200; // after thank-you, go back to the same page with ?event=...
 /* ================================================== */
@@ -206,8 +209,6 @@ let EVENT_CODE = (urlp.get('event') || '').trim();
 if (!EVENT_CODE && document.referrer) {
   try { const ref = new URL(document.referrer); const refEvent = ref.searchParams.get('event'); if (refEvent) EVENT_CODE = refEvent.trim(); } catch {}
 }
-
-function dlog(...args){ if(DEBUG) try{ console.log('[DCE]',...args); }catch{} }
 
 function setEventCode(code){
   if (!code) return;
@@ -262,32 +263,27 @@ function jsonp(url, cbParam='callback'){
   });
 }
 
-/* Search providers
-   Prefer iTunes JSONP first (CORS-proof), then Deezer JSONP, then MusicBrainz fetch. */
+/* Search providers */
 async function searchITunes(term){
   try{
     const data = await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=8`, 'callback');
-    dlog('iTunes JSONP ok', data?.results?.length||0);
     return (data?.results||[]).map(t=>({title:t.trackName, artist:t.artistName, cover:t.artworkUrl100||t.artworkUrl60, link:t.trackViewUrl}));
-  }catch(e){
-    dlog('iTunes JSONP failed, trying fetch', e);
+  }catch(_e){
     try{
       const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=8`, {mode:'cors', cache:'no-store'});
       if (r.ok) {
         const data = await r.json();
-        dlog('iTunes fetch ok', data?.results?.length||0);
         return (data?.results||[]).map(t=>({title:t.trackName, artist:t.artistName, cover:t.artworkUrl100||t.artworkUrl60, link:t.trackViewUrl}));
       }
-    }catch(e2){ dlog('iTunes fetch failed', e2); }
+    }catch(__e){}
   }
   return [];
 }
 async function searchDeezer(term){
   try{
     const data=await jsonp(`https://api.deezer.com/search?q=${encodeURIComponent(term)}&limit=8&output=jsonp`,'callback');
-    dlog('Deezer JSONP ok', data?.data?.length||0);
     return (data?.data||[]).map(d=>({title:d.title, artist:d?.artist?.name||'', cover:d?.album?.cover_medium||d?.album?.cover||'', link:d.link||''}));
-  }catch(e){ dlog('Deezer JSONP failed', e); return []; }
+  }catch(_e){ return []; }
 }
 async function searchMB(term){
   try{
@@ -296,12 +292,11 @@ async function searchMB(term){
     });
     if(!r.ok) return [];
     const data=await r.json();
-    dlog('MB fetch ok', data?.recordings?.length||0);
     return (data.recordings||[]).map(rec=>{
       const ac=rec['artist-credit']; const artist=ac && ac[0] && ac[0].name ? ac[0].name : '';
       return {title:rec.title, artist, cover:'', link:`https://musicbrainz.org/recording/${rec.id}`};
     });
-  }catch(e){ dlog('MB fetch failed', e); return []; }
+  }catch(_e){ return []; }
 }
 
 /* Render helpers */
