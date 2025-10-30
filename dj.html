@@ -6,101 +6,72 @@
 <title>DCE • DJ View</title>
 <style>
   :root{
-    --bg:#212121;
-    --surface:#303030;
-    --surface-2:#343434;
-    --surface-3:#3d3d3d;
-    --ink:#f2f2f2;
-    --muted:#bdbdbd;
-    --border:#3a3a3a;
-    --accent:#1dcec9;
-    --focus:#e6e6e6;
-    --ring:rgba(255,255,255,.22);
-    --radius:14px;
-    --radius-sm:10px;
-    --w:1100px;
+    --bg:#212121; --surface:#303030; --surface-2:#343434; --surface-3:#3d3d3d;
+    --ink:#f2f2f2; --muted:#bdbdbd; --border:#3a3a3a;
+    --accent:#1dcec9; --focus:#e6e6e6; --ring:rgba(255,255,255,.22);
+    --radius:14px; --radius-sm:10px; --w:1100px;
+  }
+  @font-face{
+    font-family:"TexGyreAdventorRegular";
+    src:url("texgyreadventor-regular.otf") format("opentype");
+    font-weight:400; font-style:normal; font-display:swap;
   }
   *{ box-sizing:border-box; }
   html,body{ margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
   .wrap{ max-width:var(--w); margin:0 auto; padding:16px 12px 64px; }
   h1{ margin:6px 0 14px; font-size:clamp(22px,5.2vw,34px); letter-spacing:.02em; }
-
-  .toolbar{
-    display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:12px;
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px;
-  }
-  .select{
-    height:44px; min-width:260px; max-width:100%; padding:0 10px;
-    background:#2b2b2b; color:var(--ink); border:1px solid var(--border); border-radius:10px; font-size:15px;
-  }
+  .toolbar{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:12px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px; }
+  .select{ height:44px; min-width:260px; max-width:100%; padding:0 10px; background:#2b2b2b; color:var(--ink); border:1px solid var(--border); border-radius:10px; font-size:15px; }
   .btn{
     height:44px; padding:0 14px; border:1px solid var(--accent); background:var(--accent); color:#000;
     border-radius:12px; font-weight:800; letter-spacing:.03em; cursor:pointer; user-select:none;
     display:inline-flex; align-items:center; justify-content:center; gap:8px;
     transition:transform .06s ease, filter .15s ease, box-shadow .06s ease;
     box-shadow:0 2px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.15);
+    font-family:"TexGyreAdventorRegular", Inter, system-ui, sans-serif;
   }
   .btn:hover{ filter:brightness(1.05); }
   .btn:active{ transform:translateY(1px); box-shadow:inset 0 2px 0 rgba(0,0,0,.25); }
-  .btn.secondary{
-    background:var(--surface-2); color:#fff; border-color:#4a4a4a;
-  }
-
-  .pill{ margin-left:auto; font-size:12px; color:#a7f3d0; background:rgba(45,212,191,.12); border:1px solid rgba(45,212,191,.35);
-         border-radius:999px; padding:6px 10px; display:none; }
+  .btn.secondary{ background:var(--surface-2); color:#fff; border-color:#4a4a4a; }
+  .pill{ margin-left:auto; font-size:12px; color:#a7f3d0; background:rgba(45,212,191,.12); border:1px solid rgba(45,212,191,.35); border-radius:999px; padding:6px 10px; display:none; }
   .pill.show{ display:inline-block; }
-
   .grid{ display:grid; grid-template-columns:1fr; gap:12px; }
   @media(min-width:900px){ .grid{ grid-template-columns:1fr 1fr; } }
-
-  .card{
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    padding:12px;
-  }
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px; }
   .card h2{ margin:0 0 8px; font-size:18px; }
   .section{ margin-top:8px; }
   .rows{ display:flex; flex-direction:column; gap:8px; }
-  .row{
-    display:flex; align-items:flex-start; gap:10px; padding:10px;
-    background:var(--surface-2); border:1px solid var(--border); border-radius:12px;
-  }
-  .meta{ color:var(--muted); font-size:12px; }
+  .row{ display:flex; align-items:flex-start; gap:10px; padding:10px; background:var(--surface-2); border:1px solid var(--border); border-radius:12px; }
   .title{ margin:0; font-weight:800; color:#fff; }
   .artist{ margin:2px 0 0; color:#d8d8d8; font-size:13px; }
   .name{ margin:0; color:#bfbfbf; font-size:12px; }
   .row-actions{ margin-left:auto; display:flex; gap:8px; }
   .small{ height:36px; padding:0 10px; border-radius:10px; font-weight:700; }
-
   details{ background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:10px; }
   details > summary{ cursor:pointer; font-weight:700; }
   details[open]{ background:var(--surface-3); }
-
   .status{ color:var(--muted); font-size:13px; min-height:18px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>DJ View</h1>
-
   <div class="toolbar">
     <select id="eventSel" class="select"></select>
     <button id="refreshBtn" class="btn secondary">Refresh</button>
     <span id="debugPill" class="pill"></span>
   </div>
-
   <div class="grid">
     <section class="card">
       <h2>Requests</h2>
       <div id="reqStatus" class="status"></div>
       <div id="reqRows" class="rows"></div>
     </section>
-
     <section class="card">
       <details id="playedBox">
         <summary>Played Songs</summary>
         <div id="playedRows" class="rows section"></div>
       </details>
-
       <details id="spamBox" style="margin-top:12px;">
         <summary>Spammed Requests</summary>
         <div id="spamRows" class="rows section"></div>
@@ -110,25 +81,16 @@
 </div>
 
 <script>
-/* ===================== CONFIG ===================== */
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxT9ELlP_dJ9myw2Z5_kNYIPlJIlHQbbho9L6BehI68DTpOJNSPgxCd9MSPL_Y5PKm-5g/exec';
 const POLL_MS = 5000;
-/* ================================================== */
 
 const urlp = new URLSearchParams(location.search);
 const DEBUG = urlp.get('debug') === '1';
 let CURRENT_EVENT = (urlp.get('event') || '').trim();
 
-const $ = (s)=>document.querySelector(s);
-const eventSel = $('#eventSel');
-const refreshBtn = $('#refreshBtn');
-const reqRows = $('#reqRows');
-const playedRows = $('#playedRows');
-const spamRows = $('#spamRows');
-const reqStatus = $('#reqStatus');
-const debugPill = $('#debugPill');
+const $ = s=>document.querySelector(s);
+const eventSel=$('#eventSel'), refreshBtn=$('#refreshBtn'), reqRows=$('#reqRows'), playedRows=$('#playedRows'), spamRows=$('#spamRows'), reqStatus=$('#reqStatus'), debugPill=$('#debugPill');
 
-/* ------------- helpers ------------- */
 function j2qs(o){ return new URLSearchParams(o).toString(); }
 function jsonp(url, cbParam='callback'){
   return new Promise((res,rej)=>{
@@ -142,173 +104,84 @@ function jsonp(url, cbParam='callback'){
     document.body.appendChild(s);
   });
 }
-function showDebug(msg){
-  if (!DEBUG) return;
-  debugPill.classList.add('show');
-  debugPill.textContent = msg;
-}
-function fmtTime(iso){
-  try{ const d=new Date(iso); return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }catch{ return iso; }
-}
+function showDebug(msg){ if (!DEBUG) return; debugPill.classList.add('show'); debugPill.textContent=msg; }
 
-/* ------------- events list ------------- */
 async function loadActiveEvents(){
   showDebug('Loading events…');
   try{
-    const qs = j2qs({ mode:'listActive' });
-    const r = await jsonp(`${ENDPOINT_URL}?${qs}`);
-    if (!r || !r.ok){ eventSel.innerHTML=''; return; }
-    const events = Array.isArray(r.events) ? r.events : [];
-    eventSel.innerHTML = '';
+    const qs=j2qs({ mode:'listActive' });
+    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
+    const events= (r && r.ok && Array.isArray(r.events)) ? r.events : [];
+    eventSel.innerHTML='';
     events.forEach(ev=>{
-      const opt=document.createElement('option');
-      opt.value = ev.code;
-      opt.textContent = `${new Date(ev.date).toLocaleDateString()} — ${ev.name}`;
-      eventSel.appendChild(opt);
+      const opt=document.createElement('option'); opt.value=ev.code; opt.textContent=`${new Date(ev.date).toLocaleDateString()} — ${ev.name}`; eventSel.appendChild(opt);
     });
-    if (events.length === 0){
-      CURRENT_EVENT = '';
-      showRequests([]);
-      return;
-    }
-    if (!CURRENT_EVENT || !events.some(e=>e.code===CURRENT_EVENT)){
-      CURRENT_EVENT = events[0].code;
-    }
-    eventSel.value = CURRENT_EVENT;
-    showDebug(`Endpoint ok • Event=${CURRENT_EVENT}`);
+    if (events.length===0){ CURRENT_EVENT=''; showRequests([]); return; }
+    if (!CURRENT_EVENT || !events.some(e=>e.code===CURRENT_EVENT)){ CURRENT_EVENT=events[0].code; }
+    eventSel.value=CURRENT_EVENT; showDebug(`Endpoint ok • Event=${CURRENT_EVENT}`);
     await loadRequests();
-  }catch(e){
-    showDebug('Events load failed');
-  }
+  }catch{ showDebug('Events load failed'); }
 }
-eventSel.addEventListener('change', ()=>{
-  CURRENT_EVENT = eventSel.value;
-  const sp = new URLSearchParams(location.search);
-  if (CURRENT_EVENT) sp.set('event', CURRENT_EVENT); else sp.delete('event');
-  history.replaceState(null, '', location.pathname + '?' + sp.toString());
-  loadRequests();
-});
+eventSel.addEventListener('change', ()=>{ CURRENT_EVENT=eventSel.value; const sp=new URLSearchParams(location.search); if(CURRENT_EVENT) sp.set('event',CURRENT_EVENT); else sp.delete('event'); history.replaceState(null,'',location.pathname+'?'+sp.toString()); loadRequests(); });
 
-/* ------------- requests ------------- */
 function showRequests(rows){
-  reqRows.innerHTML = '';
-  playedRows.innerHTML = '';
-  spamRows.innerHTML = '';
-
-  const seen = new Map(); // name+title
-  const spamList = [];
-
+  reqRows.innerHTML=''; playedRows.innerHTML=''; spamRows.innerHTML='';
+  const seen=new Map(); const spam=[];
   rows.forEach(r=>{
     const key = `${(r.name||'').trim().toLowerCase()}|${(r.song_title||'').trim().toLowerCase()}`;
-    if (seen.has(key)) spamList.push(r);
-    else seen.set(key, r);
+    if (seen.has(key)) spam.push(r); else seen.set(key,r);
   });
-
-  const unplayed = [];
-  const played = [];
-  seen.forEach((r)=>{ (String(r.played).toUpperCase()==='TRUE' ? played : unplayed).push(r); });
-
-  const makeRow = (r, includeActions=true)=>{
-    const el = document.createElement('div');
-    el.className = 'row';
-    const text = document.createElement('div');
-    const t = document.createElement('p'); t.className='title'; t.textContent = r.song_title || '(Unknown Title)';
-    const a = document.createElement('p'); a.className='artist'; a.textContent = r.artist || '(Unknown Artist)';
-    const n = document.createElement('p'); n.className='name'; n.textContent = r.name ? `Requested by ${r.name}` : '';
-    text.append(t,a,n);
-    el.appendChild(text);
-
-    if (includeActions){
-      const act = document.createElement('div');
-      act.className = 'row-actions';
-      const markBtn = document.createElement('button');
-      markBtn.className = 'btn secondary small';
-      markBtn.textContent = 'Mark as Played';
-      markBtn.onclick = ()=> togglePlayed(r, true);
-      act.appendChild(markBtn);
-      el.appendChild(act);
+  const unplayed=[]; const played=[];
+  seen.forEach(r=>{ (String(r.played).toUpperCase()==='TRUE'?played:unplayed).push(r); });
+  const makeRow=(r, withActions=true)=>{
+    const el=document.createElement('div'); el.className='row';
+    const text=document.createElement('div');
+    const t=document.createElement('p'); t.className='title'; t.textContent=r.song_title||'(Unknown Title)';
+    const a=document.createElement('p'); a.className='artist'; a.textContent=r.artist||'(Unknown Artist)';
+    const n=document.createElement('p'); n.className='name'; n.textContent=r.name?`Requested by ${r.name}`:'';
+    text.append(t,a,n); el.appendChild(text);
+    if (withActions){
+      const act=document.createElement('div'); act.className='row-actions';
+      const mark=document.createElement('button'); mark.className='btn secondary small'; mark.textContent='Mark as Played';
+      mark.onclick=()=>togglePlayed(r,true); act.appendChild(mark); el.appendChild(act);
     }
     return el;
   };
-
-  const makeSpamRow = (r)=>{
-    const el = document.createElement('div');
-    el.className = 'row';
-    const text = document.createElement('div');
-    const t = document.createElement('p'); t.className='title'; t.textContent = r.song_title || '(Unknown Title)';
-    const a = document.createElement('p'); a.className='artist'; a.textContent = r.artist || '(Unknown Artist)';
-    const n = document.createElement('p'); n.className = 'name'; n.textContent = r.name ? `Spammed by ${r.name}` : '';
-    text.append(t,a,n);
-    el.appendChild(text);
-    return el;
-  };
-
-  unplayed.forEach(r=> reqRows.appendChild(makeRow(r, true)));
-  played.forEach(r=>{
-    const row = makeRow(r, false);
-    const act = document.createElement('div');
-    act.className = 'row-actions';
-    const unBtn = document.createElement('button');
-    unBtn.className = 'btn secondary small';
-    unBtn.textContent = 'Mark as Unplayed';
-    unBtn.onclick = ()=> togglePlayed(r, false);
-    act.appendChild(unBtn);
-    row.appendChild(act);
-    playedRows.appendChild(row);
-  });
-  spamList.forEach(r=> spamRows.appendChild(makeSpamRow(r)));
-
-  reqStatus.textContent = rows.length ? `Loaded ${rows.length} rows (${unplayed.length} unique)` : 'No requests yet.';
+  const makeSpamRow=(r)=>{ const el=document.createElement('div'); el.className='row'; const text=document.createElement('div'); const t=document.createElement('p'); t.className='title'; t.textContent=r.song_title||'(Unknown Title)'; const a=document.createElement('p'); a.className='artist'; a.textContent=r.artist||'(Unknown Artist)'; const n=document.createElement('p'); n.className='name'; n.textContent=r.name?`Spammed by ${r.name}`:''; text.append(t,a,n); el.appendChild(text); return el; };
+  unplayed.forEach(r=>reqRows.appendChild(makeRow(r,true)));
+  played.forEach(r=>{ const row=makeRow(r,false); const act=document.createElement('div'); act.className='row-actions'; const un=document.createElement('button'); un.className='btn secondary small'; un.textContent='Mark as Unplayed'; un.onclick=()=>togglePlayed(r,false); act.appendChild(un); row.appendChild(act); playedRows.appendChild(row); });
+  spam.forEach(r=> spamRows.appendChild(makeSpamRow(r)));
+  reqStatus.textContent = rows.length?`Loaded ${rows.length} rows (${unplayed.length} unique)`: 'No requests yet.';
 }
 
 async function loadRequests(){
-  if (!CURRENT_EVENT){ showRequests([]); return; }
+  if(!CURRENT_EVENT){ showRequests([]); return; }
   try{
     showDebug(`Fetching rows for ${CURRENT_EVENT}`);
-    const qs = j2qs({ mode:'read', event: CURRENT_EVENT });
-    const r = await jsonp(`${ENDPOINT_URL}?${qs}`);
-    if (!r || !r.ok) { reqStatus.textContent='Load failed.'; return; }
-    const rows = Array.isArray(r.rows) ? r.rows : [];
+    const qs=j2qs({ mode:'read', event: CURRENT_EVENT });
+    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
+    const rows=(r && r.ok && Array.isArray(r.rows))?r.rows:[];
     showRequests(rows);
-  }catch{
-    reqStatus.textContent='Load failed.';
-  }
+  }catch{ reqStatus.textContent='Load failed.'; }
 }
 
-/* ------------- mark played/unplayed ------------- */
-/* Requires backend handler:
-   mode=setPlayed&id=ROW_ID&played=1|0
-   If you need it, I can drop the Code.gs patch in next. */
-async function togglePlayed(row, toPlayed){
-  if (!row.id){ alert('Missing row ID; cannot update.'); return; }
+/* Requires backend: mode=setPlayed&id=ROW_ID&played=1|0 */
+async function togglePlayed(row,toPlayed){
+  if(!row.id){ alert('Missing row ID; cannot update.'); return; }
   try{
-    const qs = j2qs({ mode:'setPlayed', id: row.id, played: toPlayed ? '1':'0' });
-    const r = await jsonp(`${ENDPOINT_URL}?${qs}`);
-    if (r && r.ok) {
-      await loadRequests();
-    } else {
-      alert('Could not update Played.');
-    }
-  }catch{
-    alert('Network error.');
-  }
+    const qs=j2qs({ mode:'setPlayed', id: row.id, played: toPlayed?'1':'0' });
+    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
+    if (r && r.ok) await loadRequests(); else alert('Could not update Played.');
+  }catch{ alert('Network error.'); }
 }
 
-/* ------------- polling ------------- */
-let timer = null;
-function startPoll(){
-  stopPoll();
-  timer = setInterval(loadRequests, POLL_MS);
-}
-function stopPoll(){ if (timer) { clearInterval(timer); timer=null; } }
-
+/* Polling */
+let timer=null;
+function startPoll(){ stopPoll(); timer=setInterval(loadRequests, 5000); }
+function stopPoll(){ if(timer){ clearInterval(timer); timer=null; } }
 refreshBtn.addEventListener('click', loadRequests);
 
-/* ------------- init ------------- */
-window.addEventListener('load', async ()=>{
-  await loadActiveEvents();
-  startPoll();
-});
+window.addEventListener('load', async ()=>{ await loadActiveEvents(); startPoll(); });
 </script>
 </body>
 </html>
