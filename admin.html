@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>DCE • Admin</title>
+<title>DCE • EVENT SETUP</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#212121;
-    --section:#5a5a5a;     /* requested */
-    --surface:#4f4f4f;
+    --section:#363636;     /* section background */
+    --surface:#424242;     /* not used much here, but matches DJ */
     --border:#3a3a3a;
     --ink:#f2f2f2;
     --muted:#e6e6e6;
@@ -66,12 +66,12 @@
   }
   .btn:hover{ filter:brightness(1.05); }
   .btn:active{ transform:translateY(1px); box-shadow:inset 0 2px 0 rgba(0,0,0,.25); }
-  .btn.secondary{ background:var(--surface); color:#fff; border-color:#4a4a4a; }
+  .btn.secondary{ background:#4f4f4f; color:#fff; border-color:#4a4a4a; }
   .btn.warn{ background:#ef4444; border-color:#ef4444; color:#fff; }
   .small{ height:38px; padding:0 12px; border-radius:10px; font-weight:400; }
 
   .events{ display:flex; flex-direction:column; gap:12px; }
-  .event{ border:1px solid var(--border); border-radius:12px; background:#6a6a6a; padding:12px; }
+  .event{ border:1px solid var(--border); border-radius:12px; background:#4a4a4a; padding:12px; }
   .event-h{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; }
   .event-title{ margin:0; font-weight:400; color:#fff; font-size:16px; font-family:var(--font-ui); }
   .event-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
@@ -104,7 +104,7 @@
 </div>
 
 <div class="wrap">
-  <div class="title">Admin</div>
+  <div class="title">EVENT SETUP</div>
 
   <div class="grid">
     <section class="card">
@@ -121,7 +121,7 @@
         <button id="btnCreate" class="btn">Create Event</button>
         <button id="btnClear" class="btn secondary">Clear</button>
       </div>
-      <div id="createStatus" class="status"></div>
+      <!-- removed status line per request -->
     </section>
 
     <section class="card">
@@ -171,7 +171,7 @@ function jsonp(url, cbParam='callback'){
 }
 function fmtTitle(dateIso, name){
   const d = new Date(dateIso);
-  const dow = d.toLocaleDateString(undefined,{weekday:'short'}); // e.g., Wed
+  const dow = d.toLocaleDateString(undefined,{weekday:'short'}); // Wed
   const mm = String(d.getMonth()+1).padStart(2,'0');
   const dd = String(d.getDate()).padStart(2,'0');
   const yy = String(d.getFullYear()).slice(-2);
@@ -187,12 +187,13 @@ function guestUrlFor(code){ const u=new URL(GUEST_BASE); u.searchParams.set('eve
 
 /* Create */
 const evtDate=$('#evtDate'), evtName=$('#evtName');
-const btnCreate=$('#btnCreate'), btnClear=$('#btnClear'), createStatus=$('#createStatus');
-btnClear.addEventListener('click', ()=>{ evtDate.value=''; evtName.value=''; createStatus.textContent=''; });
+const btnCreate=$('#btnCreate'), btnClear=$('#btnClear');
+
+btnClear.addEventListener('click', ()=>{ evtDate.value=''; evtName.value=''; });
 
 const eventsEl=$('#events');
-const eventsMap=new Map();        // code -> event
-const qrOpen=new Set();           // keep which QR sections are open
+const eventsMap=new Map();
+const qrOpen=new Set();
 
 function renderEvents(list){
   if (!list || !list.length){ eventsEl.innerHTML = `<div class="status">No Active Events.</div>`; return; }
@@ -257,29 +258,25 @@ function upsertEvent(ev){
 
 async function createEvent(){
   const name=(evtName.value||'').trim(); const date=(evtDate.value||'').trim();
-  if (!name || !date){ createStatus.textContent='Please enter date and name.'; return; }
+  if (!name || !date){ return; }
   const code=slugify(name, date);
 
-  // FAST: optimistic add (no flicker)
+  // optimistic add (fast, no flicker)
   const optimistic = {code, name, date:new Date(date).toISOString(), active:true};
   upsertEvent(optimistic);
 
-  createStatus.textContent='Creating…';
   btnCreate.setAttribute('disabled','disabled');
   try{
     const r=await jsonp(`${ENDPOINT_URL}?${j2qs({ mode:'createEvent', name, date, code, active:'1' })}`);
-    if (r && r.ok){
-      // keep item; refresh quietly once
-      createStatus.textContent='Created!';
-      evtName.value=''; evtDate.value='';
-      setTimeout(refreshInBackground, 500);
-    }else{
-      createStatus.textContent=(r && r.error)?r.error:'Failed to create event.';
-      // rollback optimistic
+    if (!(r && r.ok)){
+      // rollback if failed
       eventsMap.delete(code); refreshInBackground();
+    } else {
+      evtName.value=''; evtDate.value='';
+      setTimeout(refreshInBackground, 400);
     }
   }catch{
-    createStatus.textContent='Network error.'; eventsMap.delete(code); refreshInBackground();
+    eventsMap.delete(code); refreshInBackground();
   }finally{ btnCreate.removeAttribute('disabled'); }
 }
 btnCreate.addEventListener('click', createEvent);
@@ -289,17 +286,23 @@ function refreshInBackground(){
     try{
       const r=await jsonp(`${ENDPOINT_URL}?${j2qs({mode:'listActive'})}`);
       if (r && r.ok && Array.isArray(r.events)){
+        eventsMap.clear();
         r.events.forEach(e=> eventsMap.set(e.code, e));
         const list=[...eventsMap.values()].sort((a,b)=> new Date(b.date)-new Date(a.date));
         renderEvents(list);
+        if (list.length===0) eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
+      } else {
+        eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
       }
-    }catch{}
+    }catch{
+      eventsEl.innerHTML = `<div class="status">Unable to load events.</div>`;
+    }
   })();
 }
 
 document.getElementById('btnRefresh').addEventListener('click', refreshInBackground);
 
-/* CSV (tolerant to header names) */
+/* CSV (header-agnostic) */
 function pick(obj, ...cands){
   for (const k of cands){ if (obj[k]!==undefined) return obj[k]; }
   for (const k of Object.keys(obj)){ if (cands.some(c=>c.toLowerCase()===k.toLowerCase())) return obj[k]; }
@@ -330,7 +333,7 @@ async function downloadCSV(code, filename='requests.csv'){
   }catch{ alert('Could not generate CSV.'); }
 }
 
-/* Delete event (fast UI) */
+/* Delete event */
 async function deleteEvent(code, cardEl){
   const sure=confirm('Delete this event and all of its rows? This cannot be undone.');
   if(!sure) return;
@@ -339,7 +342,7 @@ async function deleteEvent(code, cardEl){
   try{
     const r=await jsonp(`${ENDPOINT_URL}?${j2qs({ mode:'deleteEvent', event: code, wipe:'1' })}`);
     if (!(r && r.ok)){ alert(r && r.error ? r.error : 'Failed to delete.'); refreshInBackground(); }
-    else { setTimeout(refreshInBackground, 500); }
+    else { setTimeout(refreshInBackground, 400); }
   }catch{ alert('Network error.'); refreshInBackground(); }
 }
 
