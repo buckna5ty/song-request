@@ -42,18 +42,29 @@
     height:46px; border-radius:12px; border:1px solid #3a3a3a; background:#2a2a2a; color:#fff;
     font-size:15px; padding:0 12px; width:100%;
   }
-  .inline-info{ margin-top:8px; color:#e7e7e7; font-size:14px; }
+  .inline-info{ margin-top:8px; color:#e7e7e7; font-size:14px; min-height:1.2em; }
 
-  /* Tabs (bottom panel header) */
-  .tabs{ display:flex; gap:8px; margin-bottom:10px; }
+  /* Folder-style tabs (attached to content) */
+  .tabs-wrap{ margin-bottom:12px; }
+  .tabs-bar{
+    display:flex; gap:0; align-items:flex-end;
+    border-bottom:1px solid var(--border);
+    padding:0 6px;
+  }
   .tab-btn{
-    background:#2f2f2f; border:1px solid #3a3a3a; color:#fff;
-    height:40px; padding:0 16px; border-radius:999px; font-size:14px; cursor:pointer;
+    appearance:none; cursor:pointer;
+    height:40px; padding:0 16px; font-size:14px; color:#fff;
+    background:#2f2f2f; border:1px solid var(--border); border-bottom:none;
+    border-top-left-radius:10px; border-top-right-radius:10px;
+    margin:0 6px; transform:translateY(1px);
     transition:filter .15s ease, transform .06s ease;
   }
   .tab-btn:hover{ filter:brightness(1.05); }
-  .tab-btn:active{ transform:translateY(1px); }
-  .tab-btn.active{ background:var(--subsection); }
+  .tab-btn:active{ transform:translateY(2px); }
+  .tab-btn.active{
+    background:var(--subsection);
+    transform:translateY(0);
+  }
 
   .hidden{ display:none !important; }
 
@@ -81,7 +92,7 @@
   .title{ margin:0 0 2px; font-weight:800; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .sub{ margin:0; color:#e6e6e6; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-  .actions{ display:grid; gap:8px; } /* spacing between buttons */
+  .actions{ display:grid; gap:8px; } /* consistent space between buttons */
   .btn{
     display:inline-flex; align-items:center; justify-content:center; padding:0 14px;
     height:38px; font-size:14px; border-radius:10px; border:1px solid transparent;
@@ -104,7 +115,7 @@
   .names-box ul{ margin:0; padding-left:18px; }
   .names-box li{ margin:3px 0; color:#fafafa; font-size:13px; }
 
-  .footer-line{ margin-top:10px; color:var(--muted); font-size:12px; }
+  .footer-line{ margin-top:10px; color:#fff; font-size:12px; }
 </style>
 </head>
 <body>
@@ -118,11 +129,13 @@
       <div id="inlineInfo" class="inline-info"></div>
     </div>
 
-    <!-- Bottom: Tabs + content -->
+    <!-- Bottom: Folder tabs + content -->
     <div class="panel">
-      <div class="tabs">
-        <button id="tabRequests" class="tab-btn active" type="button">Requests</button>
-        <button id="tabSpam" class="tab-btn" type="button">Spam</button>
+      <div class="tabs-wrap">
+        <div class="tabs-bar">
+          <button id="tabRequests" class="tab-btn active" type="button">Requests</button>
+          <button id="tabSpam" class="tab-btn" type="button">Spam</button>
+        </div>
       </div>
 
       <!-- Requests tab -->
@@ -235,19 +248,28 @@ async function getArtwork(song, artist){
   }catch(_){ artCache.set(k,''); return ''; }
 }
 
-/* ===== Event loading (working version) ===== */
+/* ===== Event loading (back to working path, with silent fallback) ===== */
 async function loadActiveEvents(){
   showInline('Loading your events…');
   try{
-    const res = await jsonp(ENDPOINT_URL, { mode:'listActive' });
-    const list = Array.isArray(res?.events) ? res.events : [];
-    eventSel.innerHTML = '';
+    // Primary (the one that worked for you)
+    let res = await jsonp(ENDPOINT_URL, { mode:'listActive' });
+    let list = Array.isArray(res?.events) ? res.events : [];
 
+    // Silent fallback if the shape changes server-side
+    if (!list.length){
+      try{
+        const alt = await jsonp(ENDPOINT_URL, { mode:'events' });
+        if (Array.isArray(alt?.events)) list = alt.events;
+      }catch(_e){}
+    }
+
+    eventSel.innerHTML = '';
     if (!list.length){
       const opt=document.createElement('option');
       opt.value=''; opt.textContent='No active events';
       eventSel.appendChild(opt);
-      currentCode=''; showInline('No active events found.');
+      currentCode=''; showInline('Could not load events.');
       return;
     }
 
@@ -631,7 +653,7 @@ eventSel.addEventListener('change', ()=>{
 });
 
 (async function boot(){
-  await loadActiveEvents();          // working loader
+  await loadActiveEvents();
   initCollapsibles();
   if (eventSel.value){ currentCode = eventSel.value; await fetchRows(true); startPolling(); }
 })();
