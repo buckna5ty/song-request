@@ -4,59 +4,87 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>DCE • Admin</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#212121; --surface:#303030; --surface-2:#343434; --surface-3:#3d3d3d;
-    --ink:#f2f2f2; --muted:#bdbdbd; --border:#3a3a3a; --accent:#1dcec9; --focus:#e6e6e6; --ring:rgba(255,255,255,.22);
-    --radius:14px; --radius-sm:10px; --w:980px;
+    --bg:#212121;
+    --section:#5a5a5a;     /* requested */
+    --surface:#4f4f4f;
+    --border:#3a3a3a;
+    --ink:#f2f2f2;
+    --muted:#e6e6e6;
+    --accent:#1dcec9;
+    --ring:rgba(255,255,255,.22);
+
+    --r-lg:16px; --r-md:12px; --w:980px;
+
+    --font-head:"Adventor", "Roboto", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    --font-ui:"Roboto", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   }
+
   @font-face{
     font-family:"Adventor";
     src:url("texgyreadventor-regular.otf") format("opentype");
     font-weight:400; font-style:normal; font-display:swap;
   }
+
   *{ box-sizing:border-box; }
-  html,body{ margin:0; background:var(--bg); color:var(--ink); font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+  html,body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-ui); font-weight:300; }
+
   .wrap{ max-width:var(--w); margin:0 auto; padding:18px 12px 64px; }
-  .title{ text-align:center; margin:8px 0 18px; font-weight:800; letter-spacing:.04em; font-size:clamp(22px,5.4vw,36px); }
+  .title{
+    text-align:center; margin:8px 0 18px; letter-spacing:.04em;
+    font-family:var(--font-head); font-weight:400; font-size:clamp(22px,5.4vw,36px);
+  }
+
   .grid{ display:grid; grid-template-columns:1fr; gap:16px; }
   @media(min-width:900px){ .grid{ grid-template-columns:1fr 1fr; } }
-  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:0 4px 14px rgba(0,0,0,.25); }
-  .card h2{ margin:0 0 12px; font-size:18px; letter-spacing:.02em; color:#fff; }
-  .field{ margin-bottom:10px; }
-  .label{ display:block; font-size:13px; color:var(--muted); margin:0 0 6px; }
-  .input, .date{
-    width:100%; height:48px; padding:0 14px; border:1px solid var(--border); border-radius:var(--radius-sm);
-    background:#2b2b2b; color:var(--ink); outline:none; font-size:16px; transition: box-shadow .12s ease, border-color .12s ease;
+
+  .card{
+    background:var(--section); border:1px solid var(--border); border-radius:var(--r-lg); padding:16px;
+    box-shadow:0 4px 14px rgba(0,0,0,.25);
   }
-  .input:focus, .date:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring); }
+  .card h2{ margin:0 0 12px; font-size:18px; font-family:var(--font-ui); font-weight:400; }
+
+  .field{ margin-bottom:10px; }
+  .label{ display:block; font-size:13px; color:var(--muted); margin:0 0 6px; font-weight:300; }
+  .input,.date{
+    width:100%; height:48px; padding:0 14px; border:1px solid var(--border); border-radius:12px;
+    background:#2b2b2b; color:var(--ink); outline:none; font-size:16px; transition: box-shadow .12s ease, border-color .12s ease; font-weight:300;
+  }
+  .input:focus,.date:focus{ border-color:#e6e6e6; box-shadow:0 0 0 3px var(--ring); }
+
   .row{ display:flex; gap:10px; } .row > *{ flex:1; }
+
   .btn{
     height:44px; padding:0 14px; border:1px solid var(--accent); background:var(--accent); color:#000;
-    border-radius:12px; font-weight:800; letter-spacing:.03em; cursor:pointer; user-select:none;
-    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    border-radius:12px; cursor:pointer; user-select:none; display:inline-flex; align-items:center; justify-content:center; gap:8px;
     transition:transform .06s ease, filter .15s ease, box-shadow .06s ease;
     box-shadow:0 2px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.15);
+    font-family:var(--font-ui); font-weight:400; letter-spacing:.02em;
   }
-  .btn:hover{ filter:brightness(1.05); } .btn:active{ transform:translateY(1px); box-shadow:inset 0 2px 0 rgba(0,0,0,.25); }
-  .btn.secondary{ background:var(--surface-2); color:#fff; border-color:#4a4a4a; }
+  .btn:hover{ filter:brightness(1.05); }
+  .btn:active{ transform:translateY(1px); box-shadow:inset 0 2px 0 rgba(0,0,0,.25); }
+  .btn.secondary{ background:var(--surface); color:#fff; border-color:#4a4a4a; }
   .btn.warn{ background:#ef4444; border-color:#ef4444; color:#fff; }
-  .small{ height:38px; padding:0 12px; border-radius:10px; font-weight:700; }
+  .small{ height:38px; padding:0 12px; border-radius:10px; font-weight:400; }
+
   .events{ display:flex; flex-direction:column; gap:12px; }
-  .event{ border:1px solid var(--border); border-radius:12px; background:var(--surface-2); padding:12px; }
+  .event{ border:1px solid var(--border); border-radius:12px; background:#6a6a6a; padding:12px; }
   .event-h{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; }
-  .event-title{ margin:0; font-weight:800; color:#fff; font-size:16px; }
+  .event-title{ margin:0; font-weight:400; color:#fff; font-size:16px; font-family:var(--font-ui); }
   .event-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
   .qr-wrap{ margin-top:10px; display:none; }
   .qr-wrap.show{ display:block; }
   .qr{ background:#fff; border-radius:12px; padding:8px; display:inline-block; }
-  .help{ font-size:12px; color:var(--muted); margin-top:6px; }
-  .status{ font-size:13px; color:var(--muted); min-height:18px; margin-top:8px; }
+  .help{ font-size:12px; color:#f0f0f0; margin-top:6px; font-weight:300; }
+  .status{ font-size:13px; color:#f0f0f0; min-height:18px; margin-top:8px; font-weight:300; }
 
   .gate{ position:fixed; inset:0; background:rgba(33,33,33,.98); display:flex; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(2px); }
-  .gate-card{ width:min(420px,90vw); background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; text-align:center; box-shadow:0 12px 32px rgba(0,0,0,.35); }
-  .gate-card h1{ margin:6px 0 12px; font-size:20px; }
-  .pin-input{ width:100%; letter-spacing:0.35em; text-align:center; font-weight:800; font-size:20px; }
+  .gate-card{ width:min(420px,90vw); background:var(--section); border:1px solid var(--border); border-radius:16px; padding:18px; text-align:center; box-shadow:0 12px 32px rgba(0,0,0,.35); }
+  .gate-card h1{ margin:6px 0 12px; font-size:20px; font-family:var(--font-head); font-weight:400; }
+  .pin-input{ width:100%; letter-spacing:0.35em; text-align:center; font-weight:400; font-size:20px; }
   .err{ color:#ffb4b4; font-size:13px; min-height:16px; margin-top:6px; }
   .flex{ display:flex; gap:8px; flex-wrap:wrap; }
   .right{ margin-left:auto; }
@@ -141,9 +169,9 @@ function jsonp(url, cbParam='callback'){
     document.body.appendChild(s);
   });
 }
-function fmtAdminTitle(dateIso, name){
+function fmtTitle(dateIso, name){
   const d = new Date(dateIso);
-  const dow = d.toLocaleDateString(undefined,{weekday:'short'}); // Wed
+  const dow = d.toLocaleDateString(undefined,{weekday:'short'}); // e.g., Wed
   const mm = String(d.getMonth()+1).padStart(2,'0');
   const dd = String(d.getDate()).padStart(2,'0');
   const yy = String(d.getFullYear()).slice(-2);
@@ -157,21 +185,23 @@ function slugify(name, dateStr){
 }
 function guestUrlFor(code){ const u=new URL(GUEST_BASE); u.searchParams.set('event',code); return u.toString(); }
 
-/* Create Event */
-const evtDate=$('#evtDate'), evtName=$('#evtName'), btnCreate=$('#btnCreate'), btnClear=$('#btnClear'), createStatus=$('#createStatus');
+/* Create */
+const evtDate=$('#evtDate'), evtName=$('#evtName');
+const btnCreate=$('#btnCreate'), btnClear=$('#btnClear'), createStatus=$('#createStatus');
 btnClear.addEventListener('click', ()=>{ evtDate.value=''; evtName.value=''; createStatus.textContent=''; });
 
 const eventsEl=$('#events');
-const eventsMap=new Map(); // code->ev
-const qrOpen=new Set();
+const eventsMap=new Map();        // code -> event
+const qrOpen=new Set();           // keep which QR sections are open
 
 function renderEvents(list){
   if (!list || !list.length){ eventsEl.innerHTML = `<div class="status">No Active Events.</div>`; return; }
   eventsEl.innerHTML='';
   list.forEach(ev=>{
-    const card=document.createElement('div'); card.className='event'; card.dataset.code = ev.code;
+    const card=document.createElement('div'); card.className='event'; card.dataset.code=ev.code;
+
     const h=document.createElement('div'); h.className='event-h';
-    h.innerHTML = `<h3 class="event-title">${fmtAdminTitle(ev.date, ev.name)}</h3>`;
+    h.innerHTML = `<h3 class="event-title">${fmtTitle(ev.date, ev.name)}</h3>`;
     card.appendChild(h);
 
     const actions=document.createElement('div'); actions.className='event-actions';
@@ -187,7 +217,7 @@ function renderEvents(list){
     const qrInner=document.createElement('div'); qrInner.className='qr';
     const qrImg=document.createElement('img'); qrImg.width=240; qrImg.height=240; qrImg.decoding='async'; qrImg.loading='lazy';
     qrInner.appendChild(qrImg);
-    const helper=document.createElement('div'); helper.className='help'; helper.textContent='Scan to open the guest request page for this event.';
+    const helper=document.createElement('div'); helper.className='help'; helper.textContent='Scan to open the guest request page.';
     qrC.append(qrInner, helper);
     btnQR.onclick=()=>{
       qrC.classList.toggle('show');
@@ -224,33 +254,40 @@ function upsertEvent(ev){
   const list=[...eventsMap.values()].sort((a,b)=> new Date(b.date)-new Date(a.date));
   renderEvents(list);
 }
+
 async function createEvent(){
   const name=(evtName.value||'').trim(); const date=(evtDate.value||'').trim();
   if (!name || !date){ createStatus.textContent='Please enter date and name.'; return; }
   const code=slugify(name, date);
-  createStatus.textContent='Creating…'; btnCreate.setAttribute('disabled','disabled');
+
+  // FAST: optimistic add (no flicker)
+  const optimistic = {code, name, date:new Date(date).toISOString(), active:true};
+  upsertEvent(optimistic);
+
+  createStatus.textContent='Creating…';
+  btnCreate.setAttribute('disabled','disabled');
   try{
-    const qs=j2qs({ mode:'createEvent', name, date, code, active:'1' });
-    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
+    const r=await jsonp(`${ENDPOINT_URL}?${j2qs({ mode:'createEvent', name, date, code, active:'1' })}`);
     if (r && r.ok){
-      upsertEvent({code, name, date: r.date || new Date(date).toISOString(), active:true}); // immediate; no flicker
+      // keep item; refresh quietly once
       createStatus.textContent='Created!';
       evtName.value=''; evtDate.value='';
-      // background refresh that does NOT clear list
-      setTimeout(refreshInBackground, 400);
+      setTimeout(refreshInBackground, 500);
     }else{
-      createStatus.textContent = (r && r.error) ? r.error : 'Failed to create event.';
+      createStatus.textContent=(r && r.error)?r.error:'Failed to create event.';
+      // rollback optimistic
+      eventsMap.delete(code); refreshInBackground();
     }
-  }catch{ createStatus.textContent='Network error.'; }
-  finally{ btnCreate.removeAttribute('disabled'); }
+  }catch{
+    createStatus.textContent='Network error.'; eventsMap.delete(code); refreshInBackground();
+  }finally{ btnCreate.removeAttribute('disabled'); }
 }
 btnCreate.addEventListener('click', createEvent);
 
 function refreshInBackground(){
   (async()=>{
     try{
-      const qs=j2qs({ mode:'listActive' });
-      const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
+      const r=await jsonp(`${ENDPOINT_URL}?${j2qs({mode:'listActive'})}`);
       if (r && r.ok && Array.isArray(r.events)){
         r.events.forEach(e=> eventsMap.set(e.code, e));
         const list=[...eventsMap.values()].sort((a,b)=> new Date(b.date)-new Date(a.date));
@@ -260,26 +297,30 @@ function refreshInBackground(){
   })();
 }
 
-document.getElementById('btnRefresh').addEventListener('click', ()=>{ refreshInBackground(); });
+document.getElementById('btnRefresh').addEventListener('click', refreshInBackground);
 
-/* CSV */
+/* CSV (tolerant to header names) */
+function pick(obj, ...cands){
+  for (const k of cands){ if (obj[k]!==undefined) return obj[k]; }
+  for (const k of Object.keys(obj)){ if (cands.some(c=>c.toLowerCase()===k.toLowerCase())) return obj[k]; }
+  return '';
+}
 async function downloadCSV(code, filename='requests.csv'){
   try{
-    const qs=j2qs({ mode:'read', event: code });
-    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
+    const r=await jsonp(`${ENDPOINT_URL}?${j2qs({mode:'read', event: code})}`);
     if (!r || !r.ok){ alert('No data.'); return; }
     const rows=Array.isArray(r.rows)?r.rows:[];
     const headers=['Timestamp','Name','Song Title','Artist','Link','Event','ID','Played'];
     const lines=[headers.join(',')];
     rows.forEach(obj=>{
-      const t=(obj.timestamp||'').toString().replace(/,/g,' ');
-      const n=(obj.name||'').toString().replace(/"/g,'""');
-      const st=(obj.song_title||'').toString().replace(/"/g,'""');
-      const ar=(obj.artist||'').toString().replace(/"/g,'""');
-      const lk=(obj.link||'').toString().replace(/"/g,'""');
-      const ev=(obj.event||code).toString().replace(/"/g,'""');
-      const id=(obj.id||'').toString().replace(/"/g,'""');
-      const pl=(String(obj.played).toUpperCase()==='TRUE')?'TRUE':'';
+      const t=(pick(obj,'timestamp','Timestamp')||'').toString().replace(/,/g,' ');
+      const n=(pick(obj,'name','Name')||'').toString().replace(/"/g,'""');
+      const st=(pick(obj,'song_title','Song Title','Title','Song')||'').toString().replace(/"/g,'""');
+      const ar=(pick(obj,'artist','Artist')||'').toString().replace(/"/g,'""');
+      const lk=(pick(obj,'link','Link')||'').toString().replace(/"/g,'""');
+      const ev=(pick(obj,'event','Event','Event Code')||code).toString().replace(/"/g,'""');
+      const id=(pick(obj,'id','ID')||'').toString().replace(/"/g,'""');
+      const pl=(String(pick(obj,'played','Played')).toUpperCase()==='TRUE' || pick(obj,'played','Played')==='1')?'TRUE':'';
       lines.push([`"${t}"`,`"${n}"`,`"${st}"`,`"${ar}"`,`"${lk}"`,`"${ev}"`,`"${id}"`,`"${pl}"`].join(','));
     });
     const csv=lines.join('\r\n');
@@ -289,30 +330,23 @@ async function downloadCSV(code, filename='requests.csv'){
   }catch{ alert('Could not generate CSV.'); }
 }
 
-/* Delete (instant feel) */
+/* Delete event (fast UI) */
 async function deleteEvent(code, cardEl){
   const sure=confirm('Delete this event and all of its rows? This cannot be undone.');
   if(!sure) return;
   cardEl.remove(); eventsMap.delete(code);
   if (!eventsEl.children.length) eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
   try{
-    const qs=j2qs({ mode:'deleteEvent', event: code, wipe:'1' });
-    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
-    if (!(r && r.ok)){
-      // restore if failed
-      alert(r && r.error ? r.error : 'Failed to delete.');
-      refreshInBackground();
-    } else {
-      setTimeout(refreshInBackground, 500);
-    }
+    const r=await jsonp(`${ENDPOINT_URL}?${j2qs({ mode:'deleteEvent', event: code, wipe:'1' })}`);
+    if (!(r && r.ok)){ alert(r && r.error ? r.error : 'Failed to delete.'); refreshInBackground(); }
+    else { setTimeout(refreshInBackground, 500); }
   }catch{ alert('Network error.'); refreshInBackground(); }
 }
 
 /* Initial load */
 async function loadEventsFirst(){
   try{
-    const qs=j2qs({ mode:'listActive' });
-    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
+    const r=await jsonp(`${ENDPOINT_URL}?${j2qs({mode:'listActive'})}`);
     if (r && r.ok && Array.isArray(r.events)){
       eventsMap.clear(); r.events.forEach(ev=> eventsMap.set(ev.code, ev));
       const list=[...eventsMap.values()].sort((a,b)=> new Date(b.date)-new Date(a.date));
