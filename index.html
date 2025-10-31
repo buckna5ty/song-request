@@ -5,22 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Song Request • David Charles Events</title>
 
-<!-- Roboto for UI text -->
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap" rel="stylesheet">
 
 <style>
   :root{
-    --bg:#212121;             /* page background */
-    --ink:#ffffff;            /* primary text */
-    --muted:#d9d9d9;          /* secondary text */
-    --border:#3a3a3a;         /* borders */
-    --field:#303030;          /* input background */
-    --card:#3a3a3a;           /* result card background (lighter than fields) */
-    --ring:rgba(255,255,255,.18); /* soft white focus ring */
-    --accent:#1dcec9;         /* button + check circle brand */
-    --r-lg:14px;
-    --r-md:12px;
-    --w:880px;
+    --bg:#212121;
+    --ink:#ffffff;
+    --muted:#d9d9d9;
+    --border:#3a3a3a;
+    --field:#303030;
+    --card:#3a3a3a;
+    --ring:rgba(255,255,255,.18);
+    --accent:#1dcec9;
+    --r-lg:14px; --r-md:12px; --w:880px;
   }
 
   @font-face{
@@ -29,49 +26,33 @@
     font-weight:400; font-style:normal; font-display:swap;
   }
 
-  * { box-sizing:border-box; }
-  html, body {
-    margin:0;
-    background:var(--bg);
-    color:var(--ink);
-    font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif;
-    font-weight:300;
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:Roboto, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif; font-weight:300;
   }
 
   .wrap{ max-width:var(--w); margin:0 auto; padding:18px 14px 80px; }
 
-  .logo{
-    text-align:center; margin:10px 0 8px;
-  }
-  .logo img{
-    width:min(540px, 80vw); height:auto; display:inline-block;
-  }
+  .logo{ text-align:center; margin:10px 0 8px; }
+  .logo img{ width:min(540px, 80vw); height:auto; display:inline-block; }
 
   .title{
     text-align:center; margin:4px 0 18px;
-    font-family:Adventor, Roboto, sans-serif;
-    font-weight:400; letter-spacing:.06em;
+    font-family:Adventor, Roboto, sans-serif; font-weight:400; letter-spacing:.06em;
     font-size:clamp(22px, 6vw, 36px);
   }
 
   label{ display:block; font-size:14px; color:var(--muted); margin:0 0 6px; }
-
   .field{ margin-bottom:12px; }
-
-  /* extra spacing between name input and Search label (requested 20px) */
   .sp20{ margin-top:20px; }
 
   .input{
-    width:100%; height:52px; padding:0 14px;
-    border:1px solid var(--border);
-    background:var(--field); color:var(--ink);
-    border-radius:12px; font-size:16px; outline:none;
+    width:100%; height:52px; padding:0 14px; border:1px solid var(--border);
+    background:var(--field); color:var(--ink); border-radius:12px; font-size:16px; outline:none;
     transition:border-color .12s ease, box-shadow .12s ease, background .12s ease;
   }
-  .input:focus{
-    border-color:#e9e9e9;
-    box-shadow:0 0 0 3px var(--ring);
-  }
+  .input:focus{ border-color:#e9e9e9; box-shadow:0 0 0 3px var(--ring); }
 
   .search-row{ position:relative; }
   .clear{
@@ -96,9 +77,7 @@
   .ttl{ margin:0 0 2px; font-weight:400; color:#fff; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .art{ margin:0; color:#ebebeb; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-  .selected{
-    margin-top:8px; padding:12px; border:1px solid var(--border); border-radius:12px; background:#2a2a2a; display:none;
-  }
+  .selected{ margin-top:8px; padding:12px; border:1px solid var(--border); border-radius:12px; background:#2a2a2a; display:none; }
   .sel-inner{ display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center; }
   .sel-cover{ width:72px;height:72px;border-radius:12px;object-fit:cover;background:#2d2d2d; display:block; }
   .sel-title{ margin:0 0 2px; font-size:16px; font-weight:400; }
@@ -119,9 +98,7 @@
   .btn:active{ transform:translateY(1px); box-shadow:inset 0 2px 0 rgba(0,0,0,.25); }
   .btn.block{ width:220px; max-width:100%; display:block; margin:0 auto; }
 
-  .ty-overlay{
-    position:fixed; inset:0; background:#111; display:none; align-items:center; justify-content:center; z-index:9999;
-  }
+  .ty-overlay{ position:fixed; inset:0; background:#111; display:none; align-items:center; justify-content:center; z-index:9999; }
   .ty-wrap{ text-align:center; padding:24px; max-width:92vw; color:#fff; }
   .ty-icon{
     width:96px; height:96px; margin:0 auto 18px; display:grid; place-items:center;
@@ -134,26 +111,22 @@
   }
   .ty-sub{ font:400 16px/1.5 Roboto, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif; color:#fff; margin:0; }
 
-  @media (max-width:520px){
-    .btn.block{ width:100%; }
-  }
+  @media (max-width:520px){ .btn.block{ width:100%; } }
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="logo">
-      <!-- Uses the new logo (at repo root). Falls back to old asset path if needed -->
-      <img src="./DCE%20Logo1.png" alt="David Charles Events" onerror="this.onerror=null; this.src='assets/client-logo.png';" />
+      <!-- UPDATED to use the correct current logo filename -->
+      <img src="./dce-logo.png" alt="David Charles Events" onerror="this.onerror=null; this.src='assets/client-logo.png';" />
     </div>
     <div class="title">SONG REQUEST</div>
 
-    <!-- Name -->
     <div class="field">
       <label for="nameInput">What’s your name?</label>
       <input id="nameInput" class="input" type="text" autocomplete="name" />
     </div>
 
-    <!-- Search -->
     <div class="field sp20">
       <label for="q">Search Song, Artist or Lyrics</label>
       <div class="search-row">
@@ -175,13 +148,11 @@
       <div id="status" class="status"></div>
     </div>
 
-    <!-- Submit -->
     <div class="actions">
       <button id="submitBtn" class="btn block">SUBMIT</button>
     </div>
   </div>
 
-  <!-- Thank-you overlay -->
   <div class="ty-overlay" id="tyOverlay" role="dialog" aria-live="polite" aria-modal="true">
     <div class="ty-wrap">
       <div class="ty-icon" aria-hidden="true">
@@ -193,10 +164,8 @@
   </div>
 
 <script>
-/* ===== Config ===== */
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxkSPUc2VWQYkhJ_af7CShegZLAMmVgUsTp2nMeVwkkhdFbdQT8wk2s6xBAAynjtLDT/exec';
 
-/* ===== Utilities ===== */
 const $ = s=>document.querySelector(s);
 const q = $('#q'), clearBtn = $('#clearBtn'), resultsEl = $('#results'),
       selBox = $('#selected'), selCover = $('#selCover'),
@@ -222,7 +191,6 @@ function hideSelectedCard(){
   selBox.style.display='none';
 }
 
-/* ===== Search (iTunes JSONP) ===== */
 let debounce=null, lastTerm='', lastScript=null, chosen=null;
 
 function jsonp(url, cbParam='callback'){
@@ -270,14 +238,10 @@ function render(list){
 
 async function doSearch(term){
   if (!term){ setStatus(''); clearResults(); return; }
-  try{
-    setStatus('Searching…');
-    const rows = await searchITunes(term);
-    render(rows);
-  }catch(e){ setStatus('Search failed.', true); }
+  try{ setStatus('Searching…'); const rows = await searchITunes(term); render(rows); }
+  catch(e){ setStatus('Search failed.', true); }
 }
 
-/* events for search */
 q.addEventListener('input', ()=>{
   const raw=q.value; clearBtn.style.display = raw.length>=1 ? 'flex' : 'none';
   const t=raw.trim(); if (t===lastTerm) return; lastTerm=t;
@@ -288,11 +252,9 @@ clearBtn.addEventListener('click', ()=>{
   q.value=''; lastTerm=''; chosen=null; hideSelectedCard(); clearBtn.style.display='none'; setStatus(''); clearResults();
 });
 
-/* ===== Submit ===== */
 function thankThenReturn(){
   ty.style.display='flex';
   setTimeout(()=>{
-    // return to same event page
     const sp=new URLSearchParams(location.search);
     if (EVENT_CODE) sp.set('event', EVENT_CODE);
     location.href = location.pathname + (sp.toString()?('?'+sp.toString()):'');
@@ -300,7 +262,6 @@ function thankThenReturn(){
 }
 
 function jsonpPost(url, params){
-  // JSONP "post-like": just attach params in query
   const qs = new URLSearchParams(params).toString();
   return jsonp(url + (url.includes('?')?'&':'?') + qs, 'callback');
 }
@@ -315,12 +276,11 @@ submitBtn.addEventListener('click', async ()=>{
   if (!song && !artist){ setStatus('Pick a song from the search results first.', true); return; }
 
   submitBtn.setAttribute('disabled','disabled');
-
   try{
     const payload = {
       mode:'write',
       name, song_title:song, artist, link,
-      event: EVENT_CODE,                // IMPORTANT: code only
+      event: EVENT_CODE,  // code only
       ua: navigator.userAgent || '',
       ref: location.href || ''
     };
@@ -333,11 +293,7 @@ submitBtn.addEventListener('click', async ()=>{
   }
 });
 
-/* ===== Init ===== */
-window.addEventListener('load', ()=>{
-  // focus into name for faster flow
-  try{ nameInput.focus({preventScroll:true}); }catch{}
-});
+window.addEventListener('load', ()=>{ try{ nameInput.focus({preventScroll:true}); }catch{} });
 </script>
 </body>
 </html>
