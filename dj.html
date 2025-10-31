@@ -214,11 +214,21 @@ let rowsCache = [];
 const artCache = new Map();
 const removedKeySet = new Set();
 
-/* ===== Helpers ===== */
+/* ===== Small utilities ===== */
 function showInline(msg){ inlineInfo.textContent = msg || ''; }
 function keySong(song, artist){ return `${(song||'').toLowerCase()}|${(artist||'').toLowerCase()}`; }
 function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function checksum(rows){ let s=0; for(const r of rows){ s+= (r.id||'').length + (r.played?7:3);} return s+':'+rows.length; }
+function pad2(n){ return String(n).padStart(2,'0'); }
+function dow3(n){ return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][n] || ''; }
+/* >>> The missing helper that broke event rendering <<< */
+function formatHeaderDate(dateStr){
+  try{
+    const d = new Date(dateStr);
+    if (isNaN(d)) return '';
+    return `${dow3(d.getDay())} ${pad2(d.getMonth()+1)}.${pad2(d.getDate())}.${String(d.getFullYear()).slice(-2)}`;
+  }catch{ return ''; }
+}
 
 /* JSONP */
 function jsonp(url, params = {}) {
@@ -248,21 +258,15 @@ async function getArtwork(song, artist){
   }catch(_){ artCache.set(k,''); return ''; }
 }
 
-/* ===== Event loading (back to working path, with silent fallback) ===== */
+/* ===== Event loading (working path) ===== */
 async function loadActiveEvents(){
   showInline('Loading your events…');
   try{
-    // Primary (the one that worked for you)
     let res = await jsonp(ENDPOINT_URL, { mode:'listActive' });
     let list = Array.isArray(res?.events) ? res.events : [];
 
-    // Silent fallback if the shape changes server-side
-    if (!list.length){
-      try{
-        const alt = await jsonp(ENDPOINT_URL, { mode:'events' });
-        if (Array.isArray(alt?.events)) list = alt.events;
-      }catch(_e){}
-    }
+    // Sort by date asc if present
+    list.sort((a,b)=> new Date(a.date||0) - new Date(b.date||0));
 
     eventSel.innerHTML = '';
     if (!list.length){
@@ -276,7 +280,8 @@ async function loadActiveEvents(){
     for (const ev of list){
       const opt = document.createElement('option');
       opt.value = ev.code;
-      opt.textContent = `${formatHeaderDate(ev.date)} - ${ev.name}`;
+      const d = formatHeaderDate(ev.date);
+      opt.textContent = d ? `${d} - ${ev.name}` : ev.name || ev.code;
       eventSel.appendChild(opt);
     }
 
@@ -285,7 +290,7 @@ async function loadActiveEvents(){
     if (pre && [...eventSel.options].some(o=>o.value===pre)) eventSel.value = pre;
 
     currentCode = eventSel.value || '';
-    showInline(''); // clear
+    showInline('');
   }catch(e){
     showInline('Could not load events.');
   }
