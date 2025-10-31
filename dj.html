@@ -1,27 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>DCE • REQUESTS</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>REQUESTS • David Charles Events</title>
 <style>
   :root{
-    --bg:#212121;
-    --section:#363636;      /* section background */
-    --surface:#424242;      /* collapsible subsection background */
-    --surface-2:#4f4f4f;
-    --border:#3a3a3a;
+    --bg:#212121;                 /* page */
+    --section:#363636;            /* section (cards/panels) */
+    --subsection:#424242;         /* collapsible inner sections */
+    --border:#2b2b2b;
     --ink:#f2f2f2;
-    --muted:#dfdfdf;
-    --accent:#1dcec9;
+    --muted:#bdbdbd;
+    --accent:#1dcec9;             /* brand */
+    --amber:#f7b731;              /* unplayed revert button */
     --ring:rgba(255,255,255,.22);
-
-    --r-lg:14px; --r-md:12px; --w:1100px;
-
-    --font-head:"Adventor", "Roboto", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    --font-ui:"Roboto", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    --focus:#e6e6e6;
+    --radius:12px;
+    --radius-lg:14px;
+    --maxw:1100px;
   }
 
   @font-face{
@@ -33,255 +30,536 @@
   *{ box-sizing:border-box; }
   html,body{
     margin:0; background:var(--bg); color:var(--ink);
-    font-family:var(--font-ui); font-weight:300;
+    font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   }
 
-  .wrap{ max-width:var(--w); margin:0 auto; padding:16px 12px 64px; }
-  h1{
-    margin:6px 0 14px; font-size:clamp(22px,5.2vw,34px);
-    letter-spacing:.02em; font-family:var(--font-head); font-weight:400;
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:16px 14px 56px; }
+
+  .page-title{
+    text-align:center; margin:8px 0 18px; letter-spacing:.06em;
+    font-weight:800; font-size:clamp(22px,5.5vw,36px);
   }
 
-  .toolbar{
-    display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:12px;
-    background:var(--section); border:1px solid var(--border); border-radius:var(--r-lg); padding:10px;
+  .panel{
+    background:var(--section); border:1px solid var(--border); border-radius:var(--radius);
+    padding:14px; margin-bottom:14px;
   }
-  .select{
-    height:44px; min-width:260px; max-width:100%; padding:0 10px;
-    background:#2b2b2b; color:var(--ink); border:1px solid var(--border); border-radius:10px; font-size:15px; font-weight:300;
+
+  .row{ display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:end; }
+  @media (max-width:720px){ .row{ grid-template-columns:1fr; } }
+
+  label{ display:block; font-size:14px; color:var(--muted); margin:0 0 6px; }
+
+  select, button, .btn{
+    height:46px; border-radius:12px; border:1px solid #3a3a3a; background:#2a2a2a; color:#fff;
+    font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    font-size:15px; cursor:pointer;
+    transition:filter .15s ease, transform .06s ease, box-shadow .06s ease, background .15s ease;
   }
+  select{ padding:0 12px; width:100%; }
+  button:hover{ filter:brightness(1.05); }
+  button:active{ transform:translateY(1px); box-shadow:inset 0 2px 0 rgba(0,0,0,.25); }
 
   .btn{
-    height:44px; padding:0 14px; border:1px solid var(--accent); background:var(--accent); color:#000;
-    border-radius:12px; cursor:pointer; user-select:none; display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    transition:transform .06s ease, filter .15s ease, box-shadow .06s ease;
+    display:inline-flex; align-items:center; justify-content:center; padding:0 14px;
     box-shadow:0 2px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.15);
-    font-family:var(--font-ui); font-weight:400; letter-spacing:.02em;
   }
-  .btn:hover{ filter:brightness(1.05); }
-  .btn:active{ transform:translateY(1px); box-shadow:inset 0 2px 0 rgba(0,0,0,.25); }
-  .btn.secondary{ background:var(--surface-2); color:#fff; border-color:#4a4a4a; }
+  .btn.refresh{ background:#2f2f2f; border-color:#3a3a3a; }
+  .btn.played{ background:var(--accent); border-color:var(--accent); color:#000; }
+  .btn.unplayed{ background:var(--amber); border-color:var(--amber); color:#000; }
+  .btn.small{ height:36px; padding:0 10px; font-size:14px; border-radius:10px; }
 
-  .pill{ margin-left:auto; font-size:12px; color:#082; background:rgba(45,212,191,.12); border:1px solid rgba(45,212,191,.35); border-radius:999px; padding:6px 10px; display:none; }
-  .pill.show{ display:inline-block; }
+  .h2{
+    margin:10px 0 10px; font-size:18px; font-weight:800; letter-spacing:.03em;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .count-pill{
+    font-size:13px; color:#dcdcdc; opacity:.9; margin-left:8px;
+  }
 
-  .grid{ display:grid; grid-template-columns:1fr; gap:12px; }
-  @media(min-width:900px){ .grid{ grid-template-columns:1fr 1fr; } }
-
+  /* lists */
+  .list{ display:grid; gap:10px; }
   .card{
-    background:var(--section); border:1px solid var(--border); border-radius:var(--r-lg); padding:12px;
+    background:var(--section); border:1px solid var(--border); border-radius:12px; padding:10px;
+    display:grid; grid-template-columns:64px 1fr auto; gap:12px; align-items:center;
   }
-  .card h2{
-    margin:0 0 8px; font-size:18px; font-family:var(--font-ui); font-weight:400;
+  .thumb{
+    width:64px; height:64px; border-radius:10px; background:#1f1f1f; object-fit:cover; display:block;
+  }
+  .meta{ min-width:0; }
+  .title{ margin:0 0 2px; font-weight:800; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sub{ margin:0; color:#e6e6e6; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .names-toggle{
+    margin-top:6px; background:var(--subsection); border:1px solid var(--border); border-radius:10px; padding:6px 10px; display:none;
+  }
+  .names-toggle.open{ display:block; }
+  .names-btn{
+    margin-top:6px;
   }
 
-  .status{ color:var(--muted); font-size:13px; min-height:18px; }
-
-  .rows{ display:flex; flex-direction:column; gap:8px; }
-  .row{
-    display:flex; align-items:flex-start; gap:10px; padding:10px;
-    background:var(--surface-2); border:1px solid var(--border); border-radius:12px;
+  .collapsible{
+    background:var(--subsection); border:1px solid var(--border); border-radius:12px; padding:10px; margin-top:6px;
   }
-  .title{ margin:0; font-weight:400; color:#fff; font-family:var(--font-ui); }
-  .artist{ margin:2px 0 0; color:#e9e9e9; font-size:13px; font-weight:300; }
-  .name{ margin:0; color:#d5d5d5; font-size:12px; font-weight:300; }
-
-  .row-actions{ margin-left:auto; display:flex; gap:8px; }
-  .small{ height:36px; padding:0 12px; border-radius:10px; font-weight:400; }
-
-  details{
-    background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:10px;
+  .collapsible-header{
+    display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none;
   }
-  details > summary{ cursor:pointer; font-weight:400; font-family:var(--font-ui); }
-  details[open]{ background:var(--surface); }
+  .twist{ width:18px; height:18px; display:inline-grid; place-items:center; margin-left:8px; }
+  .collapsible-body{ display:none; margin-top:10px; }
+  .collapsible.open .collapsible-body{ display:block; }
+
+  .muted{ color:var(--muted); font-size:13px; }
+  .spacer{ height:4px; }
+
+  .footer-line{ margin-top:10px; color:var(--muted); font-size:12px; }
+
+  .hidden{ display:none !important; }
+
+  .pill{
+    display:inline-block; padding:6px 10px; border-radius:999px; background:rgba(45,212,191,.1);
+    border:1px solid rgba(45,212,191,.35); color:#a7f3d0; font-size:12px;
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>REQUESTS</h1>
+  <div class="wrap">
+    <div class="page-title">REQUESTS</div>
 
-  <div class="toolbar">
-    <select id="eventSel" class="select"></select>
-    <button id="refreshBtn" class="btn secondary">Refresh</button>
-    <span id="debugPill" class="pill"></span>
+    <div class="panel">
+      <div class="row">
+        <div>
+          <label for="eventSel">Select Your Event</label>
+          <select id="eventSel"></select>
+        </div>
+        <button id="refreshBtn" class="btn refresh" type="button">Refresh</button>
+      </div>
+      <div id="eventPill" class="pill" style="margin-top:10px; display:none;"></div>
+    </div>
+
+    <div class="panel" id="requestsPanel">
+      <div class="h2">
+        <div>Requests</div>
+      </div>
+      <div id="reqList" class="list"></div>
+
+      <div class="collapsible" id="playedWrap">
+        <div class="collapsible-header" data-target="playedBody">
+          <div>Played Songs <span id="playedCount" class="count-pill">(0)</span></div>
+          <div class="twist">▸</div>
+        </div>
+        <div id="playedBody" class="collapsible-body">
+          <div id="playedList" class="list"></div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="collapsible" id="spamWrap">
+        <div class="collapsible-header" data-target="spamBody">
+          <div>Spammed Requests <span id="spamCount" class="count-pill">(0)</span></div>
+          <div class="twist">▸</div>
+        </div>
+        <div id="spamBody" class="collapsible-body">
+          <div id="spamList" class="list"></div>
+        </div>
+      </div>
+
+      <div class="footer-line" id="statusLine"></div>
+    </div>
   </div>
-
-  <div class="grid">
-    <section class="card">
-      <h2>Requests</h2>
-      <div id="reqStatus" class="status"></div>
-      <div id="reqRows" class="rows"></div>
-    </section>
-
-    <section class="card">
-      <details id="playedBox">
-        <summary>Played Songs</summary>
-        <div id="playedRows" class="rows" style="margin-top:8px;"></div>
-      </details>
-
-      <details id="spamBox" style="margin-top:12px;">
-        <summary>Spammed Requests</summary>
-        <div id="spamRows" class="rows" style="margin-top:8px;"></div>
-      </details>
-    </section>
-  </div>
-</div>
 
 <script>
+/* ====== Config ====== */
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxkSPUc2VWQYkhJ_af7CShegZLAMmVgUsTp2nMeVwkkhdFbdQT8wk2s6xBAAynjtLDT/exec';
 const POLL_MS = 5000;
 
-const urlp = new URLSearchParams(location.search);
-const DEBUG = urlp.get('debug') === '1';
-let CURRENT_EVENT = (urlp.get('event') || '').trim();
+/* ====== Helpers ====== */
+const $ = s => document.querySelector(s);
+const eventSel = $('#eventSel');
+const refreshBtn = $('#refreshBtn');
+const reqList = $('#reqList');
+const playedList = $('#playedList');
+const spamList = $('#spamList');
+const playedCountEl = $('#playedCount');
+const spamCountEl = $('#spamCount');
+const statusLine = $('#statusLine');
+const eventPill = $('#eventPill');
 
-const $ = s=>document.querySelector(s);
-const eventSel=$('#eventSel'), refreshBtn=$('#refreshBtn'),
-      reqRows=$('#reqRows'), playedRows=$('#playedRows'), spamRows=$('#spamRows'),
-      reqStatus=$('#reqStatus'), debugPill=$('#debugPill');
+let currentCode = '';
+let pollTimer = null;
+let rowsCache = [];                   // raw rows from backend
+const artCache = new Map();           // artwork cache per "title|artist"
 
-function showDebug(msg){ if(!DEBUG) return; debugPill.classList.add('show'); debugPill.textContent=msg; }
-function j2qs(o){ return new URLSearchParams(o).toString(); }
-function jsonp(url, cbParam='callback'){
-  return new Promise((res,rej)=>{
-    const cb='cb_'+Math.random().toString(36).slice(2);
-    const s=document.createElement('script');
-    s.src = url + (url.includes('?')?'&':'?') + cbParam + '=' + cb + '&t=' + Date.now();
-    const kill=setTimeout(()=>{ cleanup(); rej(new Error('timeout')); }, 9000);
+/* JSONP */
+function jsonp(url, params = {}) {
+  const qs = new URLSearchParams(params);
+  const cb = 'cb_' + Math.random().toString(36).slice(2);
+  qs.set('callback', cb);
+  qs.set('t', Date.now());
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = url + (url.includes('?') ? '&' : '?') + qs.toString();
+    const kill = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, 9000);
     function cleanup(){ clearTimeout(kill); try{ delete window[cb]; }catch{} s.remove(); }
-    window[cb]=(data)=>{ cleanup(); res(data); };
-    s.onerror=()=>{ cleanup(); rej(new Error('jsonp error')); };
+    window[cb] = (data) => { cleanup(); resolve(data); };
+    s.onerror = () => { cleanup(); reject(new Error('jsonp error')); };
     document.body.appendChild(s);
   });
 }
 
-/* normalize row keys regardless of sheet header names/order */
-function norm(r){
-  const get=(...keys)=> {
-    for (const k of keys){
-      if (r[k] !== undefined && r[k] !== null) return r[k];
-      const alt = Object.keys(r).find(x=> x.toLowerCase() === k.toLowerCase());
-      if (alt) return r[alt];
-    }
-    return '';
-  };
-  const playedRaw = get('played','Played');
-  const played = (String(playedRaw).toLowerCase()==='true' || playedRaw==='1' || playedRaw===1 || String(playedRaw).toUpperCase()==='TRUE');
-
-  return {
-    id:        get('id','ID'),
-    timestamp: get('timestamp','Timestamp'),
-    name:      get('name','Name'),
-    song:      get('song_title','Song Title','Title','Song'),
-    artist:    get('artist','Artist'),
-    link:      get('link','Link'),
-    event:     get('event','Event','Event Code','EventCode'),
-    played
-  };
-}
-
-async function loadActiveEvents(){
-  try{
-    const r=await jsonp(`${ENDPOINT_URL}?${j2qs({mode:'listActive'})}`);
-    const events=(r && r.ok && Array.isArray(r.events))?r.events:[];
-    eventSel.innerHTML='';
-    events.forEach(ev=>{
-      const opt=document.createElement('option');
-      opt.value=ev.code;
-      opt.textContent=`${new Date(ev.date).toLocaleDateString()} — ${ev.name}`;
-      eventSel.appendChild(opt);
-    });
-    if (!events.length){ CURRENT_EVENT=''; showRequests([]); showDebug('No active events'); return; }
-    if (!CURRENT_EVENT || !events.some(e=>e.code===CURRENT_EVENT)) CURRENT_EVENT=events[0].code;
-    eventSel.value=CURRENT_EVENT; showDebug(`Event=${CURRENT_EVENT}`);
-    await loadRequests();
-  }catch(e){ showDebug('Events load failed'); }
-}
-
-eventSel.addEventListener('change', ()=>{
-  CURRENT_EVENT = eventSel.value;
-  const sp=new URLSearchParams(location.search);
-  if (CURRENT_EVENT) sp.set('event', CURRENT_EVENT); else sp.delete('event');
-  history.replaceState(null,'',location.pathname + '?' + sp.toString());
-  loadRequests();
-});
-
-function showRequests(rowsRaw){
-  const rows = rowsRaw.map(norm).filter(r => r.event === CURRENT_EVENT);
-  reqRows.innerHTML=''; playedRows.innerHTML=''; spamRows.innerHTML='';
-
-  const seen=new Map(); const spam=[];
-  rows.forEach(r=>{
-    const key = `${(r.name||'').trim().toLowerCase()}|${(r.song||'').trim().toLowerCase()}`;
-    if (seen.has(key)) spam.push(r); else seen.set(key,r);
+/* Events list */
+async function loadActiveEvents() {
+  const res = await jsonp(ENDPOINT_URL, { mode:'listActive' });
+  const list = Array.isArray(res?.events) ? res.events : [];
+  eventSel.innerHTML = '';
+  list.forEach(ev => {
+    const opt = document.createElement('option');
+    opt.value = ev.code;
+    const dt = formatHeaderDate(ev.date);     // Wed 11.05.25
+    opt.textContent = `${dt} - ${ev.name}`;
+    eventSel.appendChild(opt);
   });
-
-  const unplayed=[]; const played=[];
-  seen.forEach(r=> (r.played ? played : unplayed).push(r) );
-
-  const mkRow = (r, withActions) => {
-    const el=document.createElement('div'); el.className='row';
-    const text=document.createElement('div');
-    const t=document.createElement('p'); t.className='title'; t.textContent=r.song||'(Unknown Title)';
-    const a=document.createElement('p'); a.className='artist'; a.textContent=r.artist||'(Unknown Artist)';
-    const n=document.createElement('p'); n.className='name'; n.textContent=r.name?`Requested by ${r.name}`:'';
-    text.append(t,a,n); el.appendChild(text);
-    if (withActions){
-      const act=document.createElement('div'); act.className='row-actions';
-      const b=document.createElement('button'); b.className='btn secondary small'; b.textContent='Mark as Played';
-      b.onclick=()=>togglePlayed(r,true);
-      act.appendChild(b); el.appendChild(act);
-    }
-    return el;
-  };
-
-  const mkSpam = (r)=>{ const el=document.createElement('div'); el.className='row';
-    const t=document.createElement('p'); t.className='title'; t.textContent=r.song||'(Unknown Title)';
-    const a=document.createElement('p'); a.className='artist'; a.textContent=r.artist||'(Unknown Artist)';
-    const n=document.createElement('p'); n.className='name'; n.textContent=r.name?`Spammed by ${r.name}`:''; const box=document.createElement('div'); box.append(t,a,n); el.appendChild(box); return el;
-  };
-
-  unplayed.forEach(r=> reqRows.appendChild(mkRow(r, true)));
-  played.forEach(r=> {
-    const el = mkRow(r, false);
-    const act=document.createElement('div'); act.className='row-actions';
-    const b=document.createElement('button'); b.className='btn secondary small'; b.textContent='Mark as Unplayed';
-    b.onclick=()=>togglePlayed(r,false); act.appendChild(b); el.appendChild(act);
-    playedRows.appendChild(el);
-  });
-  spam.forEach(r=> spamRows.appendChild(mkSpam(r)));
-
-  reqStatus.textContent = rowsRaw.length
-    ? `Fetched=${rowsRaw.length} • Displaying=${unplayed.length} (unique, unplayed)`
-    : 'No requests yet.';
+  // keep selection if possible
+  const urlp = new URLSearchParams(location.search);
+  const urlCode = (urlp.get('event')||'').trim();
+  if (urlCode && [...eventSel.options].some(o=>o.value===urlCode)) {
+    eventSel.value = urlCode;
+  }
+  currentCode = eventSel.value || '';
+  updateEventPill();
 }
 
-async function loadRequests(){
-  if(!CURRENT_EVENT){ showRequests([]); return; }
+/* Polling */
+function startPolling(){
+  stopPolling();
+  pollTimer = setInterval(fetchRows, POLL_MS);
+}
+function stopPolling(){
+  if (pollTimer) clearInterval(pollTimer); pollTimer = null;
+}
+
+/* Fetch rows for selected event */
+async function fetchRows(force=false){
+  if (!currentCode) return;
   try{
-    const r=await jsonp(`${ENDPOINT_URL}?${j2qs({mode:'read', event: CURRENT_EVENT})}`);
-    const rows=(r && r.ok && Array.isArray(r.rows))?r.rows:[];
-    showRequests(rows);
+    const res = await jsonp(ENDPOINT_URL, { mode:'read', event: currentCode });
+    const rows = Array.isArray(res?.rows) ? res.rows : [];
+    // Only re-render if changed (cheap compare by length & simple checksum)
+    const changed = force || rows.length !== rowsCache.length || checksum(rows) !== checksum(rowsCache);
+    rowsCache = rows;
+    if (changed) renderAll(rows);
+    statusLine.textContent = rows.length ? '' : 'No requests yet.';
   }catch(e){
-    reqStatus.textContent='Load failed.'; showDebug('Read failed');
+    statusLine.textContent = 'Connection error. Try Refresh.';
   }
 }
 
-async function togglePlayed(row,toPlayed){
-  if(!row.id){ alert('Missing row ID; cannot update.'); return; }
-  try{
-    const resp=await jsonp(`${ENDPOINT_URL}?${j2qs({mode:'setPlayed', id: row.id, played: (toPlayed?'1':'0')})}`);
-    if (resp && resp.ok) await loadRequests(); else alert('Could not update Played.');
-  }catch{ alert('Network error.'); }
+/* Checksumming rows (lightweight) */
+function checksum(rows){
+  let s = 0; for (const r of rows){ s += (r.id||'').length + (r.played?7:3); }
+  return s + ':' + rows.length;
 }
 
-let timer=null;
-function startPoll(){ stopPoll(); timer=setInterval(loadRequests, POLL_MS); }
-function stopPoll(){ if(timer){ clearInterval(timer); timer=null; } }
-refreshBtn.addEventListener('click', loadRequests);
+/* Grouping & spam logic */
+function keySong(r){ return `${(r.song_title||'').toLowerCase()}|${(r.artist||'').toLowerCase()}`; }
+function keySpam(r){ return `${keySong(r)}|${(r.name||'').toLowerCase()}`; }
 
-window.addEventListener('load', async ()=>{ await loadActiveEvents(); startPoll(); });
+function splitBuckets(rows){
+  const played = [];
+  const unplayed = [];
+  const bySong = new Map();   // keySong -> { song, artist, names:Set, rows:[] }
+  const spamMap = new Map();  // keySpam -> count of requests from same person for same song
+
+  for (const r of rows){
+    (r.played ? played : unplayed).push(r);
+
+    const kS = keySong(r);
+    if (!bySong.has(kS)) bySong.set(kS, { song:r.song_title||'', artist:r.artist||'', names:new Set(), rows:[] });
+    const node = bySong.get(kS);
+    if (r.name) node.names.add(r.name);
+    node.rows.push(r);
+
+    const kP = keySpam(r);
+    spamMap.set(kP, (spamMap.get(kP)||0) + 1);
+  }
+
+  // Build spam list: only entries where same person requested same song > 1
+  const spam = [];
+  for (const [k,count] of spamMap.entries()){
+    if (count > 1){
+      const [songLower, artistLower, nameLower] = k.split('|');
+      // find one representative row
+      const node = bySong.get(`${songLower}|${artistLower}`);
+      if (!node) continue;
+      const rep = node.rows.find(x=>String(x.name||'').toLowerCase()===nameLower);
+      spam.push({
+        song: rep?.song_title || node.song,
+        artist: rep?.artist || node.artist,
+        name: rep?.name || '',
+        count
+      });
+    }
+  }
+
+  // For Requests UI: use unique songs (dedup by song+artist), show people count
+  const uniqueSongs = [];
+  for (const [,node] of bySong.entries()){
+    // pick first row as representative (prefer unplayed)
+    const sample = node.rows.find(x=>!x.played) || node.rows[0];
+    uniqueSongs.push({
+      song: node.song,
+      artist: node.artist,
+      ids: node.rows.filter(x=>!x.played).map(x=>x.id), // unplayed ids for marking played
+      people: [...node.names],                           // array of unique names
+      playedAll: node.rows.every(x=>x.played)
+    });
+  }
+  // keep only those not fully played
+  const requests = uniqueSongs.filter(x=>!x.playedAll);
+
+  return { requests, played, spam };
+}
+
+/* Artwork lookup (iTunes) with cache */
+async function getArtwork(song, artist){
+  const key = `${(song||'').trim().toLowerCase()}|${(artist||'').trim().toLowerCase()}`;
+  if (artCache.has(key)) return artCache.get(key);
+  try{
+    const data = await jsonp(`https://itunes.apple.com/search`, {
+      term: `${song} ${artist}`.trim(),
+      entity: 'musicTrack',
+      limit: 1,
+      callback: 'noop' // gets replaced in jsonp()
+    });
+    const url = data?.results?.[0]?.artworkUrl100 || data?.results?.[0]?.artworkUrl60 || '';
+    artCache.set(key, url||'');
+    return url||'';
+  }catch(_){ artCache.set(key,''); return ''; }
+}
+
+/* Render everything */
+function renderAll(rows){
+  const { requests, played, spam } = splitBuckets(rows);
+
+  // Requests (unique by song)
+  reqList.innerHTML = '';
+  for (const r of requests){
+    const card = document.createElement('div');
+    card.className = 'card';
+    const namesCount = r.people.length;
+    const namesText = (namesCount <= 1)
+      ? (r.people[0] ? `Requested by ${r.people[0]}` : 'Requested')
+      : `Requested by (${namesCount}) people`;
+
+    card.innerHTML = `
+      <img class="thumb" alt="" />
+      <div class="meta">
+        <p class="title">${escapeHTML(r.song || 'Unknown Title')}</p>
+        <p class="sub">${escapeHTML(r.artist || 'Unknown Artist')}</p>
+        <p class="sub">${escapeHTML(namesText)}</p>
+        <div class="names-toggle" aria-hidden="true"></div>
+      </div>
+      <div>
+        <button class="btn played small" type="button">Mark as Played</button>
+        ${namesCount>1 ? `<div><button class="btn small names-btn" type="button">Show names</button></div>` : ``}
+      </div>
+    `;
+
+    // load artwork async
+    (async()=>{
+      const img = card.querySelector('.thumb');
+      const src = await getArtwork(r.song, r.artist);
+      if (src) { img.src = src; img.alt = `${r.song} cover`; }
+    })();
+
+    // names toggle if multiple requesters
+    if (namesCount>1){
+      const btn = card.querySelector('.names-btn');
+      const box = card.querySelector('.names-toggle');
+      btn.addEventListener('click', ()=>{
+        box.classList.toggle('open');
+        btn.textContent = box.classList.contains('open') ? 'Hide names' : 'Show names';
+      });
+      box.innerHTML = `<div class="muted">${r.people.map(n=>escapeHTML(n)).join(' • ')}</div>`;
+    }
+
+    // Mark as Played (optimistic): move to played right away
+    const btnPlayed = card.querySelector('.btn.played');
+    btnPlayed.addEventListener('click', async ()=>{
+      // optimistic move all unplayed IDs for this song
+      const ids = r.ids.slice(); // copy
+      if (!ids.length) return;
+      // UI optimistic: remove from Requests, add to Played
+      card.remove();
+      // add each as played card
+      for (const id of ids){
+        const row = rows.find(x=>x.id===id) || { song_title:r.song, artist:r.artist, id };
+        addPlayedCard(row, true);
+      }
+      updateCounts();
+
+      // backend calls
+      try{
+        await Promise.all(ids.map(id => jsonp(ENDPOINT_URL, { mode:'setPlayed', id, played:'true' })));
+        // refetch to fully sync (fast)
+        fetchRows(true);
+      }catch(e){
+        // revert on error: move back into Requests
+        for (const id of ids){
+          const row = rows.find(x=>x.id===id);
+          if (row){
+            row.played = false;
+          }
+        }
+        fetchRows(true);
+      }
+    });
+
+    reqList.appendChild(card);
+  }
+
+  // Played list
+  playedList.innerHTML = '';
+  for (const p of played){
+    addPlayedCard(p, false);
+  }
+  // Spam list
+  spamList.innerHTML = '';
+  for (const s of spam){
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <img class="thumb" alt="" />
+      <div class="meta">
+        <p class="title">${escapeHTML(s.song || 'Unknown Title')}</p>
+        <p class="sub">${escapeHTML(s.artist || 'Unknown Artist')}</p>
+        <p class="sub">Requested by ${escapeHTML(s.name || 'Guest')} (x${s.count})</p>
+      </div>
+      <div></div>
+    `;
+    (async()=>{
+      const img = card.querySelector('.thumb');
+      const src = await getArtwork(s.song, s.artist);
+      if (src) { img.src = src; img.alt = `${s.song} cover`; }
+    })();
+    spamList.appendChild(card);
+  }
+
+  updateCounts();
+}
+
+/* Add a single played card (optionally optimistic) */
+function addPlayedCard(row, optimistic){
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <img class="thumb" alt="" />
+    <div class="meta">
+      <p class="title">${escapeHTML(row.song_title || 'Unknown Title')}</p>
+      <p class="sub">${escapeHTML(row.artist || 'Unknown Artist')}</p>
+      <p class="sub muted">${escapeHTML(row.name ? `Requested by ${row.name}` : '')}</p>
+    </div>
+    <div>
+      <button class="btn unplayed small" type="button">Mark as Unplayed</button>
+    </div>
+  `;
+
+  (async()=>{
+    const img = card.querySelector('.thumb');
+    const src = await getArtwork(row.song_title, row.artist);
+    if (src) { img.src = src; img.alt = `${row.song_title} cover`; }
+  })();
+
+  // Unplayed (optimistic)
+  const btn = card.querySelector('.btn.unplayed');
+  btn.addEventListener('click', async ()=>{
+    // optimistic: move back to requests
+    card.remove();
+    // create a synthetic entry in requests (will be reconciled on next fetch)
+    // Easiest is to force a refresh after backend ack
+    updateCounts();
+    try{
+      await jsonp(ENDPOINT_URL, { mode:'setPlayed', id: row.id, played: 'false' });
+      fetchRows(true);
+    }catch(e){
+      // revert: put it back to played
+      playedList.appendChild(card);
+      updateCounts();
+    }
+  });
+
+  playedList.appendChild(card);
+}
+
+/* Counts & headers */
+function updateCounts(){
+  playedCountEl.textContent = `(${playedList.children.length})`;
+  spamCountEl.textContent = `(${spamList.children.length})`;
+}
+
+/* Collapsibles */
+function initCollapsibles(){
+  document.querySelectorAll('.collapsible-header').forEach(h=>{
+    h.addEventListener('click', ()=>{
+      const parent = h.parentElement;
+      parent.classList.toggle('open');
+      const twist = h.querySelector('.twist');
+      if (twist) twist.textContent = parent.classList.contains('open') ? '▾' : '▸';
+    });
+  });
+}
+
+/* Event pill */
+function updateEventPill(){
+  if (currentCode){
+    eventPill.style.display = 'inline-block';
+    eventPill.textContent = `Event = ${currentCode}`;
+  }else{
+    eventPill.style.display = 'none';
+    eventPill.textContent = '';
+  }
+}
+
+/* Small date label like: Wed 11.05.25 */
+function formatHeaderDate(iso){
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${days[d.getDay()]} ${mm}.${dd}.${yy}`;
+}
+
+/* Escape HTML */
+function escapeHTML(s){
+  return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* ====== Init ====== */
+eventSel.addEventListener('change', ()=>{
+  currentCode = eventSel.value || '';
+  updateEventPill();
+  fetchRows(true);
+  startPolling();
+});
+refreshBtn.addEventListener('click', ()=> fetchRows(true));
+
+(async function boot(){
+  // Seed selection from URL if provided
+  const urlp = new URLSearchParams(location.search);
+  const pre = (urlp.get('event')||'').trim();
+
+  await loadActiveEvents();
+  if (pre && [...eventSel.options].some(o=>o.value===pre)) {
+    eventSel.value = pre;
+    currentCode = pre;
+    updateEventPill();
+  }
+  initCollapsibles();
+  await fetchRows(true);
+  startPolling();
+})();
 </script>
 </body>
 </html>
-
