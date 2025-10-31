@@ -14,7 +14,9 @@
     --muted:#bdbdbd;
     --accent:#1dcec9;   /* Mark as Played */
     --amber:#f7b731;    /* Mark as Unplayed */
+    --names:#7aa2ff;    /* Show/Hide Names */
     --danger:#ef4444;   /* Remove */
+    --ok:#34d399;       /* Put Back */
     --ring:rgba(255,255,255,.22);
     --radius:12px;
     --maxw:1100px;
@@ -36,11 +38,8 @@
   .page-title{ text-align:center; margin:8px 0 18px; letter-spacing:.06em; font-weight:800; font-size:clamp(22px,5.5vw,36px); }
 
   .panel{ background:var(--section); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:14px; }
-
-  .row{ display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:end; }
-  @media (max-width:720px){ .row{ grid-template-columns:1fr; } }
-
   label{ display:block; font-size:14px; color:var(--muted); margin:0 0 6px; }
+
   select, button{
     height:46px; border-radius:12px; border:1px solid #3a3a3a; background:#2a2a2a; color:#fff;
     font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
@@ -51,22 +50,21 @@
   button:hover{ filter:brightness(1.05); }
   button:active{ transform:translateY(1px); box-shadow:inset 0 2px 0 rgba(0,0,0,.25); }
 
-  .btn{ display:inline-flex; align-items:center; justify-content:center; padding:0 14px;
-        box-shadow:0 2px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.15); }
-  .btn.refresh{ background:#2f2f2f; border-color:#3a3a3a; }
-  .btn.played { background:var(--accent); border-color:var(--accent); color:#000; width:100%; }
-  .btn.unplayed{ background:var(--amber); border-color:var(--amber); color:#000; width:100%; }
-  .btn.names { background:#2f2f2f; border-color:#3a3a3a; color:#fff; width:100%; }
-  .btn.remove{ background:var(--danger); border-color:var(--danger); color:#fff; width:100%; }
-  .btn.small { height:38px; font-size:14px; border-radius:10px; }
-
-  .pill{
-    display:inline-block; padding:6px 10px; border-radius:999px; background:rgba(45,212,191,.1);
-    border:1px solid rgba(45,212,191,.35); color:#a7f3d0; font-size:12px;
+  /* Tabs */
+  .tabs{ display:flex; gap:8px; margin-top:10px; }
+  .tab-btn{
+    background:#2f2f2f; border-color:#3a3a3a; padding:0 16px; height:40px; border-radius:999px; font-size:14px;
   }
+  .tab-btn.active{ background:var(--subsection); }
 
-  .h2{ margin:6px 0 10px; font-size:18px; font-weight:800; letter-spacing:.03em; display:flex; align-items:center; justify-content:space-between; }
-  .count-pill{ font-size:13px; color:#dcdcdc; opacity:.9; margin-left:8px; }
+  /* Info banner */
+  .info{
+    display:none; margin-top:10px; padding:8px 12px; border-radius:10px;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); color:#e7e7e7; font-size:14px;
+  }
+  .info.show{ display:block; }
+
+  .row{ display:grid; grid-template-columns:1fr; gap:10px; }
 
   .collapsible{ background:var(--subsection); border:1px solid var(--border); border-radius:12px; padding:10px; margin-top:6px; }
   .collapsible-header{ display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
@@ -74,14 +72,17 @@
   .collapsible-body{ display:none; margin-top:10px; }
   .collapsible.open .collapsible-body{ display:block; }
 
+  .h2{ margin:6px 0 10px; font-size:18px; font-weight:800; letter-spacing:.03em; display:flex; align-items:center; justify-content:space-between; }
+  .count-pill{ font-size:13px; color:#dcdcdc; opacity:.9; margin-left:8px; }
+
   .list{ display:grid; gap:10px; }
   .card{
     background:var(--section); border:1px solid var(--border); border-radius:12px; padding:10px;
-    display:grid; grid-template-columns:64px 1fr 180px; gap:12px; align-items:center;
+    display:grid; grid-template-columns:64px 1fr 210px; gap:12px; align-items:center;
   }
-  @media (max-width:700px){
+  @media (max-width:760px){
     .card{ grid-template-columns:64px 1fr; }
-    .card .actions{ grid-column:1 / -1; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .card .actions{ grid-column:1 / -1; }
   }
 
   .thumb{ width:64px; height:64px; border-radius:10px; background:#1f1f1f; object-fit:cover; display:block; }
@@ -89,12 +90,25 @@
   .title{ margin:0 0 2px; font-weight:800; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .sub{ margin:0; color:#e6e6e6; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-  .names-box{ margin-top:6px; background:var(--subsection); border:1px solid var(--border); border-radius:10px; padding:6px 10px; display:none; }
+  .actions{ display:grid; gap:8px; } /* spacing between buttons */
+  .btn{ display:inline-flex; align-items:center; justify-content:center; padding:0 14px;
+        box-shadow:0 2px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.15); width:100%; }
+  .btn.played   { background:var(--accent); border-color:var(--accent); color:#000; }
+  .btn.unplayed { background:var(--amber);  border-color:var(--amber);  color:#000; }
+  .btn.names    { background:var(--names);  border-color:var(--names);  color:#fff; }
+  .btn.remove   { background:var(--danger); border-color:var(--danger); color:#fff; }
+  .btn.putback  { background:var(--ok);     border-color:var(--ok);     color:#000; }
+  .btn.small    { height:38px; font-size:14px; border-radius:10px; }
+
+  .names-box{ margin-top:6px; background:var(--subsection); border:1px solid var(--border); border-radius:10px; padding:8px 10px; display:none; }
   .names-box.open{ display:block; }
-  .names-box ul{ margin:6px 0 0; padding-left:18px; }
+  .names-box .hdr{ color:#cfcfcf; font-size:13px; margin:0 0 4px; }
+  .names-box ul{ margin:0; padding-left:18px; }
   .names-box li{ margin:3px 0; color:#fafafa; font-size:13px; }
 
   .footer-line{ margin-top:10px; color:var(--muted); font-size:12px; }
+
+  .hidden{ display:none !important; }
 </style>
 </head>
 <body>
@@ -107,12 +121,17 @@
           <label for="eventSel">Select Your Event</label>
           <select id="eventSel"></select>
         </div>
-        <button id="refreshBtn" class="btn refresh" type="button">Refresh</button>
       </div>
-      <div id="eventPill" class="pill" style="margin-top:10px; display:none;"></div>
+      <div id="infoBanner" class="info"></div>
+
+      <div class="tabs">
+        <button id="tabRequests" class="tab-btn active" type="button">Requests</button>
+        <button id="tabSpam" class="tab-btn" type="button">Spam</button>
+      </div>
     </div>
 
-    <div class="panel" id="requestsPanel">
+    <!-- Requests tab content -->
+    <div id="tabRequestsPane" class="panel">
       <div class="collapsible open" id="reqWrap">
         <div class="collapsible-header" data-target="reqBody">
           <div>Requests <span id="reqCount" class="count-pill">(0)</span></div>
@@ -143,17 +162,13 @@
         </div>
       </div>
 
-      <div class="collapsible" id="spamWrap" style="margin-top:6px;">
-        <div class="collapsible-header" data-target="spamBody">
-          <div>Spammed Requests <span id="spamCount" class="count-pill">(0)</span></div>
-          <div class="twist">▸</div>
-        </div>
-        <div id="spamBody" class="collapsible-body">
-          <div id="spamList" class="list"></div>
-        </div>
-      </div>
-
       <div class="footer-line" id="statusLine"></div>
+    </div>
+
+    <!-- Spam tab content -->
+    <div id="tabSpamPane" class="panel hidden">
+      <div class="h2">Spammed Requests <span id="spamCountTop" class="count-pill">(0)</span></div>
+      <div id="spamList" class="list"></div>
     </div>
   </div>
 
@@ -165,8 +180,12 @@ const POLL_MS = 5000;
 /* ===== Elements ===== */
 const $ = s => document.querySelector(s);
 const eventSel = $('#eventSel');
-const refreshBtn = $('#refreshBtn');
-const eventPill = $('#eventPill');
+const infoBanner = $('#infoBanner');
+
+const tabRequestsBtn = $('#tabRequests');
+const tabSpamBtn = $('#tabSpam');
+const tabRequestsPane = $('#tabRequestsPane');
+const tabSpamPane = $('#tabSpamPane');
 
 const reqList = $('#reqList');
 const playedList = $('#playedList');
@@ -176,7 +195,7 @@ const spamList = $('#spamList');
 const reqCountEl = $('#reqCount');
 const playedCountEl = $('#playedCount');
 const removedCountEl = $('#removedCount');
-const spamCountEl = $('#spamCount');
+const spamCountTop = $('#spamCountTop');
 const statusLine = $('#statusLine');
 
 /* ===== State ===== */
@@ -187,6 +206,9 @@ const artCache = new Map();
 const removedKeySet = new Set(); // client-side hidden “removed” songs (keyed by song|artist)
 
 /* ===== Utilities ===== */
+function showInfo(msg){ infoBanner.textContent = msg; infoBanner.classList.add('show'); }
+function hideInfo(){ infoBanner.classList.remove('show'); infoBanner.textContent=''; }
+
 function jsonp(url, params = {}) {
   const qs = new URLSearchParams(params);
   const cb = 'cb_' + Math.random().toString(36).slice(2);
@@ -204,14 +226,6 @@ function jsonp(url, params = {}) {
 }
 function keySong(song, artist){ return `${(song||'').toLowerCase()}|${(artist||'').toLowerCase()}`; }
 function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-function formatHeaderDate(iso){
-  const d = new Date(iso); if (isNaN(d)) return '';
-  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const dd = String(d.getDate()).padStart(2,'0');
-  const yy = String(d.getFullYear()).slice(-2);
-  return `${days[d.getDay()]} ${mm}.${dd}.${yy}`;
-}
 function checksum(rows){ let s=0; for(const r of rows){ s+= (r.id||'').length + (r.played?7:3);} return s+':'+rows.length; }
 
 async function getArtwork(song, artist){
@@ -226,7 +240,8 @@ async function getArtwork(song, artist){
 
 /* ===== Data loading ===== */
 async function loadActiveEvents(){
-  const res = await jsonp(ENDPOINT_URL, { mode:'listActive' });
+  showInfo('Loading your events…');
+  const res = await jsonp(ENDPOINT_URL, { mode:'listActive' }).catch(()=>({events:[]}));
   const list = Array.isArray(res?.events) ? res.events : [];
   eventSel.innerHTML = '';
   for (const ev of list){
@@ -239,7 +254,7 @@ async function loadActiveEvents(){
   const pre = (urlp.get('event')||'').trim();
   if (pre && [...eventSel.options].some(o=>o.value===pre)) eventSel.value = pre;
   currentCode = eventSel.value || '';
-  updateEventPill();
+  hideInfo();
 }
 
 function startPolling(){ stopPolling(); pollTimer = setInterval(fetchRows, POLL_MS); }
@@ -247,6 +262,7 @@ function stopPolling(){ if (pollTimer) clearInterval(pollTimer); pollTimer = nul
 
 async function fetchRows(force=false){
   if (!currentCode) return;
+  showInfo('Loading your requests…');
   try{
     const res = await jsonp(ENDPOINT_URL, { mode:'read', event: currentCode });
     const rows = Array.isArray(res?.rows) ? res.rows : [];
@@ -255,19 +271,21 @@ async function fetchRows(force=false){
     if (changed) renderAll(rows);
     statusLine.textContent = rows.length ? '' : 'No requests yet.';
   }catch(e){
-    statusLine.textContent = 'Connection error. Try Refresh.';
+    statusLine.textContent = 'Connection error.';
+  }finally{
+    hideInfo();
   }
 }
 
 /* ===== Grouping ===== */
 function splitBuckets(rows){
-  const bySong = new Map();  // song|artist => {song, artist, ids:[], names:Set, anyPlayed, anyUnplayed, sampleRow}
+  const bySong = new Map();  // song|artist => {song, artist, ids:[], names:Set, anyPlayed, anyUnplayed}
   const spamMap = new Map(); // song|artist|name => count
-  const playedRows = [];     // raw played rows
+  const playedRows = [];
 
   for (const r of rows){
     const k = keySong(r.song_title, r.artist);
-    if (!bySong.has(k)) bySong.set(k, { song:r.song_title||'', artist:r.artist||'', ids:[], names:new Set(), anyPlayed:false, anyUnplayed:false, sampleRow:r });
+    if (!bySong.has(k)) bySong.set(k, { song:r.song_title||'', artist:r.artist||'', ids:[], names:new Set(), anyPlayed:false, anyUnplayed:false });
     const node = bySong.get(k);
     node.ids.push(r.id);
     if (r.name) node.names.add(r.name);
@@ -289,36 +307,41 @@ function splitBuckets(rows){
     }
   }
 
-  const played = [];
-  for (const [k,node] of bySong.entries()){
-    if (node.anyPlayed && !node.anyUnplayed){
-      // fully played group (only for count in header)
-      played.push({ key:k, song:node.song, artist:node.artist, ids: rows.filter(x=>keySong(x.song_title,x.artist)===k && x.played).map(x=>x.id), people:[...node.names] });
-    }
+  // Played groups (unique per song)
+  const playedGroups = new Map();
+  for (const pr of playedRows){
+    const k = keySong(pr.song_title, pr.artist);
+    if (!playedGroups.has(k)) playedGroups.set(k, { key:k, song:pr.song_title, artist:pr.artist, ids:[], people:new Set() });
+    const g = playedGroups.get(k);
+    g.ids.push(pr.id);
+    if (pr.name) g.people.add(pr.name);
   }
 
+  // Spam items
   const spam = [];
   for (const [kp,count] of spamMap.entries()){
     if (count>1){
       const [songLower, artistLower, nameLower] = kp.split('|');
-      const row = rows.find(x => keySong(x.song_title,x.artist)===`${songLower}|${artistLower}` && String(x.name||'').toLowerCase()===nameLower);
-      if (row){
-        spam.push({ song:row.song_title, artist:row.artist, name:row.name, count });
+      const anyRow = rows.find(x => keySong(x.song_title,x.artist)===`${songLower}|${artistLower}` && String(x.name||'').toLowerCase()===nameLower);
+      if (anyRow){
+        spam.push({ song:anyRow.song_title, artist:anyRow.artist, name:anyRow.name, count });
       }
     }
   }
 
-  return { requests, playedRows, played, spam };
+  return { requests, playedGroups:[...playedGroups.values()], spam };
 }
 
 /* ===== Card builders ===== */
 function namesBoxHTML(names){
   const items = names.map(n=>`<li>${escapeHTML(n)}</li>`).join('');
-  return `<div class="names-box"><div class="muted">Requesters:</div><ul>${items}</ul></div>`;
+  return `<div class="names-box"><p class="hdr">Requesters</p><ul>${items}</ul></div>`;
 }
 
 function buildRequestCard(obj){
   // obj: {key,song,artist,ids,people}
+  const guestsCount = obj.people.length || 0;
+
   const card = document.createElement('div');
   card.className = 'card';
   card.dataset.key = obj.key;
@@ -329,12 +352,12 @@ function buildRequestCard(obj){
     <div class="meta">
       <p class="title">${escapeHTML(obj.song||'Unknown Title')}</p>
       <p class="sub">${escapeHTML(obj.artist||'Unknown Artist')}</p>
-      <p class="sub">${obj.people.length<=1 ? escapeHTML(obj.people[0]?`Requested by ${obj.people[0]}`:'Requested') : `Requested by (${obj.people.length}) people`}</p>
-      ${obj.people.length>1 ? namesBoxHTML(obj.people) : `<div class="names-box"></div>`}
+      <p class="sub">Requested by ${guestsCount} guest${guestsCount===1?'':'s'}</p>
+      ${namesBoxHTML(obj.people)}
     </div>
     <div class="actions">
       <button class="btn played small" type="button">Mark as Played</button>
-      <button class="btn names small" type="button">${obj.people.length>1?'Show names':'Show names'}</button>
+      <button class="btn names small" type="button">Show Names</button>
       <button class="btn remove small" type="button">Remove</button>
     </div>
   `;
@@ -351,23 +374,20 @@ function buildRequestCard(obj){
   const box = card.querySelector('.names-box');
   namesBtn.addEventListener('click', ()=>{
     box.classList.toggle('open');
-    namesBtn.textContent = box.classList.contains('open') ? 'Hide names' : 'Show names';
+    namesBtn.textContent = box.classList.contains('open') ? 'Hide Names' : 'Show Names';
   });
 
   // Mark as Played (optimistic move of the exact card)
   const playBtn = card.querySelector('.btn.played');
   playBtn.addEventListener('click', async ()=>{
-    // move card as-is to played list
     reqList.removeChild(card);
     addPlayedCardFromRequestCard(card);
     updateCounts();
-    // backend: set all its unplayed ids to played
     const ids = JSON.parse(card.dataset.ids||'[]');
     try{
       await Promise.all(ids.map(id => jsonp(ENDPOINT_URL, { mode:'setPlayed', id, played:'true' })));
       fetchRows(true);
     }catch(e){
-      // revert
       playedList.removeChild(card);
       reqList.appendChild(card);
       updateCounts();
@@ -377,8 +397,7 @@ function buildRequestCard(obj){
   // Remove (client-side only)
   const rmBtn = card.querySelector('.btn.remove');
   rmBtn.addEventListener('click', ()=>{
-    const k = card.dataset.key;
-    removedKeySet.add(k);
+    removedKeySet.add(card.dataset.key);
     reqList.removeChild(card);
     addRemovedCardFromRequestCard(card);
     updateCounts();
@@ -388,52 +407,44 @@ function buildRequestCard(obj){
 }
 
 function addPlayedCardFromRequestCard(requestCard){
-  // convert the action buttons to include "Mark as Unplayed"
-  const card = requestCard; // reuse
+  const card = requestCard; // reuse exact card
   card.querySelector('.actions').innerHTML = `
     <button class="btn unplayed small" type="button">Mark as Unplayed</button>
   `;
-
-  // fast optimistic unplayed: move back immediately on click
   const unBtn = card.querySelector('.btn.unplayed');
   unBtn.addEventListener('click', async ()=>{
     playedList.removeChild(card);
-    addRequestCardFromPlayedCard(card);  // move exact card back
+    addRequestCardFromPlayedCard(card);  // instant move back
     updateCounts();
-    // backend: set ids to unplayed
     const ids = JSON.parse(card.dataset.ids||'[]');
     try{
       await Promise.all(ids.map(id => jsonp(ENDPOINT_URL, { mode:'setPlayed', id, played:'false' })));
       fetchRows(true);
     }catch(e){
-      // revert on failure
       reqList.removeChild(card);
       playedList.appendChild(card);
       updateCounts();
     }
   });
-
   playedList.appendChild(card);
 }
 
 function addRequestCardFromPlayedCard(playedCard){
-  // rebuild actions to Played + Names + Remove
   const card = playedCard;
   const actions = document.createElement('div');
   actions.className = 'actions';
   actions.innerHTML = `
     <button class="btn played small" type="button">Mark as Played</button>
-    <button class="btn names small" type="button">Show names</button>
+    <button class="btn names small" type="button">Show Names</button>
     <button class="btn remove small" type="button">Remove</button>
   `;
   card.querySelector('.actions')?.replaceWith(actions);
 
-  // wire buttons
   const namesBtn = actions.querySelector('.btn.names');
   const box = card.querySelector('.names-box');
   namesBtn.addEventListener('click', ()=>{
     box.classList.toggle('open');
-    namesBtn.textContent = box.classList.contains('open') ? 'Hide names' : 'Show names';
+    namesBtn.textContent = box.classList.contains('open') ? 'Hide Names' : 'Show Names';
   });
 
   const playBtn = actions.querySelector('.btn.played');
@@ -454,8 +465,7 @@ function addRequestCardFromPlayedCard(playedCard){
 
   const rmBtn = actions.querySelector('.btn.remove');
   rmBtn.addEventListener('click', ()=>{
-    const k = card.dataset.key;
-    removedKeySet.add(k);
+    removedKeySet.add(card.dataset.key);
     reqList.removeChild(card);
     addRemovedCardFromRequestCard(card);
     updateCounts();
@@ -466,25 +476,24 @@ function addRequestCardFromPlayedCard(playedCard){
 
 function addRemovedCardFromRequestCard(requestCard){
   const card = requestCard;
-  // For Removed, show Put Back only
   const actions = document.createElement('div');
   actions.className = 'actions';
-  actions.innerHTML = `<button class="btn names small" type="button">Show names</button>
-                       <button class="btn small" style="width:100%; background:#2f2f2f; border-color:#3a3a3a;" type="button">Put Back</button>`;
+  actions.innerHTML = `
+    <button class="btn names small" type="button">Show Names</button>
+    <button class="btn putback small" type="button">Put Back</button>
+  `;
   card.querySelector('.actions')?.replaceWith(actions);
 
-  // names toggle still works
   const namesBtn = actions.querySelector('.btn.names');
   const box = card.querySelector('.names-box');
   namesBtn.addEventListener('click', ()=>{
     box.classList.toggle('open');
-    namesBtn.textContent = box.classList.contains('open') ? 'Hide names' : 'Show names';
+    namesBtn.textContent = box.classList.contains('open') ? 'Hide Names' : 'Show Names';
   });
 
-  const putBack = actions.querySelector('button:nth-of-type(2)');
+  const putBack = actions.querySelector('.btn.putback');
   putBack.addEventListener('click', ()=>{
-    const k = card.dataset.key;
-    removedKeySet.delete(k);
+    removedKeySet.delete(card.dataset.key);
     removedList.removeChild(card);
     addRequestCardFromRemovedCard(card);
     updateCounts();
@@ -495,12 +504,11 @@ function addRemovedCardFromRequestCard(requestCard){
 
 function addRequestCardFromRemovedCard(removedCard){
   const card = removedCard;
-  // restore Request actions
   const actions = document.createElement('div');
   actions.className = 'actions';
   actions.innerHTML = `
     <button class="btn played small" type="button">Mark as Played</button>
-    <button class="btn names small" type="button">Show names</button>
+    <button class="btn names small" type="button">Show Names</button>
     <button class="btn remove small" type="button">Remove</button>
   `;
   card.querySelector('.actions')?.replaceWith(actions);
@@ -509,7 +517,7 @@ function addRequestCardFromRemovedCard(removedCard){
   const box = card.querySelector('.names-box');
   namesBtn.addEventListener('click', ()=>{
     box.classList.toggle('open');
-    namesBtn.textContent = box.classList.contains('open') ? 'Hide names' : 'Show names';
+    namesBtn.textContent = box.classList.contains('open') ? 'Hide Names' : 'Show Names';
   });
 
   const playBtn = actions.querySelector('.btn.played');
@@ -530,8 +538,7 @@ function addRequestCardFromRemovedCard(removedCard){
 
   const rmBtn = actions.querySelector('.btn.remove');
   rmBtn.addEventListener('click', ()=>{
-    const k = card.dataset.key;
-    removedKeySet.add(k);
+    removedKeySet.add(card.dataset.key);
     reqList.removeChild(card);
     addRemovedCardFromRequestCard(card);
     updateCounts();
@@ -542,36 +549,23 @@ function addRequestCardFromRemovedCard(removedCard){
 
 /* ===== Render ===== */
 function renderAll(rows){
-  // Build groups
-  const { requests, playedRows, played, spam } = splitBuckets(rows);
+  const { requests, playedGroups, spam } = splitBuckets(rows);
 
-  // Requests (skip removed keys)
+  // Requests (skip removed)
   reqList.innerHTML = '';
   for (const r of requests){
     if (removedKeySet.has(r.key)) continue;
     reqList.appendChild(buildRequestCard(r));
   }
 
-  // Played (cards show as full song cards too)
+  // Played
   playedList.innerHTML = '';
-  // Create unique groups that are fully/partly played to display cards
-  const playedGroups = new Map();
-  for (const pr of playedRows){
-    const k = keySong(pr.song_title, pr.artist);
-    if (!playedGroups.has(k)) playedGroups.set(k, { key:k, song:pr.song_title, artist:pr.artist, ids:[], people:new Set() });
-    const g = playedGroups.get(k);
-    g.ids.push(pr.id);
-    if (pr.name) g.people.add(pr.name);
-  }
-  for (const [,g] of playedGroups.entries()){
+  for (const g of playedGroups){
     const card = buildRequestCard({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.people] });
-    // convert to Played card actions
-    addPlayedCardFromRequestCard(card);
+    addPlayedCardFromRequestCard(card); // converts actions & appends to played
   }
 
-  // Removed list remains as-is (client-side only)
-
-  // Spam
+  // Spam tab
   spamList.innerHTML = '';
   for (const s of spam){
     const card = document.createElement('div');
@@ -600,7 +594,7 @@ function updateCounts(){
   reqCountEl.textContent     = `(${reqList.children.length})`;
   playedCountEl.textContent  = `(${playedList.children.length})`;
   removedCountEl.textContent = `(${removedList.children.length})`;
-  spamCountEl.textContent    = `(${spamList.children.length})`;
+  spamCountTop.textContent   = `(${spamList.children.length})`;
 }
 
 /* ===== Collapsibles ===== */
@@ -615,35 +609,29 @@ function initCollapsibles(){
   });
 }
 
-/* ===== Misc ===== */
-function updateEventPill(){
-  if (currentCode){
-    eventPill.style.display = 'inline-block';
-    eventPill.textContent = `Event = ${currentCode}`;
+/* ===== Tabs ===== */
+function setTab(which){
+  if (which==='spam'){
+    tabSpamBtn.classList.add('active'); tabRequestsBtn.classList.remove('active');
+    tabSpamPane.classList.remove('hidden'); tabRequestsPane.classList.add('hidden');
   }else{
-    eventPill.style.display = 'none';
-    eventPill.textContent = '';
+    tabRequestsBtn.classList.add('active'); tabSpamBtn.classList.remove('active');
+    tabRequestsPane.classList.remove('hidden'); tabSpamPane.classList.add('hidden');
   }
 }
+tabRequestsBtn.addEventListener('click', ()=> setTab('requests'));
+tabSpamBtn.addEventListener('click', ()=> setTab('spam'));
 
 /* ===== Init ===== */
 eventSel.addEventListener('change', ()=>{
   currentCode = eventSel.value || '';
-  updateEventPill();
-  removedKeySet.clear(); // reset client-side removed set when switching events
+  removedKeySet.clear();
   fetchRows(true);
   startPolling();
 });
-refreshBtn.addEventListener('click', ()=> fetchRows(true));
 
 (async function boot(){
-  const urlp = new URLSearchParams(location.search);
-  const pre = (urlp.get('event')||'').trim();
-
   await loadActiveEvents();
-  if (pre && [...eventSel.options].some(o=>o.value===pre)) {
-    eventSel.value = pre; currentCode = pre; updateEventPill();
-  }
   initCollapsibles();
   await fetchRows(true);
   startPolling();
