@@ -6,18 +6,17 @@
 <title>REQUESTS • David Charles Events</title>
 <style>
   :root{
-    --bg:#212121;                 /* page */
-    --section:#363636;            /* section (cards/panels) */
-    --subsection:#424242;         /* collapsible inner sections */
+    --bg:#212121;
+    --section:#363636;
+    --subsection:#424242;
     --border:#2b2b2b;
     --ink:#f2f2f2;
     --muted:#bdbdbd;
-    --accent:#1dcec9;             /* brand */
-    --amber:#f7b731;              /* unplayed revert button */
+    --accent:#1dcec9;   /* Mark as Played */
+    --amber:#f7b731;    /* Mark as Unplayed */
+    --danger:#ef4444;   /* Remove */
     --ring:rgba(255,255,255,.22);
-    --focus:#e6e6e6;
     --radius:12px;
-    --radius-lg:14px;
     --maxw:1100px;
   }
 
@@ -34,23 +33,15 @@
   }
 
   .wrap{ max-width:var(--maxw); margin:0 auto; padding:16px 14px 56px; }
+  .page-title{ text-align:center; margin:8px 0 18px; letter-spacing:.06em; font-weight:800; font-size:clamp(22px,5.5vw,36px); }
 
-  .page-title{
-    text-align:center; margin:8px 0 18px; letter-spacing:.06em;
-    font-weight:800; font-size:clamp(22px,5.5vw,36px);
-  }
-
-  .panel{
-    background:var(--section); border:1px solid var(--border); border-radius:var(--radius);
-    padding:14px; margin-bottom:14px;
-  }
+  .panel{ background:var(--section); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:14px; }
 
   .row{ display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:end; }
   @media (max-width:720px){ .row{ grid-template-columns:1fr; } }
 
   label{ display:block; font-size:14px; color:var(--muted); margin:0 0 6px; }
-
-  select, button, .btn{
+  select, button{
     height:46px; border-radius:12px; border:1px solid #3a3a3a; background:#2a2a2a; color:#fff;
     font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
     font-size:15px; cursor:pointer;
@@ -60,65 +51,50 @@
   button:hover{ filter:brightness(1.05); }
   button:active{ transform:translateY(1px); box-shadow:inset 0 2px 0 rgba(0,0,0,.25); }
 
-  .btn{
-    display:inline-flex; align-items:center; justify-content:center; padding:0 14px;
-    box-shadow:0 2px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.15);
-  }
+  .btn{ display:inline-flex; align-items:center; justify-content:center; padding:0 14px;
+        box-shadow:0 2px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.15); }
   .btn.refresh{ background:#2f2f2f; border-color:#3a3a3a; }
-  .btn.played{ background:var(--accent); border-color:var(--accent); color:#000; }
-  .btn.unplayed{ background:var(--amber); border-color:var(--amber); color:#000; }
-  .btn.small{ height:36px; padding:0 10px; font-size:14px; border-radius:10px; }
-
-  .h2{
-    margin:10px 0 10px; font-size:18px; font-weight:800; letter-spacing:.03em;
-    display:flex; align-items:center; justify-content:space-between;
-  }
-  .count-pill{
-    font-size:13px; color:#dcdcdc; opacity:.9; margin-left:8px;
-  }
-
-  /* lists */
-  .list{ display:grid; gap:10px; }
-  .card{
-    background:var(--section); border:1px solid var(--border); border-radius:12px; padding:10px;
-    display:grid; grid-template-columns:64px 1fr auto; gap:12px; align-items:center;
-  }
-  .thumb{
-    width:64px; height:64px; border-radius:10px; background:#1f1f1f; object-fit:cover; display:block;
-  }
-  .meta{ min-width:0; }
-  .title{ margin:0 0 2px; font-weight:800; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .sub{ margin:0; color:#e6e6e6; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-  .names-toggle{
-    margin-top:6px; background:var(--subsection); border:1px solid var(--border); border-radius:10px; padding:6px 10px; display:none;
-  }
-  .names-toggle.open{ display:block; }
-  .names-btn{
-    margin-top:6px;
-  }
-
-  .collapsible{
-    background:var(--subsection); border:1px solid var(--border); border-radius:12px; padding:10px; margin-top:6px;
-  }
-  .collapsible-header{
-    display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none;
-  }
-  .twist{ width:18px; height:18px; display:inline-grid; place-items:center; margin-left:8px; }
-  .collapsible-body{ display:none; margin-top:10px; }
-  .collapsible.open .collapsible-body{ display:block; }
-
-  .muted{ color:var(--muted); font-size:13px; }
-  .spacer{ height:4px; }
-
-  .footer-line{ margin-top:10px; color:var(--muted); font-size:12px; }
-
-  .hidden{ display:none !important; }
+  .btn.played { background:var(--accent); border-color:var(--accent); color:#000; width:100%; }
+  .btn.unplayed{ background:var(--amber); border-color:var(--amber); color:#000; width:100%; }
+  .btn.names { background:#2f2f2f; border-color:#3a3a3a; color:#fff; width:100%; }
+  .btn.remove{ background:var(--danger); border-color:var(--danger); color:#fff; width:100%; }
+  .btn.small { height:38px; font-size:14px; border-radius:10px; }
 
   .pill{
     display:inline-block; padding:6px 10px; border-radius:999px; background:rgba(45,212,191,.1);
     border:1px solid rgba(45,212,191,.35); color:#a7f3d0; font-size:12px;
   }
+
+  .h2{ margin:6px 0 10px; font-size:18px; font-weight:800; letter-spacing:.03em; display:flex; align-items:center; justify-content:space-between; }
+  .count-pill{ font-size:13px; color:#dcdcdc; opacity:.9; margin-left:8px; }
+
+  .collapsible{ background:var(--subsection); border:1px solid var(--border); border-radius:12px; padding:10px; margin-top:6px; }
+  .collapsible-header{ display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
+  .twist{ width:18px; height:18px; display:inline-grid; place-items:center; margin-left:8px; }
+  .collapsible-body{ display:none; margin-top:10px; }
+  .collapsible.open .collapsible-body{ display:block; }
+
+  .list{ display:grid; gap:10px; }
+  .card{
+    background:var(--section); border:1px solid var(--border); border-radius:12px; padding:10px;
+    display:grid; grid-template-columns:64px 1fr 180px; gap:12px; align-items:center;
+  }
+  @media (max-width:700px){
+    .card{ grid-template-columns:64px 1fr; }
+    .card .actions{ grid-column:1 / -1; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  }
+
+  .thumb{ width:64px; height:64px; border-radius:10px; background:#1f1f1f; object-fit:cover; display:block; }
+  .meta{ min-width:0; }
+  .title{ margin:0 0 2px; font-weight:800; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sub{ margin:0; color:#e6e6e6; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .names-box{ margin-top:6px; background:var(--subsection); border:1px solid var(--border); border-radius:10px; padding:6px 10px; display:none; }
+  .names-box.open{ display:block; }
+  .names-box ul{ margin:6px 0 0; padding-left:18px; }
+  .names-box li{ margin:3px 0; color:#fafafa; font-size:13px; }
+
+  .footer-line{ margin-top:10px; color:var(--muted); font-size:12px; }
 </style>
 </head>
 <body>
@@ -137,10 +113,15 @@
     </div>
 
     <div class="panel" id="requestsPanel">
-      <div class="h2">
-        <div>Requests</div>
+      <div class="collapsible open" id="reqWrap">
+        <div class="collapsible-header" data-target="reqBody">
+          <div>Requests <span id="reqCount" class="count-pill">(0)</span></div>
+          <div class="twist">▾</div>
+        </div>
+        <div id="reqBody" class="collapsible-body">
+          <div id="reqList" class="list"></div>
+        </div>
       </div>
-      <div id="reqList" class="list"></div>
 
       <div class="collapsible" id="playedWrap">
         <div class="collapsible-header" data-target="playedBody">
@@ -152,9 +133,17 @@
         </div>
       </div>
 
-      <div class="spacer"></div>
+      <div class="collapsible" id="removedWrap">
+        <div class="collapsible-header" data-target="removedBody">
+          <div>Removed Songs <span id="removedCount" class="count-pill">(0)</span></div>
+          <div class="twist">▸</div>
+        </div>
+        <div id="removedBody" class="collapsible-body">
+          <div id="removedList" class="list"></div>
+        </div>
+      </div>
 
-      <div class="collapsible" id="spamWrap">
+      <div class="collapsible" id="spamWrap" style="margin-top:6px;">
         <div class="collapsible-header" data-target="spamBody">
           <div>Spammed Requests <span id="spamCount" class="count-pill">(0)</span></div>
           <div class="twist">▸</div>
@@ -169,28 +158,35 @@
   </div>
 
 <script>
-/* ====== Config ====== */
+/* ===== Config ===== */
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxkSPUc2VWQYkhJ_af7CShegZLAMmVgUsTp2nMeVwkkhdFbdQT8wk2s6xBAAynjtLDT/exec';
 const POLL_MS = 5000;
 
-/* ====== Helpers ====== */
+/* ===== Elements ===== */
 const $ = s => document.querySelector(s);
 const eventSel = $('#eventSel');
 const refreshBtn = $('#refreshBtn');
-const reqList = $('#reqList');
-const playedList = $('#playedList');
-const spamList = $('#spamList');
-const playedCountEl = $('#playedCount');
-const spamCountEl = $('#spamCount');
-const statusLine = $('#statusLine');
 const eventPill = $('#eventPill');
 
+const reqList = $('#reqList');
+const playedList = $('#playedList');
+const removedList = $('#removedList');
+const spamList = $('#spamList');
+
+const reqCountEl = $('#reqCount');
+const playedCountEl = $('#playedCount');
+const removedCountEl = $('#removedCount');
+const spamCountEl = $('#spamCount');
+const statusLine = $('#statusLine');
+
+/* ===== State ===== */
 let currentCode = '';
 let pollTimer = null;
-let rowsCache = [];                   // raw rows from backend
-const artCache = new Map();           // artwork cache per "title|artist"
+let rowsCache = [];        // backend rows (raw)
+const artCache = new Map();
+const removedKeySet = new Set(); // client-side hidden “removed” songs (keyed by song|artist)
 
-/* JSONP */
+/* ===== Utilities ===== */
 function jsonp(url, params = {}) {
   const qs = new URLSearchParams(params);
   const cb = 'cb_' + Math.random().toString(36).slice(2);
@@ -206,45 +202,54 @@ function jsonp(url, params = {}) {
     document.body.appendChild(s);
   });
 }
+function keySong(song, artist){ return `${(song||'').toLowerCase()}|${(artist||'').toLowerCase()}`; }
+function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function formatHeaderDate(iso){
+  const d = new Date(iso); if (isNaN(d)) return '';
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${days[d.getDay()]} ${mm}.${dd}.${yy}`;
+}
+function checksum(rows){ let s=0; for(const r of rows){ s+= (r.id||'').length + (r.played?7:3);} return s+':'+rows.length; }
 
-/* Events list */
-async function loadActiveEvents() {
+async function getArtwork(song, artist){
+  const k = keySong(song, artist);
+  if (artCache.has(k)) return artCache.get(k);
+  try{
+    const data = await jsonp('https://itunes.apple.com/search', { term:`${song} ${artist}`.trim(), entity:'musicTrack', limit:1 });
+    const url = data?.results?.[0]?.artworkUrl100 || data?.results?.[0]?.artworkUrl60 || '';
+    artCache.set(k, url||''); return url||'';
+  }catch(_){ artCache.set(k,''); return ''; }
+}
+
+/* ===== Data loading ===== */
+async function loadActiveEvents(){
   const res = await jsonp(ENDPOINT_URL, { mode:'listActive' });
   const list = Array.isArray(res?.events) ? res.events : [];
   eventSel.innerHTML = '';
-  list.forEach(ev => {
+  for (const ev of list){
     const opt = document.createElement('option');
     opt.value = ev.code;
-    const dt = formatHeaderDate(ev.date);     // Wed 11.05.25
-    opt.textContent = `${dt} - ${ev.name}`;
+    opt.textContent = `${formatHeaderDate(ev.date)} - ${ev.name}`;
     eventSel.appendChild(opt);
-  });
-  // keep selection if possible
-  const urlp = new URLSearchParams(location.search);
-  const urlCode = (urlp.get('event')||'').trim();
-  if (urlCode && [...eventSel.options].some(o=>o.value===urlCode)) {
-    eventSel.value = urlCode;
   }
+  const urlp = new URLSearchParams(location.search);
+  const pre = (urlp.get('event')||'').trim();
+  if (pre && [...eventSel.options].some(o=>o.value===pre)) eventSel.value = pre;
   currentCode = eventSel.value || '';
   updateEventPill();
 }
 
-/* Polling */
-function startPolling(){
-  stopPolling();
-  pollTimer = setInterval(fetchRows, POLL_MS);
-}
-function stopPolling(){
-  if (pollTimer) clearInterval(pollTimer); pollTimer = null;
-}
+function startPolling(){ stopPolling(); pollTimer = setInterval(fetchRows, POLL_MS); }
+function stopPolling(){ if (pollTimer) clearInterval(pollTimer); pollTimer = null; }
 
-/* Fetch rows for selected event */
 async function fetchRows(force=false){
   if (!currentCode) return;
   try{
     const res = await jsonp(ENDPOINT_URL, { mode:'read', event: currentCode });
     const rows = Array.isArray(res?.rows) ? res.rows : [];
-    // Only re-render if changed (cheap compare by length & simple checksum)
     const changed = force || rows.length !== rowsCache.length || checksum(rows) !== checksum(rowsCache);
     rowsCache = rows;
     if (changed) renderAll(rows);
@@ -254,176 +259,319 @@ async function fetchRows(force=false){
   }
 }
 
-/* Checksumming rows (lightweight) */
-function checksum(rows){
-  let s = 0; for (const r of rows){ s += (r.id||'').length + (r.played?7:3); }
-  return s + ':' + rows.length;
-}
-
-/* Grouping & spam logic */
-function keySong(r){ return `${(r.song_title||'').toLowerCase()}|${(r.artist||'').toLowerCase()}`; }
-function keySpam(r){ return `${keySong(r)}|${(r.name||'').toLowerCase()}`; }
-
+/* ===== Grouping ===== */
 function splitBuckets(rows){
-  const played = [];
-  const unplayed = [];
-  const bySong = new Map();   // keySong -> { song, artist, names:Set, rows:[] }
-  const spamMap = new Map();  // keySpam -> count of requests from same person for same song
+  const bySong = new Map();  // song|artist => {song, artist, ids:[], names:Set, anyPlayed, anyUnplayed, sampleRow}
+  const spamMap = new Map(); // song|artist|name => count
+  const playedRows = [];     // raw played rows
 
   for (const r of rows){
-    (r.played ? played : unplayed).push(r);
-
-    const kS = keySong(r);
-    if (!bySong.has(kS)) bySong.set(kS, { song:r.song_title||'', artist:r.artist||'', names:new Set(), rows:[] });
-    const node = bySong.get(kS);
+    const k = keySong(r.song_title, r.artist);
+    if (!bySong.has(k)) bySong.set(k, { song:r.song_title||'', artist:r.artist||'', ids:[], names:new Set(), anyPlayed:false, anyUnplayed:false, sampleRow:r });
+    const node = bySong.get(k);
+    node.ids.push(r.id);
     if (r.name) node.names.add(r.name);
-    node.rows.push(r);
+    if (r.played) node.anyPlayed = true; else node.anyUnplayed = true;
+    if (r.played) playedRows.push(r);
 
-    const kP = keySpam(r);
-    spamMap.set(kP, (spamMap.get(kP)||0) + 1);
+    const kp = `${k}|${(r.name||'').toLowerCase()}`;
+    spamMap.set(kp, (spamMap.get(kp)||0)+1);
   }
 
-  // Build spam list: only entries where same person requested same song > 1
-  const spam = [];
-  for (const [k,count] of spamMap.entries()){
-    if (count > 1){
-      const [songLower, artistLower, nameLower] = k.split('|');
-      // find one representative row
-      const node = bySong.get(`${songLower}|${artistLower}`);
-      if (!node) continue;
-      const rep = node.rows.find(x=>String(x.name||'').toLowerCase()===nameLower);
-      spam.push({
-        song: rep?.song_title || node.song,
-        artist: rep?.artist || node.artist,
-        name: rep?.name || '',
-        count
+  const requests = [];
+  for (const [k,node] of bySong.entries()){
+    if (node.anyUnplayed){
+      requests.push({
+        key:k, song:node.song, artist:node.artist,
+        ids: rows.filter(x=>keySong(x.song_title,x.artist)===k && !x.played).map(x=>x.id),
+        people: [...node.names]
       });
     }
   }
 
-  // For Requests UI: use unique songs (dedup by song+artist), show people count
-  const uniqueSongs = [];
-  for (const [,node] of bySong.entries()){
-    // pick first row as representative (prefer unplayed)
-    const sample = node.rows.find(x=>!x.played) || node.rows[0];
-    uniqueSongs.push({
-      song: node.song,
-      artist: node.artist,
-      ids: node.rows.filter(x=>!x.played).map(x=>x.id), // unplayed ids for marking played
-      people: [...node.names],                           // array of unique names
-      playedAll: node.rows.every(x=>x.played)
-    });
+  const played = [];
+  for (const [k,node] of bySong.entries()){
+    if (node.anyPlayed && !node.anyUnplayed){
+      // fully played group (only for count in header)
+      played.push({ key:k, song:node.song, artist:node.artist, ids: rows.filter(x=>keySong(x.song_title,x.artist)===k && x.played).map(x=>x.id), people:[...node.names] });
+    }
   }
-  // keep only those not fully played
-  const requests = uniqueSongs.filter(x=>!x.playedAll);
 
-  return { requests, played, spam };
+  const spam = [];
+  for (const [kp,count] of spamMap.entries()){
+    if (count>1){
+      const [songLower, artistLower, nameLower] = kp.split('|');
+      const row = rows.find(x => keySong(x.song_title,x.artist)===`${songLower}|${artistLower}` && String(x.name||'').toLowerCase()===nameLower);
+      if (row){
+        spam.push({ song:row.song_title, artist:row.artist, name:row.name, count });
+      }
+    }
+  }
+
+  return { requests, playedRows, played, spam };
 }
 
-/* Artwork lookup (iTunes) with cache */
-async function getArtwork(song, artist){
-  const key = `${(song||'').trim().toLowerCase()}|${(artist||'').trim().toLowerCase()}`;
-  if (artCache.has(key)) return artCache.get(key);
-  try{
-    const data = await jsonp(`https://itunes.apple.com/search`, {
-      term: `${song} ${artist}`.trim(),
-      entity: 'musicTrack',
-      limit: 1,
-      callback: 'noop' // gets replaced in jsonp()
-    });
-    const url = data?.results?.[0]?.artworkUrl100 || data?.results?.[0]?.artworkUrl60 || '';
-    artCache.set(key, url||'');
-    return url||'';
-  }catch(_){ artCache.set(key,''); return ''; }
+/* ===== Card builders ===== */
+function namesBoxHTML(names){
+  const items = names.map(n=>`<li>${escapeHTML(n)}</li>`).join('');
+  return `<div class="names-box"><div class="muted">Requesters:</div><ul>${items}</ul></div>`;
 }
 
-/* Render everything */
+function buildRequestCard(obj){
+  // obj: {key,song,artist,ids,people}
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.key = obj.key;
+  card.dataset.ids = JSON.stringify(obj.ids);
+
+  card.innerHTML = `
+    <img class="thumb" alt="" />
+    <div class="meta">
+      <p class="title">${escapeHTML(obj.song||'Unknown Title')}</p>
+      <p class="sub">${escapeHTML(obj.artist||'Unknown Artist')}</p>
+      <p class="sub">${obj.people.length<=1 ? escapeHTML(obj.people[0]?`Requested by ${obj.people[0]}`:'Requested') : `Requested by (${obj.people.length}) people`}</p>
+      ${obj.people.length>1 ? namesBoxHTML(obj.people) : `<div class="names-box"></div>`}
+    </div>
+    <div class="actions">
+      <button class="btn played small" type="button">Mark as Played</button>
+      <button class="btn names small" type="button">${obj.people.length>1?'Show names':'Show names'}</button>
+      <button class="btn remove small" type="button">Remove</button>
+    </div>
+  `;
+
+  // artwork async
+  (async()=>{
+    const img = card.querySelector('.thumb');
+    const src = await getArtwork(obj.song, obj.artist);
+    if (src){ img.src = src; img.alt = `${obj.song} cover`; }
+  })();
+
+  // names toggle
+  const namesBtn = card.querySelector('.btn.names');
+  const box = card.querySelector('.names-box');
+  namesBtn.addEventListener('click', ()=>{
+    box.classList.toggle('open');
+    namesBtn.textContent = box.classList.contains('open') ? 'Hide names' : 'Show names';
+  });
+
+  // Mark as Played (optimistic move of the exact card)
+  const playBtn = card.querySelector('.btn.played');
+  playBtn.addEventListener('click', async ()=>{
+    // move card as-is to played list
+    reqList.removeChild(card);
+    addPlayedCardFromRequestCard(card);
+    updateCounts();
+    // backend: set all its unplayed ids to played
+    const ids = JSON.parse(card.dataset.ids||'[]');
+    try{
+      await Promise.all(ids.map(id => jsonp(ENDPOINT_URL, { mode:'setPlayed', id, played:'true' })));
+      fetchRows(true);
+    }catch(e){
+      // revert
+      playedList.removeChild(card);
+      reqList.appendChild(card);
+      updateCounts();
+    }
+  });
+
+  // Remove (client-side only)
+  const rmBtn = card.querySelector('.btn.remove');
+  rmBtn.addEventListener('click', ()=>{
+    const k = card.dataset.key;
+    removedKeySet.add(k);
+    reqList.removeChild(card);
+    addRemovedCardFromRequestCard(card);
+    updateCounts();
+  });
+
+  return card;
+}
+
+function addPlayedCardFromRequestCard(requestCard){
+  // convert the action buttons to include "Mark as Unplayed"
+  const card = requestCard; // reuse
+  card.querySelector('.actions').innerHTML = `
+    <button class="btn unplayed small" type="button">Mark as Unplayed</button>
+  `;
+
+  // fast optimistic unplayed: move back immediately on click
+  const unBtn = card.querySelector('.btn.unplayed');
+  unBtn.addEventListener('click', async ()=>{
+    playedList.removeChild(card);
+    addRequestCardFromPlayedCard(card);  // move exact card back
+    updateCounts();
+    // backend: set ids to unplayed
+    const ids = JSON.parse(card.dataset.ids||'[]');
+    try{
+      await Promise.all(ids.map(id => jsonp(ENDPOINT_URL, { mode:'setPlayed', id, played:'false' })));
+      fetchRows(true);
+    }catch(e){
+      // revert on failure
+      reqList.removeChild(card);
+      playedList.appendChild(card);
+      updateCounts();
+    }
+  });
+
+  playedList.appendChild(card);
+}
+
+function addRequestCardFromPlayedCard(playedCard){
+  // rebuild actions to Played + Names + Remove
+  const card = playedCard;
+  const actions = document.createElement('div');
+  actions.className = 'actions';
+  actions.innerHTML = `
+    <button class="btn played small" type="button">Mark as Played</button>
+    <button class="btn names small" type="button">Show names</button>
+    <button class="btn remove small" type="button">Remove</button>
+  `;
+  card.querySelector('.actions')?.replaceWith(actions);
+
+  // wire buttons
+  const namesBtn = actions.querySelector('.btn.names');
+  const box = card.querySelector('.names-box');
+  namesBtn.addEventListener('click', ()=>{
+    box.classList.toggle('open');
+    namesBtn.textContent = box.classList.contains('open') ? 'Hide names' : 'Show names';
+  });
+
+  const playBtn = actions.querySelector('.btn.played');
+  playBtn.addEventListener('click', async ()=>{
+    reqList.removeChild(card);
+    addPlayedCardFromRequestCard(card);
+    updateCounts();
+    const ids = JSON.parse(card.dataset.ids||'[]');
+    try{
+      await Promise.all(ids.map(id => jsonp(ENDPOINT_URL, { mode:'setPlayed', id, played:'true' })));
+      fetchRows(true);
+    }catch(e){
+      playedList.removeChild(card);
+      reqList.appendChild(card);
+      updateCounts();
+    }
+  });
+
+  const rmBtn = actions.querySelector('.btn.remove');
+  rmBtn.addEventListener('click', ()=>{
+    const k = card.dataset.key;
+    removedKeySet.add(k);
+    reqList.removeChild(card);
+    addRemovedCardFromRequestCard(card);
+    updateCounts();
+  });
+
+  reqList.appendChild(card);
+}
+
+function addRemovedCardFromRequestCard(requestCard){
+  const card = requestCard;
+  // For Removed, show Put Back only
+  const actions = document.createElement('div');
+  actions.className = 'actions';
+  actions.innerHTML = `<button class="btn names small" type="button">Show names</button>
+                       <button class="btn small" style="width:100%; background:#2f2f2f; border-color:#3a3a3a;" type="button">Put Back</button>`;
+  card.querySelector('.actions')?.replaceWith(actions);
+
+  // names toggle still works
+  const namesBtn = actions.querySelector('.btn.names');
+  const box = card.querySelector('.names-box');
+  namesBtn.addEventListener('click', ()=>{
+    box.classList.toggle('open');
+    namesBtn.textContent = box.classList.contains('open') ? 'Hide names' : 'Show names';
+  });
+
+  const putBack = actions.querySelector('button:nth-of-type(2)');
+  putBack.addEventListener('click', ()=>{
+    const k = card.dataset.key;
+    removedKeySet.delete(k);
+    removedList.removeChild(card);
+    addRequestCardFromRemovedCard(card);
+    updateCounts();
+  });
+
+  removedList.appendChild(card);
+}
+
+function addRequestCardFromRemovedCard(removedCard){
+  const card = removedCard;
+  // restore Request actions
+  const actions = document.createElement('div');
+  actions.className = 'actions';
+  actions.innerHTML = `
+    <button class="btn played small" type="button">Mark as Played</button>
+    <button class="btn names small" type="button">Show names</button>
+    <button class="btn remove small" type="button">Remove</button>
+  `;
+  card.querySelector('.actions')?.replaceWith(actions);
+
+  const namesBtn = actions.querySelector('.btn.names');
+  const box = card.querySelector('.names-box');
+  namesBtn.addEventListener('click', ()=>{
+    box.classList.toggle('open');
+    namesBtn.textContent = box.classList.contains('open') ? 'Hide names' : 'Show names';
+  });
+
+  const playBtn = actions.querySelector('.btn.played');
+  playBtn.addEventListener('click', async ()=>{
+    reqList.removeChild(card);
+    addPlayedCardFromRequestCard(card);
+    updateCounts();
+    const ids = JSON.parse(card.dataset.ids||'[]');
+    try{
+      await Promise.all(ids.map(id => jsonp(ENDPOINT_URL, { mode:'setPlayed', id, played:'true' })));
+      fetchRows(true);
+    }catch(e){
+      playedList.removeChild(card);
+      reqList.appendChild(card);
+      updateCounts();
+    }
+  });
+
+  const rmBtn = actions.querySelector('.btn.remove');
+  rmBtn.addEventListener('click', ()=>{
+    const k = card.dataset.key;
+    removedKeySet.add(k);
+    reqList.removeChild(card);
+    addRemovedCardFromRequestCard(card);
+    updateCounts();
+  });
+
+  reqList.appendChild(card);
+}
+
+/* ===== Render ===== */
 function renderAll(rows){
-  const { requests, played, spam } = splitBuckets(rows);
+  // Build groups
+  const { requests, playedRows, played, spam } = splitBuckets(rows);
 
-  // Requests (unique by song)
+  // Requests (skip removed keys)
   reqList.innerHTML = '';
   for (const r of requests){
-    const card = document.createElement('div');
-    card.className = 'card';
-    const namesCount = r.people.length;
-    const namesText = (namesCount <= 1)
-      ? (r.people[0] ? `Requested by ${r.people[0]}` : 'Requested')
-      : `Requested by (${namesCount}) people`;
-
-    card.innerHTML = `
-      <img class="thumb" alt="" />
-      <div class="meta">
-        <p class="title">${escapeHTML(r.song || 'Unknown Title')}</p>
-        <p class="sub">${escapeHTML(r.artist || 'Unknown Artist')}</p>
-        <p class="sub">${escapeHTML(namesText)}</p>
-        <div class="names-toggle" aria-hidden="true"></div>
-      </div>
-      <div>
-        <button class="btn played small" type="button">Mark as Played</button>
-        ${namesCount>1 ? `<div><button class="btn small names-btn" type="button">Show names</button></div>` : ``}
-      </div>
-    `;
-
-    // load artwork async
-    (async()=>{
-      const img = card.querySelector('.thumb');
-      const src = await getArtwork(r.song, r.artist);
-      if (src) { img.src = src; img.alt = `${r.song} cover`; }
-    })();
-
-    // names toggle if multiple requesters
-    if (namesCount>1){
-      const btn = card.querySelector('.names-btn');
-      const box = card.querySelector('.names-toggle');
-      btn.addEventListener('click', ()=>{
-        box.classList.toggle('open');
-        btn.textContent = box.classList.contains('open') ? 'Hide names' : 'Show names';
-      });
-      box.innerHTML = `<div class="muted">${r.people.map(n=>escapeHTML(n)).join(' • ')}</div>`;
-    }
-
-    // Mark as Played (optimistic): move to played right away
-    const btnPlayed = card.querySelector('.btn.played');
-    btnPlayed.addEventListener('click', async ()=>{
-      // optimistic move all unplayed IDs for this song
-      const ids = r.ids.slice(); // copy
-      if (!ids.length) return;
-      // UI optimistic: remove from Requests, add to Played
-      card.remove();
-      // add each as played card
-      for (const id of ids){
-        const row = rows.find(x=>x.id===id) || { song_title:r.song, artist:r.artist, id };
-        addPlayedCard(row, true);
-      }
-      updateCounts();
-
-      // backend calls
-      try{
-        await Promise.all(ids.map(id => jsonp(ENDPOINT_URL, { mode:'setPlayed', id, played:'true' })));
-        // refetch to fully sync (fast)
-        fetchRows(true);
-      }catch(e){
-        // revert on error: move back into Requests
-        for (const id of ids){
-          const row = rows.find(x=>x.id===id);
-          if (row){
-            row.played = false;
-          }
-        }
-        fetchRows(true);
-      }
-    });
-
-    reqList.appendChild(card);
+    if (removedKeySet.has(r.key)) continue;
+    reqList.appendChild(buildRequestCard(r));
   }
 
-  // Played list
+  // Played (cards show as full song cards too)
   playedList.innerHTML = '';
-  for (const p of played){
-    addPlayedCard(p, false);
+  // Create unique groups that are fully/partly played to display cards
+  const playedGroups = new Map();
+  for (const pr of playedRows){
+    const k = keySong(pr.song_title, pr.artist);
+    if (!playedGroups.has(k)) playedGroups.set(k, { key:k, song:pr.song_title, artist:pr.artist, ids:[], people:new Set() });
+    const g = playedGroups.get(k);
+    g.ids.push(pr.id);
+    if (pr.name) g.people.add(pr.name);
   }
-  // Spam list
+  for (const [,g] of playedGroups.entries()){
+    const card = buildRequestCard({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.people] });
+    // convert to Played card actions
+    addPlayedCardFromRequestCard(card);
+  }
+
+  // Removed list remains as-is (client-side only)
+
+  // Spam
   spamList.innerHTML = '';
   for (const s of spam){
     const card = document.createElement('div');
@@ -435,7 +583,7 @@ function renderAll(rows){
         <p class="sub">${escapeHTML(s.artist || 'Unknown Artist')}</p>
         <p class="sub">Requested by ${escapeHTML(s.name || 'Guest')} (x${s.count})</p>
       </div>
-      <div></div>
+      <div class="actions"></div>
     `;
     (async()=>{
       const img = card.querySelector('.thumb');
@@ -448,56 +596,14 @@ function renderAll(rows){
   updateCounts();
 }
 
-/* Add a single played card (optionally optimistic) */
-function addPlayedCard(row, optimistic){
-  const card = document.createElement('div');
-  card.className = 'card';
-  card.innerHTML = `
-    <img class="thumb" alt="" />
-    <div class="meta">
-      <p class="title">${escapeHTML(row.song_title || 'Unknown Title')}</p>
-      <p class="sub">${escapeHTML(row.artist || 'Unknown Artist')}</p>
-      <p class="sub muted">${escapeHTML(row.name ? `Requested by ${row.name}` : '')}</p>
-    </div>
-    <div>
-      <button class="btn unplayed small" type="button">Mark as Unplayed</button>
-    </div>
-  `;
-
-  (async()=>{
-    const img = card.querySelector('.thumb');
-    const src = await getArtwork(row.song_title, row.artist);
-    if (src) { img.src = src; img.alt = `${row.song_title} cover`; }
-  })();
-
-  // Unplayed (optimistic)
-  const btn = card.querySelector('.btn.unplayed');
-  btn.addEventListener('click', async ()=>{
-    // optimistic: move back to requests
-    card.remove();
-    // create a synthetic entry in requests (will be reconciled on next fetch)
-    // Easiest is to force a refresh after backend ack
-    updateCounts();
-    try{
-      await jsonp(ENDPOINT_URL, { mode:'setPlayed', id: row.id, played: 'false' });
-      fetchRows(true);
-    }catch(e){
-      // revert: put it back to played
-      playedList.appendChild(card);
-      updateCounts();
-    }
-  });
-
-  playedList.appendChild(card);
-}
-
-/* Counts & headers */
 function updateCounts(){
-  playedCountEl.textContent = `(${playedList.children.length})`;
-  spamCountEl.textContent = `(${spamList.children.length})`;
+  reqCountEl.textContent     = `(${reqList.children.length})`;
+  playedCountEl.textContent  = `(${playedList.children.length})`;
+  removedCountEl.textContent = `(${removedList.children.length})`;
+  spamCountEl.textContent    = `(${spamList.children.length})`;
 }
 
-/* Collapsibles */
+/* ===== Collapsibles ===== */
 function initCollapsibles(){
   document.querySelectorAll('.collapsible-header').forEach(h=>{
     h.addEventListener('click', ()=>{
@@ -509,7 +615,7 @@ function initCollapsibles(){
   });
 }
 
-/* Event pill */
+/* ===== Misc ===== */
 function updateEventPill(){
   if (currentCode){
     eventPill.style.display = 'inline-block';
@@ -520,41 +626,23 @@ function updateEventPill(){
   }
 }
 
-/* Small date label like: Wed 11.05.25 */
-function formatHeaderDate(iso){
-  const d = new Date(iso);
-  if (isNaN(d)) return '';
-  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const dd = String(d.getDate()).padStart(2,'0');
-  const yy = String(d.getFullYear()).slice(-2);
-  return `${days[d.getDay()]} ${mm}.${dd}.${yy}`;
-}
-
-/* Escape HTML */
-function escapeHTML(s){
-  return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
-
-/* ====== Init ====== */
+/* ===== Init ===== */
 eventSel.addEventListener('change', ()=>{
   currentCode = eventSel.value || '';
   updateEventPill();
+  removedKeySet.clear(); // reset client-side removed set when switching events
   fetchRows(true);
   startPolling();
 });
 refreshBtn.addEventListener('click', ()=> fetchRows(true));
 
 (async function boot(){
-  // Seed selection from URL if provided
   const urlp = new URLSearchParams(location.search);
   const pre = (urlp.get('event')||'').trim();
 
   await loadActiveEvents();
   if (pre && [...eventSel.options].some(o=>o.value===pre)) {
-    eventSel.value = pre;
-    currentCode = pre;
-    updateEventPill();
+    eventSel.value = pre; currentCode = pre; updateEventPill();
   }
   initCollapsibles();
   await fetchRows(true);
