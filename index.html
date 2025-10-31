@@ -12,21 +12,29 @@
     --radius:12px; --field-max:640px;
   }
   @font-face{
-    font-family:"TexGyreAdventorRegular";
+    font-family:"Adventor";
     src:url("texgyreadventor-regular.otf") format("opentype");
     font-weight:400; font-style:normal; font-display:swap;
   }
   *{ box-sizing:border-box; }
-  html,body{ margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+  html,body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  }
   .wrap{ width:100%; max-width:960px; margin:0 auto; padding:16px 12px 48px; }
   .dce-logo{text-align:center; margin:14px 0 6px;}
   .dce-logo img{ max-width:min(220px,60vw); height:auto; }
-  .app-title{ text-align:center; margin:0 auto 26px; font-weight:800; letter-spacing:.06em; line-height:1.05; font-size:clamp(22px,6vw,38px); color:#fff; }
+  .app-title{
+    text-align:center; margin:0 auto 26px; font-weight:800; letter-spacing:.06em; line-height:1.05;
+    font-size:clamp(22px,6vw,38px); color:#fff;
+  }
   .row{ width:100%; max-width:var(--field-max); margin:0 auto; }
   label{ display:block; font-size:14px; color:var(--muted); margin:10px 0 6px; }
   input[type="text"]{
     width:100%; height:52px; padding:0 14px; border:1px solid var(--border); border-radius:var(--radius);
-    background:var(--surface); color:var(--ink); font-size:16px; outline:none; transition: box-shadow .12s ease, border-color .12s ease;
+    background:var(--surface); color:var(--ink); font-size:16px; outline:none;
+    transition: box-shadow .12s ease, border-color .12s ease;
+    font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   }
   input[type="text"]::placeholder{ color:#9e9e9e; }
   input[type="text"]:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring); }
@@ -34,12 +42,20 @@
   .search{ width:100%; height:52px; padding:0 42px 0 14px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); color:var(--ink); font-size:16px; transition: box-shadow .12s ease, border-color .12s ease; }
   .search::placeholder{ color:#9e9e9e; }
   .search:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring); }
-  .clear{ position:absolute; right:8px; top:50%; transform:translateY(-50%); width:32px; height:32px; border-radius:50%; display:none; align-items:center; justify-content:center; border:1px solid var(--border); background:#2b2b2b; color:#e0e0e0; cursor:pointer; user-select:none; line-height:1; font-size:18px; }
+  .clear{
+    position:absolute; right:8px; top:50%; transform:translateY(-50%); width:32px; height:32px; border-radius:50%;
+    display:none; align-items:center; justify-content:center; border:1px solid var(--border); background:#2b2b2b; color:#e0e0e0;
+    cursor:pointer; user-select:none; line-height:1; font-size:18px;
+  }
   .clear.show{ display:flex; }
   .clear:active{ transform:translateY(-50%) scale(0.98); }
   .results{ margin-top:6px; }
   .hidden{ display:none !important; }
-  .item{ display:grid; grid-template-columns:56px 1fr; align-items:center; gap:12px; padding:10px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2); transition:background .15s,transform .06s,border-color .15s; cursor:pointer; margin-bottom:8px; }
+  .item{
+    display:grid; grid-template-columns:56px 1fr; align-items:center; gap:12px; padding:10px;
+    border:1px solid var(--border); border-radius:12px; background:var(--surface-2);
+    transition:background .15s,transform .06s,border-color .15s; cursor:pointer; margin-bottom:8px;
+  }
   .item:hover{ background:var(--surface-2-hover); } .item:active{ transform:scale(.995); }
   .cover{ width:56px;height:56px;border-radius:10px;object-fit:cover;background:#1f1f1f; color:#9aa6b2; display:grid; place-items:center; font-size:12px; }
   .info{ min-width:0; }
@@ -53,13 +69,14 @@
   .sel-title{ margin:0 0 2px; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
   .sel-artist{ margin:0; color:#cfcfcf; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .status{ margin-top:6px; font-size:13px; color:var(--muted); min-height:0; }
-  .actions{ width:100%; max-width:var(--field-max); margin:12px auto 0; }
+
+  .actions{ width:100%; max-width:var(--field-max); margin:20px auto 0; } /* 20px gap requested */
   .btn{
     width:100%; height:54px; border:1px solid var(--accent); background:var(--accent); color:#000000;
     border-radius:14px; cursor:pointer; font-weight:800; letter-spacing:.03em; font-size:16px; text-transform:uppercase;
     display:inline-flex; align-items:center; justify-content:center; transform:translateZ(0); transition:transform .06s, filter .15s, opacity .15s, background .15s;
     box-shadow:0 2px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.15);
-    font-family:"TexGyreAdventorRegular", Inter, system-ui, sans-serif;
+    font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   }
   .btn:hover{ filter:brightness(1.05); }
   .btn:active{ transform:scale(0.985); }
@@ -67,12 +84,18 @@
   .btn .spin{ width:18px; height:18px; margin-right:10px; border-radius:50%; border:2px solid rgba(6,44,42,.4); border-top-color:#062c2a; animation:spin .8s linear infinite; display:none; }
   .btn.loading .spin{ display:inline-block; }
   @keyframes spin{ to{ transform:rotate(360deg);} }
+
   .ty-overlay{ position:fixed; inset:0; background:rgba(33,33,33,.98); display:none; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(2px); }
   .ty-wrap{ text-align:center; padding:24px; max-width:92vw; color:#ffffff; }
   .ty-icon{ width:96px; height:96px; margin:0 auto 22px; display:grid; place-items:center; border-radius:50%; background:#1dcec9; box-shadow:0 6px 18px rgba(29,206,201,.35); color:#052911; font-size:52px; }
-  .ty-title{ font-weight:800; font-size:clamp(28px,7.8vw,56px); line-height:1.05; margin:0 0 8px; color:#ffffff;}
-  .ty-sub{ font:500 16px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#ffffff; margin:0;}
-  @media (max-width:480px){ .wrap{ padding-left:10px; padding-right:10px; } .sel-inner{ grid-template-columns:64px 1fr; } .sel-cover{ width:64px; height:64px; } }
+  .ty-title{ font-weight:800; font-size:clamp(28px,7.8vw,56px); line-height:1.05; margin:0 0 8px; color:#ffffff; }
+  .ty-sub{ font:500 16px/1.5 "Adventor",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#ffffff; margin:0;}
+
+  @media (max-width:480px){
+    .wrap{ padding-left:10px; padding-right:10px; }
+    .sel-inner{ grid-template-columns:64px 1fr; } .sel-cover{ width:64px; height:64px; }
+  }
+
   .dbg{ display:none; width:100%; max-width:var(--field-max); margin:10px auto 0; color:#a7f3d0; background:rgba(45,212,191,.12); border:1px solid rgba(45,212,191,.35); border-radius:999px; padding:6px 12px; font-size:12px; }
   .dbg.show{ display:block; }
 </style>
@@ -130,15 +153,27 @@ const REDIRECT_DELAY_MS = 2200;
 
 const urlp = new URLSearchParams(location.search);
 const DEBUG = urlp.get('debug') === '1';
+function saveEventCode(code){ try{ localStorage.setItem('dce_event', code); }catch{} }
+function loadEventCode(){ try{ return localStorage.getItem('dce_event') || ''; }catch{ return ''; } }
+
 let EVENT_CODE = (urlp.get('event') || '').trim();
-if (!EVENT_CODE && document.referrer) { try{ const ref=new URL(document.referrer); const refEvent=ref.searchParams.get('event'); if(refEvent) EVENT_CODE=refEvent.trim(); }catch{} }
+if (!EVENT_CODE && document.referrer) {
+  try{ const ref=new URL(document.referrer); const refEvent=ref.searchParams.get('event'); if(refEvent) EVENT_CODE=refEvent.trim(); }catch{}
+}
+if (!EVENT_CODE) { EVENT_CODE = loadEventCode(); }
+if (EVENT_CODE) { saveEventCode(EVENT_CODE); }
 
 const $=s=>document.querySelector(s);
 const nameInput=$('#yourName'), q=$('#q'), clearBtn=$('#clearBtn'), resultsEl=$('#results'), selectedBox=$('#selected'), statusEl=$('#status'), submitBtn=$('#submitBtn'), selTitle=$('#selTitle'), selArtist=$('#selArtist'); let selCoverEl=$('#selCover');
 const titleInput=$('#songTitle'), artistInput=$('#artist'), linkInput=$('#link');
 const tyOverlay=$('#tyOverlay'); const btnTxt=document.querySelector('.btntxt'); const btnSpin=document.querySelector('.spin');
 
-function showDebug(){ const pill=document.getElementById('debugPill'); pill.classList.add('show'); pill.textContent = EVENT_CODE ? `Event detected: ${EVENT_CODE}` : 'No event detected'; }
+function showDebug(msg){
+  const pill=document.getElementById('debugPill');
+  if (!DEBUG) return;
+  pill.classList.add('show');
+  pill.textContent = msg || (EVENT_CODE ? `Event: ${EVENT_CODE}` : 'No event detected');
+}
 if (DEBUG) showDebug();
 
 function setStatus(m='',err=false){ statusEl.textContent=m; statusEl.style.color=err?'#ffb4b4':'var(--muted)'; }
@@ -272,8 +307,10 @@ function redirectBack(){
 function writeRequest(){
   const nameVal=(nameInput.value||'').trim(), titleVal=(titleInput.value||'').trim(), artistVal=(artistInput.value||'').trim(), linkVal=(linkInput.value||'').trim();
   if (!titleVal && !artistVal){ setStatus('Pick a song first.'); q.focus(); return; }
+  if (!EVENT_CODE){ setStatus('No event selected. Re-scan the QR and try again.', true); return; }
+  saveEventCode(EVENT_CODE);
   setBtnLoading(true); openThankYou();
-  const qs=new URLSearchParams({ mode:'write', event:EVENT_CODE||'', name:nameVal, song_title:titleVal, artist:artistVal, link:linkVal, ua:navigator.userAgent, referer:document.referrer||location.href });
+  const qs=new URLSearchParams({ mode:'write', event:EVENT_CODE, name:nameVal, song_title:titleVal, artist:artistVal, link:linkVal, ua:navigator.userAgent, referer:document.referrer||location.href });
   const cb='cb_'+Math.random().toString(36).slice(2); window[cb]=(data)=>{ try{ delete window[cb]; }catch{} };
   const s=document.createElement('script'); s.src=ENDPOINT_URL+'?'+qs.toString()+'&callback='+cb+'&t='+Date.now(); s.onerror=()=>{ try{ delete window[cb]; }catch{} };
   document.body.appendChild(s);
