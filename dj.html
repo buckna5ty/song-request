@@ -35,33 +35,29 @@
   .wrap{ max-width:var(--maxw); margin:0 auto; padding:16px 14px 56px; }
   .page-title{ text-align:center; margin:8px 0 18px; letter-spacing:.06em; font-weight:800; font-size:clamp(22px,5.5vw,36px); }
 
-  /* Panel with folder-tabs */
-  .panel{ border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; background:var(--section); }
-  .panel-body{ padding:14px; }
-
-  /* Folder-style tabs attached to panel */
-  .tabs-bar{
-    display:flex; gap:0; align-items:flex-end; padding:0 10px; background:var(--section);
-    border-bottom:1px solid var(--border);
-  }
-  .tab-btn{
-    appearance:none; border:1px solid var(--border); border-bottom:none; background:#2f2f2f; color:#fff;
-    height:40px; padding:0 16px; cursor:pointer; font-size:14px;
-    border-top-left-radius:10px; border-top-right-radius:10px; margin:0 6px; transform:translateY(1px);
-  }
-  .tab-btn.active{
-    background:var(--subsection); color:#fff; transform:translateY(0);
-  }
-
+  /* Panels */
+  .panel{ background:var(--section); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:14px; }
   label{ display:block; font-size:14px; color:var(--muted); margin:0 0 6px; }
   select{
     height:46px; border-radius:12px; border:1px solid #3a3a3a; background:#2a2a2a; color:#fff;
     font-size:15px; padding:0 12px; width:100%;
   }
-
   .inline-info{ margin-top:8px; color:#e7e7e7; font-size:14px; }
+
+  /* Tabs (bottom panel header) */
+  .tabs{ display:flex; gap:8px; margin-bottom:10px; }
+  .tab-btn{
+    background:#2f2f2f; border:1px solid #3a3a3a; color:#fff;
+    height:40px; padding:0 16px; border-radius:999px; font-size:14px; cursor:pointer;
+    transition:filter .15s ease, transform .06s ease;
+  }
+  .tab-btn:hover{ filter:brightness(1.05); }
+  .tab-btn:active{ transform:translateY(1px); }
+  .tab-btn.active{ background:var(--subsection); }
+
   .hidden{ display:none !important; }
 
+  /* Collapsibles */
   .collapsible{ background:var(--subsection); border:1px solid var(--border); border-radius:12px; padding:10px; margin-top:10px; }
   .collapsible-header{ display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
   .twist{ width:18px; height:18px; display:inline-grid; place-items:center; margin-left:8px; }
@@ -115,58 +111,59 @@
   <div class="wrap">
     <div class="page-title">REQUESTS</div>
 
-    <!-- Panel + folder tabs -->
+    <!-- Top: Event select + inline info -->
     <div class="panel">
-      <div class="tabs-bar">
+      <label for="eventSel">Select Your Event</label>
+      <select id="eventSel"></select>
+      <div id="inlineInfo" class="inline-info"></div>
+    </div>
+
+    <!-- Bottom: Tabs + content -->
+    <div class="panel">
+      <div class="tabs">
         <button id="tabRequests" class="tab-btn active" type="button">Requests</button>
         <button id="tabSpam" class="tab-btn" type="button">Spam</button>
       </div>
 
-      <div class="panel-body">
-        <label for="eventSel">Select Your Event</label>
-        <select id="eventSel"></select>
-        <div id="inlineInfo" class="inline-info"></div>
-
-        <!-- Requests tab content -->
-        <div id="tabRequestsPane">
-          <div class="collapsible open" id="reqWrap">
-            <div class="collapsible-header" data-target="reqBody">
-              <div>Requests <span id="reqCount" class="count-pill">(0)</span></div>
-              <div class="twist">▾</div>
-            </div>
-            <div id="reqBody" class="collapsible-body">
-              <div id="reqList" class="list"></div>
-            </div>
+      <!-- Requests tab -->
+      <div id="tabRequestsPane">
+        <div class="collapsible open" id="reqWrap">
+          <div class="collapsible-header" data-target="reqBody">
+            <div>Requests <span id="reqCount" class="count-pill">(0)</span></div>
+            <div class="twist">▾</div>
           </div>
-
-          <div class="collapsible" id="playedWrap">
-            <div class="collapsible-header" data-target="playedBody">
-              <div>Played Songs <span id="playedCount" class="count-pill">(0)</span></div>
-              <div class="twist">▸</div>
-            </div>
-            <div id="playedBody" class="collapsible-body">
-              <div id="playedList" class="list"></div>
-            </div>
+          <div id="reqBody" class="collapsible-body">
+            <div id="reqList" class="list"></div>
           </div>
-
-          <div class="collapsible" id="removedWrap">
-            <div class="collapsible-header" data-target="removedBody">
-              <div>Removed Songs <span id="removedCount" class="count-pill">(0)</span></div>
-              <div class="twist">▸</div>
-            </div>
-            <div id="removedBody" class="collapsible-body">
-              <div id="removedList" class="list"></div>
-            </div>
-          </div>
-
-          <div class="footer-line" id="statusLine"></div>
         </div>
 
-        <!-- Spam tab content -->
-        <div id="tabSpamPane" class="hidden">
-          <div class="h2">Spammed Requests <span id="spamCountTop" class="count-pill">(0)</span></div>
-          <div id="spamList" class="list"></div>
+        <div class="collapsible" id="playedWrap">
+          <div class="collapsible-header" data-target="playedBody">
+            <div>Played Songs <span id="playedCount" class="count-pill">(0)</span></div>
+            <div class="twist">▸</div>
+          </div>
+          <div id="playedBody" class="collapsible-body">
+            <div id="playedList" class="list"></div>
+          </div>
         </div>
+
+        <div class="collapsible" id="removedWrap">
+          <div class="collapsible-header" data-target="removedBody">
+            <div>Removed Songs <span id="removedCount" class="count-pill">(0)</span></div>
+            <div class="twist">▸</div>
+          </div>
+          <div id="removedBody" class="collapsible-body">
+            <div id="removedList" class="list"></div>
+          </div>
+        </div>
+
+        <div class="footer-line" id="statusLine"></div>
+      </div>
+
+      <!-- Spam tab -->
+      <div id="tabSpamPane" class="hidden">
+        <div class="h2">Spammed Requests <span id="spamCountTop" class="count-pill">(0)</span></div>
+        <div id="spamList" class="list"></div>
       </div>
     </div>
   </div>
@@ -205,12 +202,12 @@ const artCache = new Map();
 const removedKeySet = new Set();
 
 /* ===== Helpers ===== */
-function showInline(msg){ inlineInfo.textContent = msg || ''; inlineInfo.classList.toggle('hidden', !msg); }
+function showInline(msg){ inlineInfo.textContent = msg || ''; }
 function keySong(song, artist){ return `${(song||'').toLowerCase()}|${(artist||'').toLowerCase()}`; }
 function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function checksum(rows){ let s=0; for(const r of rows){ s+= (r.id||'').length + (r.played?7:3);} return s+':'+rows.length; }
 
-/* Robust JSONP */
+/* JSONP */
 function jsonp(url, params = {}) {
   const qs = new URLSearchParams(params);
   const cb = 'cb_' + Math.random().toString(36).slice(2);
@@ -219,7 +216,7 @@ function jsonp(url, params = {}) {
   return new Promise((resolve, reject) => {
     const s = document.createElement('script');
     s.src = url + (url.includes('?') ? '&' : '?') + qs.toString();
-    const kill = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, 10000);
+    const kill = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, 9000);
     function cleanup(){ clearTimeout(kill); try{ delete window[cb]; }catch{} s.remove(); }
     window[cb] = (data) => { cleanup(); resolve(data); };
     s.onerror = () => { cleanup(); reject(new Error('jsonp error')); };
@@ -227,6 +224,7 @@ function jsonp(url, params = {}) {
   });
 }
 
+/* Artwork */
 async function getArtwork(song, artist){
   const k = keySong(song, artist);
   if (artCache.has(k)) return artCache.get(k);
@@ -237,55 +235,38 @@ async function getArtwork(song, artist){
   }catch(_){ artCache.set(k,''); return ''; }
 }
 
-/* ===== Events list (more resilient) ===== */
+/* ===== Event loading (working version) ===== */
 async function loadActiveEvents(){
   showInline('Loading your events…');
+  try{
+    const res = await jsonp(ENDPOINT_URL, { mode:'listActive' });
+    const list = Array.isArray(res?.events) ? res.events : [];
+    eventSel.innerHTML = '';
 
-  // Try common modes in order; accept several shapes.
-  let res = null;
-  try {
-    res = await jsonp(ENDPOINT_URL, { mode:'listActive' });
-    if (!res || (!res.events && !res.ok)) throw new Error('fallback');
-  } catch(_) {
-    try {
-      res = await jsonp(ENDPOINT_URL, { mode:'events' });
-    } catch(__) {
-      try { res = await jsonp(ENDPOINT_URL, {}); } catch(___) { res = null; }
+    if (!list.length){
+      const opt=document.createElement('option');
+      opt.value=''; opt.textContent='No active events';
+      eventSel.appendChild(opt);
+      currentCode=''; showInline('No active events found.');
+      return;
     }
+
+    for (const ev of list){
+      const opt = document.createElement('option');
+      opt.value = ev.code;
+      opt.textContent = `${formatHeaderDate(ev.date)} - ${ev.name}`;
+      eventSel.appendChild(opt);
+    }
+
+    const urlp = new URLSearchParams(location.search);
+    const pre = (urlp.get('event')||'').trim();
+    if (pre && [...eventSel.options].some(o=>o.value===pre)) eventSel.value = pre;
+
+    currentCode = eventSel.value || '';
+    showInline(''); // clear
+  }catch(e){
+    showInline('Could not load events.');
   }
-
-  const events =
-    (res && Array.isArray(res.events) && res.events) ||
-    (res && Array.isArray(res.rows)   && res.rows.map(r=>({code:r.code||r.event||r.name, name:r.name||r.event||r.code, date:r.date||r.event_date||''}))) ||
-    [];
-
-  eventSel.innerHTML = '';
-  if (!events.length){
-    const opt = document.createElement('option');
-    opt.value = ''; opt.textContent = 'No active events';
-    eventSel.appendChild(opt);
-    currentCode = '';
-    showInline('No active events found.');
-    return;
-  }
-
-  for (const ev of events){
-    const code = (ev.code || ev.event || '').trim();
-    const name = ev.name || code || 'Event';
-    const date = ev.date || '';
-    const opt = document.createElement('option');
-    opt.value = code;
-    opt.textContent = `${formatHeaderDate(date)} - ${name}`;
-    eventSel.appendChild(opt);
-  }
-
-  // Preserve ?event= preselect, else first.
-  const urlp = new URLSearchParams(location.search);
-  const pre = (urlp.get('event')||'').trim();
-  if (pre && [...eventSel.options].some(o=>o.value===pre)) eventSel.value = pre;
-
-  currentCode = eventSel.value || '';
-  showInline(''); // clear
 }
 
 /* ===== Polling & fetch ===== */
@@ -650,7 +631,7 @@ eventSel.addEventListener('change', ()=>{
 });
 
 (async function boot(){
-  await loadActiveEvents();
+  await loadActiveEvents();          // working loader
   initCollapsibles();
   if (eventSel.value){ currentCode = eventSel.value; await fetchRows(true); startPolling(); }
 })();
