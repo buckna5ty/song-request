@@ -4,79 +4,124 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>DCE • DJ View</title>
+
+<!-- Roboto (300/400) for body + buttons/titles -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#212121; --surface:#303030; --surface-2:#343434; --surface-3:#3d3d3d;
-    --ink:#f2f2f2; --muted:#bdbdbd; --border:#3a3a3a;
-    --accent:#1dcec9; --focus:#e6e6e6; --ring:rgba(255,255,255,.22);
-    --radius:14px; --radius-sm:10px; --w:1100px;
+    --bg:#212121;
+    --section:#5a5a5a;      /* requested */
+    --surface:#4f4f4f;
+    --surface-2:#595959;
+    --border:#3a3a3a;
+    --ink:#f2f2f2;
+    --muted:#dfdfdf;
+    --accent:#1dcec9;
+    --ring:rgba(255,255,255,.22);
+
+    --r-lg:14px; --r-md:12px; --w:1100px;
+
+    --font-head:"Adventor", "Roboto", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    --font-ui:"Roboto", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   }
+
+  /* page header font */
   @font-face{
     font-family:"Adventor";
     src:url("texgyreadventor-regular.otf") format("opentype");
     font-weight:400; font-style:normal; font-display:swap;
   }
+
   *{ box-sizing:border-box; }
   html,body{
     margin:0; background:var(--bg); color:var(--ink);
-    font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    font-family:var(--font-ui); font-weight:300;  /* Roboto Light for general text */
   }
+
   .wrap{ max-width:var(--w); margin:0 auto; padding:16px 12px 64px; }
-  h1{ margin:6px 0 14px; font-size:clamp(22px,5.2vw,34px); letter-spacing:.02em; }
-  .toolbar{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:12px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px; }
-  .select{ height:44px; min-width:260px; max-width:100%; padding:0 10px; background:#2b2b2b; color:var(--ink); border:1px solid var(--border); border-radius:10px; font-size:15px; }
+  h1{
+    margin:6px 0 14px; font-size:clamp(22px,5.2vw,34px);
+    letter-spacing:.02em; font-family:var(--font-head); font-weight:400; /* Adventor regular */
+  }
+
+  .toolbar{
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:12px;
+    background:var(--section); border:1px solid var(--border); border-radius:var(--r-lg); padding:10px;
+  }
+  .select{
+    height:44px; min-width:260px; max-width:100%; padding:0 10px;
+    background:#2b2b2b; color:var(--ink); border:1px solid var(--border); border-radius:10px; font-size:15px; font-weight:300;
+  }
+
   .btn{
     height:44px; padding:0 14px; border:1px solid var(--accent); background:var(--accent); color:#000;
-    border-radius:12px; font-weight:800; letter-spacing:.03em; cursor:pointer; user-select:none;
-    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    border-radius:12px; cursor:pointer; user-select:none; display:inline-flex; align-items:center; justify-content:center; gap:8px;
     transition:transform .06s ease, filter .15s ease, box-shadow .06s ease;
     box-shadow:0 2px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.15);
+    font-family:var(--font-ui); font-weight:400; /* Roboto Regular for buttons */
+    letter-spacing:.02em;
   }
   .btn:hover{ filter:brightness(1.05); }
   .btn:active{ transform:translateY(1px); box-shadow:inset 0 2px 0 rgba(0,0,0,.25); }
-  .btn.secondary{ background:var(--surface-2); color:#fff; border-color:#4a4a4a; }
-  .pill{ margin-left:auto; font-size:12px; color:#a7f3d0; background:rgba(45,212,191,.12); border:1px solid rgba(45,212,191,.35); border-radius:999px; padding:6px 10px; display:none; }
+  .btn.secondary{ background:var(--surface); color:#fff; border-color:#4a4a4a; }
+
+  .pill{ margin-left:auto; font-size:12px; color:#082; background:rgba(45,212,191,.12); border:1px solid rgba(45,212,191,.35); border-radius:999px; padding:6px 10px; display:none; }
   .pill.show{ display:inline-block; }
+
   .grid{ display:grid; grid-template-columns:1fr; gap:12px; }
   @media(min-width:900px){ .grid{ grid-template-columns:1fr 1fr; } }
-  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px; }
-  .card h2{ margin:0 0 8px; font-size:18px; }
-  .section{ margin-top:8px; }
-  .rows{ display:flex; flex-direction:column; gap:8px; }
-  .row{ display:flex; align-items:flex-start; gap:10px; padding:10px; background:var(--surface-2); border:1px solid var(--border); border-radius:12px; }
-  .title{ margin:0; font-weight:800; color:#fff; }
-  .artist{ margin:2px 0 0; color:#d8d8d8; font-size:13px; }
-  .name{ margin:0; color:#bfbfbf; font-size:12px; }
-  .row-actions{ margin-left:auto; display:flex; gap:8px; }
-  .small{ height:36px; padding:0 10px; border-radius:10px; font-weight:700; }
-  details{ background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:10px; }
-  details > summary{ cursor:pointer; font-weight:700; }
-  details[open]{ background:var(--surface-3); }
+
+  .card{
+    background:var(--section); border:1px solid var(--border); border-radius:var(--r-lg); padding:12px;
+  }
+  .card h2{
+    margin:0 0 8px; font-size:18px; font-family:var(--font-ui); font-weight:400; /* Roboto Regular for section titles */
+  }
+
   .status{ color:var(--muted); font-size:13px; min-height:18px; }
+
+  .rows{ display:flex; flex-direction:column; gap:8px; }
+  .row{
+    display:flex; align-items:flex-start; gap:10px; padding:10px;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:12px;
+  }
+  .title{ margin:0; font-weight:400; color:#fff; font-family:var(--font-ui); }
+  .artist{ margin:2px 0 0; color:#e9e9e9; font-size:13px; font-weight:300; }
+  .name{ margin:0; color:#d5d5d5; font-size:12px; font-weight:300; }
+
+  .row-actions{ margin-left:auto; display:flex; gap:8px; }
+  .small{ height:36px; padding:0 12px; border-radius:10px; font-weight:400; }
+  details{ background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:10px; }
+  details > summary{ cursor:pointer; font-weight:400; font-family:var(--font-ui); }
+  details[open]{ background:var(--surface-2); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>DJ View</h1>
+
   <div class="toolbar">
     <select id="eventSel" class="select"></select>
     <button id="refreshBtn" class="btn secondary">Refresh</button>
     <span id="debugPill" class="pill"></span>
   </div>
+
   <div class="grid">
     <section class="card">
       <h2>Requests</h2>
       <div id="reqStatus" class="status"></div>
       <div id="reqRows" class="rows"></div>
     </section>
+
     <section class="card">
       <details id="playedBox">
         <summary>Played Songs</summary>
-        <div id="playedRows" class="rows section"></div>
+        <div id="playedRows" class="rows" style="margin-top:8px;"></div>
       </details>
+
       <details id="spamBox" style="margin-top:12px;">
         <summary>Spammed Requests</summary>
-        <div id="spamRows" class="rows section"></div>
+        <div id="spamRows" class="rows" style="margin-top:8px;"></div>
       </details>
     </section>
   </div>
@@ -91,8 +136,11 @@ const DEBUG = urlp.get('debug') === '1';
 let CURRENT_EVENT = (urlp.get('event') || '').trim();
 
 const $ = s=>document.querySelector(s);
-const eventSel=$('#eventSel'), refreshBtn=$('#refreshBtn'), reqRows=$('#reqRows'), playedRows=$('#playedRows'), spamRows=$('#spamRows'), reqStatus=$('#reqStatus'), debugPill=$('#debugPill');
+const eventSel=$('#eventSel'), refreshBtn=$('#refreshBtn'),
+      reqRows=$('#reqRows'), playedRows=$('#playedRows'), spamRows=$('#spamRows'),
+      reqStatus=$('#reqStatus'), debugPill=$('#debugPill');
 
+function showDebug(msg){ if(!DEBUG) return; debugPill.classList.add('show'); debugPill.textContent=msg; }
 function j2qs(o){ return new URLSearchParams(o).toString(); }
 function jsonp(url, cbParam='callback'){
   return new Promise((res,rej)=>{
@@ -106,84 +154,135 @@ function jsonp(url, cbParam='callback'){
     document.body.appendChild(s);
   });
 }
-function showDebug(msg){ if (!DEBUG) return; debugPill.classList.add('show'); debugPill.textContent=msg; }
 
-/* Events */
+/* --- Row normalizer: tolerate any header names / column order --- */
+function norm(r){
+  const get=(...keys)=> {
+    for (const k of keys){
+      if (r[k] !== undefined && r[k] !== null) return r[k];
+      const alt = Object.keys(r).find(x=> x.toLowerCase() === k.toLowerCase());
+      if (alt) return r[alt];
+    }
+    return '';
+  };
+  const playedRaw = get('played','Played');
+  const played = (String(playedRaw).toLowerCase()==='true' || playedRaw==='1' || playedRaw===1 || String(playedRaw).toUpperCase()==='TRUE');
+
+  return {
+    id:        get('id','ID'),
+    timestamp: get('timestamp','Timestamp'),
+    name:      get('name','Name'),
+    song:      get('song_title','Song Title','Title','Song'),
+    artist:    get('artist','Artist'),
+    link:      get('link','Link'),
+    event:     get('event','Event','Event Code','EventCode'),
+    played
+  };
+}
+
+/* --- Events --- */
 async function loadActiveEvents(){
-  showDebug('Loading events…');
   try{
-    const qs=j2qs({ mode:'listActive' });
-    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
-    const events= (r && r.ok && Array.isArray(r.events)) ? r.events : [];
+    const r=await jsonp(`${ENDPOINT_URL}?${j2qs({mode:'listActive'})}`);
+    const events=(r && r.ok && Array.isArray(r.events))?r.events:[];
     eventSel.innerHTML='';
     events.forEach(ev=>{
-      const opt=document.createElement('option'); opt.value=ev.code; opt.textContent=`${new Date(ev.date).toLocaleDateString()} — ${ev.name}`; eventSel.appendChild(opt);
+      const opt=document.createElement('option');
+      opt.value=ev.code;
+      opt.textContent=`${new Date(ev.date).toLocaleDateString()} — ${ev.name}`;
+      eventSel.appendChild(opt);
     });
-    if (events.length===0){ CURRENT_EVENT=''; showRequests([]); showDebug('No active events'); return; }
-    if (!CURRENT_EVENT || !events.some(e=>e.code===CURRENT_EVENT)){ CURRENT_EVENT=events[0].code; }
+    if (!events.length){ CURRENT_EVENT=''; showRequests([]); showDebug('No active events'); return; }
+    if (!CURRENT_EVENT || !events.some(e=>e.code===CURRENT_EVENT)) CURRENT_EVENT=events[0].code;
     eventSel.value=CURRENT_EVENT; showDebug(`Event=${CURRENT_EVENT}`);
     await loadRequests();
-  }catch{ showDebug('Events load failed'); }
+  }catch(e){ showDebug('Events load failed'); }
 }
-eventSel.addEventListener('change', ()=>{ CURRENT_EVENT=eventSel.value; const sp=new URLSearchParams(location.search); if(CURRENT_EVENT) sp.set('event',CURRENT_EVENT); else sp.delete('event'); history.replaceState(null,'',location.pathname+'?'+sp.toString()); loadRequests(); });
 
-/* Render */
-function showRequests(rows){
+eventSel.addEventListener('change', ()=>{
+  CURRENT_EVENT = eventSel.value;
+  const sp=new URLSearchParams(location.search);
+  if (CURRENT_EVENT) sp.set('event', CURRENT_EVENT); else sp.delete('event');
+  history.replaceState(null,'',location.pathname + '?' + sp.toString());
+  loadRequests();
+});
+
+/* --- Render --- */
+function showRequests(rowsRaw){
+  const rows = rowsRaw.map(norm).filter(r => r.event === CURRENT_EVENT);
   reqRows.innerHTML=''; playedRows.innerHTML=''; spamRows.innerHTML='';
+
+  // dedupe spam (name+song)
   const seen=new Map(); const spam=[];
   rows.forEach(r=>{
-    const key = `${(r.name||'').trim().toLowerCase()}|${(r.song_title||'').trim().toLowerCase()}`;
+    const key = `${(r.name||'').trim().toLowerCase()}|${(r.song||'').trim().toLowerCase()}`;
     if (seen.has(key)) spam.push(r); else seen.set(key,r);
   });
-  const unplayed=[]; const played=[];
-  seen.forEach(r=>{ (String(r.played).toUpperCase()==='TRUE'?played:unplayed).push(r); });
 
-  const makeRow=(r, withActions=true)=>{
+  const unplayed=[]; const played=[];
+  seen.forEach(r=> (r.played ? played : unplayed).push(r) );
+
+  const mkRow = (r, withActions) => {
     const el=document.createElement('div'); el.className='row';
     const text=document.createElement('div');
-    const t=document.createElement('p'); t.className='title'; t.textContent=r.song_title||'(Unknown Title)';
+    const t=document.createElement('p'); t.className='title'; t.textContent=r.song||'(Unknown Title)';
     const a=document.createElement('p'); a.className='artist'; a.textContent=r.artist||'(Unknown Artist)';
     const n=document.createElement('p'); n.className='name'; n.textContent=r.name?`Requested by ${r.name}`:'';
     text.append(t,a,n); el.appendChild(text);
     if (withActions){
       const act=document.createElement('div'); act.className='row-actions';
-      const mark=document.createElement('button'); mark.className='btn secondary small'; mark.textContent='Mark as Played';
-      mark.onclick=()=>togglePlayed(r,true); act.appendChild(mark); el.appendChild(act);
+      const b=document.createElement('button'); b.className='btn secondary small'; b.textContent='Mark as Played';
+      b.onclick=()=>togglePlayed(r,true);
+      act.appendChild(b); el.appendChild(act);
     }
     return el;
   };
-  const makeSpamRow=(r)=>{ const el=document.createElement('div'); el.className='row'; const text=document.createElement('div'); const t=document.createElement('p'); t.className='title'; t.textContent=r.song_title||'(Unknown Title)'; const a=document.createElement('p'); a.className='artist'; a.textContent=r.artist||'(Unknown Artist)'; const n=document.createElement('p'); n.className='name'; n.textContent=r.name?`Spammed by ${r.name}`:''; text.append(t,a,n); el.appendChild(text); return el; };
 
-  unplayed.forEach(r=>reqRows.appendChild(makeRow(r,true)));
-  played.forEach(r=>{ const row=makeRow(r,false); const act=document.createElement('div'); act.className='row-actions'; const un=document.createElement('button'); un.className='btn secondary small'; un.textContent='Mark as Unplayed'; un.onclick=()=>togglePlayed(r,false); act.appendChild(un); row.appendChild(act); playedRows.appendChild(row); });
-  spam.forEach(r=> spamRows.appendChild(makeSpamRow(r)));
+  const mkSpam = (r)=>{ const el=document.createElement('div'); el.className='row';
+    const t=document.createElement('p'); t.className='title'; t.textContent=r.song||'(Unknown Title)';
+    const a=document.createElement('p'); a.className='artist'; a.textContent=r.artist||'(Unknown Artist)';
+    const n=document.createElement('p'); n.className='name'; n.textContent=r.name?`Spammed by ${r.name}`:''; const box=document.createElement('div'); box.append(t,a,n); el.appendChild(box); return el;
+  };
 
-  reqStatus.textContent = rows.length?`Rows=${rows.length} • Unique=${unplayed.length}`: 'No requests yet.';
-  showDebug(`Fetched ${rows.length} rows`);
+  unplayed.forEach(r=> reqRows.appendChild(mkRow(r, true)));
+  played.forEach(r=> {
+    const el = mkRow(r, false);
+    const act=document.createElement('div'); act.className='row-actions';
+    const b=document.createElement('button'); b.className='btn secondary small'; b.textContent='Mark as Unplayed';
+    b.onclick=()=>togglePlayed(r,false); act.appendChild(b); el.appendChild(act);
+    playedRows.appendChild(el);
+  });
+  spam.forEach(r=> spamRows.appendChild(mkSpam(r)));
+
+  reqStatus.textContent = rowsRaw.length
+    ? `Fetched=${rowsRaw.length} • Displaying=${unplayed.length} (unique, unplayed)`
+    : 'No requests yet.';
+  if (DEBUG && rowsRaw.length){ showDebug(`First row keys: ${Object.keys(rowsRaw[0]).join(', ')}`); }
 }
 
-/* Read */
+/* --- Read --- */
 async function loadRequests(){
   if(!CURRENT_EVENT){ showRequests([]); return; }
   try{
-    const qs=j2qs({ mode:'read', event: CURRENT_EVENT });
-    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
+    // Ask backend for all rows; we'll filter client-side to tolerate header/column changes.
+    const r=await jsonp(`${ENDPOINT_URL}?${j2qs({mode:'read', event: CURRENT_EVENT})}`);
     const rows=(r && r.ok && Array.isArray(r.rows))?r.rows:[];
     showRequests(rows);
-  }catch{ reqStatus.textContent='Load failed.'; showDebug('Read failed'); }
+  }catch(e){
+    reqStatus.textContent='Load failed.'; showDebug('Read failed');
+  }
 }
 
-/* Played toggle (requires backend setPlayed) */
+/* --- Played toggle (needs Apps Script setPlayed mode) --- */
 async function togglePlayed(row,toPlayed){
   if(!row.id){ alert('Missing row ID; cannot update.'); return; }
   try{
-    const qs=j2qs({ mode:'setPlayed', id: row.id, played: toPlayed?'1':'0' });
-    const r=await jsonp(`${ENDPOINT_URL}?${qs}`);
-    if (r && r.ok) await loadRequests(); else alert('Could not update Played.');
+    const resp=await jsonp(`${ENDPOINT_URL}?${j2qs({mode:'setPlayed', id: row.id, played: (toPlayed?'1':'0')})}`);
+    if (resp && resp.ok) await loadRequests(); else alert('Could not update Played.');
   }catch{ alert('Network error.'); }
 }
 
-/* Polling */
+/* --- Polling --- */
 let timer=null;
 function startPoll(){ stopPoll(); timer=setInterval(loadRequests, POLL_MS); }
 function stopPoll(){ if(timer){ clearInterval(timer); timer=null; } }
