@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>REQUESTS • David Charles Events</title>
+<title>DCE • REQUESTS</title>
 <style>
   :root{
     --bg:#212121;
@@ -33,7 +33,24 @@
     margin:0; background:var(--bg); color:var(--ink);
     font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   }
-  .wrap{ max-width:var(--maxw); margin:0 auto; padding:16px 14px 56px; }
+
+  /* Top-left logo bar */
+  .topbar{
+    max-width:var(--maxw);
+    margin:0 auto;
+    padding:10px 14px 0;
+    display:flex;
+    align-items:center;
+  }
+  .topbar .logo{
+    display:inline-block;
+    line-height:0;
+  }
+  .topbar .logo img{
+    height:28px; width:auto;
+  }
+
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:8px 14px 56px; }
   .page-title{
     text-align:center; margin:8px 0 18px;
     letter-spacing:.06em; font-weight:800;
@@ -146,6 +163,13 @@
 </style>
 </head>
 <body>
+  <!-- Top-left logo -->
+  <div class="topbar">
+    <a class="logo" href="#" aria-label="David Charles Events">
+      <img src="assets/dce-logo.png" alt="David Charles Events" onerror="this.style.display='none'"/>
+    </a>
+  </div>
+
   <div class="wrap">
     <div class="page-title">REQUESTS</div>
 
