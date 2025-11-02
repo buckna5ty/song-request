@@ -80,6 +80,7 @@
   .list{ display:grid; gap:10px; }
 
   .card{
+    position:relative;
     background:var(--section);
     border:1px solid var(--border);
     border-radius:12px;
@@ -91,6 +92,21 @@
   .card.appear{ opacity:0; transform:translateY(8px); }
   .card.appear.card-ready{ transition:opacity .28s ease, transform .28s ease; opacity:1; transform:none; }
   .no-anim *{ transition:none!important; }
+
+  /* Busy visual */
+  .card.busy{ opacity:.88; }
+  .card.busy::after{
+    content:"";
+    position:absolute; left:0; top:0; height:3px; width:0;
+    background:linear-gradient(90deg,var(--accent),#fff,var(--accent));
+    animation:bar 1.2s ease-in-out infinite;
+    border-top-left-radius:12px; border-top-right-radius:12px;
+  }
+  @keyframes bar{
+    0%{width:0;}
+    50%{width:65%;}
+    100%{width:100%;}
+  }
 
   @media (max-width:760px){ .card{ grid-template-columns:64px 1fr; } .card .actions{ grid-column:1/-1; } }
 
@@ -122,6 +138,17 @@
   .btn.remove{   background:var(--danger); border-color:var(--danger); color:#fff; }
   .btn.putback{  background:var(--put);    border-color:var(--put);    color:#fff; }
   .btn[disabled]{ opacity:.7; cursor:not-allowed; }
+
+  /* Tiny spinner inside buttons */
+  .spinner{
+    width:14px; height:14px; border-radius:50%;
+    border:2px solid rgba(0,0,0,.25);
+    border-top-color: rgba(0,0,0,.7);
+    margin-right:8px; display:none;
+    animation:spin .8s linear infinite;
+  }
+  .btn.loading .spinner{ display:inline-block; }
+  @keyframes spin{ to{ transform:rotate(360deg);} }
 
   .footer-line{ margin-top:10px; color:#fff; font-size:12px; }
 </style>
@@ -192,8 +219,8 @@ const POLL_MS = 5000;
 
 /* Render/poll control */
 const ACTION_RENDER_LOCK_MS = 1200;
-const ACTION_POLL_PAUSE_MS  = 1500;   // a bit longer to cover unplayed path
-const BUCKET_HOLD_MS        = 2500;   // pin a card to target bucket shortly
+const ACTION_POLL_PAUSE_MS  = 1500;
+const BUCKET_HOLD_MS        = 2500;
 let renderLockUntil = 0;
 let pollTimer = null;
 let pollPausedUntil = 0;
@@ -219,7 +246,7 @@ const artCache=new Map();
 
 /* In-flight guards per song key */
 const inFlightByKey = new Map(); // key -> {target:boolean, ts:number}
-/* Bucket pin per song key (force which bucket to render into briefly) */
+/* Bucket pin per song key */
 const bucketHoldByKey = new Map(); // key -> {bucket:'requests'|'played', until:number}
 
 /* ===== Utils ===== */
@@ -311,18 +338,14 @@ function splitBuckets(rows){
   let played  =[...playedGroups.values()].map(g=>({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
 
   // Bucket hold override (pin membership briefly to avoid flicker)
-  // If a key is pinned to 'requests', ensure it is in requests and not in played (and vice versa)
   if (bucketHoldByKey.size){
     const pinTo = (arrFrom, arrTo, keySetToPin) => {
-      // remove from source if pinned to target
       for (const key of keySetToPin){
         const idx = arrFrom.findIndex(x=>x.key===key);
         if (idx>=0) arrFrom.splice(idx,1);
       }
-      // ensure present in target
       for (const key of keySetToPin){
         if (!arrTo.some(x=>x.key===key)) {
-          // try to synthesize from rows (names/ids) – find any latest data for this key
           const any = rows.find(r=> keySong(r.song_title||r.song,r.artist)===key);
           if (any){
             const ids = rows.filter(r=> keySong(r.song_title||r.song,r.artist)===key).map(r=>r.id);
@@ -333,9 +356,10 @@ function splitBuckets(rows){
       }
     };
 
+    const nowTs = Date.now();
     const toRequests=new Set(), toPlayed=new Set();
     for (const [k,hold] of bucketHoldByKey.entries()){
-      if (now > hold.until){ bucketHoldByKey.delete(k); continue; }
+      if (nowTs > hold.until){ bucketHoldByKey.delete(k); continue; }
       if (hold.bucket==='requests') toRequests.add(k);
       else if (hold.bucket==='played') toPlayed.add(k);
     }
@@ -400,73 +424,101 @@ function updateCardBase(node,obj){
   node.querySelector('.names-box').innerHTML=`<p class="hdr">Requesters</p><ul>${obj.people.map(n=>`<li>${escapeHTML(n)}`).join('')}</ul>`;
 }
 
+/* Busy helpers */
+function setCardBusy(card, on){
+  if(!card) return;
+  card.classList.toggle('busy', !!on);
+  const btns = card.querySelectorAll('.btn');
+  btns.forEach(b=>{
+    b.disabled = !!on;
+    if(!on) b.classList.remove('loading');
+  });
+}
+function setBtnLoading(btn, on){
+  if(!btn) return;
+  btn.classList.toggle('loading', !!on);
+}
+
 /* Action drivers (transactional per song + bucket pin) */
-async function togglePlayedForKey(key, ids, targetPlayed){
+async function togglePlayedForKey(key, ids, targetPlayed, clickedBtn){
   const now=Date.now();
   // Coalesce rapid clicks
   inFlightByKey.set(key,{target:targetPlayed, ts:now});
   // Pin bucket to avoid flicker
   bucketHoldByKey.set(key, { bucket: targetPlayed ? 'played' : 'requests', until: now + BUCKET_HOLD_MS });
 
-  // Optimistic local state
+  // Optimistic local state + busy visuals
   lockRender(); pausePolling();
   rowsCache = rowsCache.map(r => (ids.includes(r.id) ? {...r, played:targetPlayed} : r));
-  renderAll(rowsCache);
 
-  // Disable buttons on this card while in-flight
   const card = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
-  if (card) card.querySelectorAll('.btn').forEach(b=> b.disabled = true);
+  setCardBusy(card, true);
+  setBtnLoading(clickedBtn, true);
+
+  renderAll(rowsCache);
 
   // Write burst
   try{
     await Promise.all(ids.map(id => jsonp(ENDPOINT_URL,{mode:'setPlayed',id,played:String(targetPlayed)})));
-  }catch(_e){ /* we'll reconcile on next pull */ }
+  }catch(_e){ /* reconcile later */ }
 
   // Only finalize if not superseded
   const final = inFlightByKey.get(key);
   if (!final || final.ts !== now) return;
 
-  if (card) card.querySelectorAll('.btn').forEach(b=> b.disabled = false);
+  setCardBusy(card, false);
+  setBtnLoading(clickedBtn, false);
   inFlightByKey.delete(key);
-  await fetchRows(); // sync once; polling resumes after pause window
+  await fetchRows(); // one sync pull
 }
 
 /* Attach actions */
 function attachRequestActions(card){
   const actions=card.querySelector('.actions');
   actions.innerHTML=`
-    <button class="btn played" type="button">Mark as Played</button>
-    <button class="btn remove" type="button">Remove</button>
+    <button class="btn played" type="button"><span class="spinner" aria-hidden="true"></span><span>Mark as Played</span></button>
+    <button class="btn remove" type="button"><span class="spinner" aria-hidden="true"></span><span>Remove</span></button>
   `;
-  actions.querySelector('.btn.played').addEventListener('click', ()=>{
+  const btnPlayed = actions.querySelector('.btn.played');
+  const btnRemove = actions.querySelector('.btn.remove');
+
+  btnPlayed.addEventListener('click', ()=>{
     const ids=JSON.parse(card.dataset.ids||'[]'); const key=card.dataset.key;
-    togglePlayedForKey(key, ids, true);
+    togglePlayedForKey(key, ids, true, btnPlayed);
   });
-  actions.querySelector('.btn.remove').addEventListener('click', ()=>{
+
+  btnRemove.addEventListener('click', ()=>{
+    // Local remove is instant; still show a brief busy to communicate lock window
     lockRender(); pausePolling();
+    setCardBusy(card, true); setBtnLoading(btnRemove, true);
     removedKeySet.add(card.dataset.key);
     renderAll(rowsCache);
+    setTimeout(()=>{ setCardBusy(card,false); setBtnLoading(btnRemove,false); }, 400);
   });
 }
 function attachPlayedActions(card){
   const actions=card.querySelector('.actions');
   actions.innerHTML=`
-    <button class="btn unplayed" type="button">Mark as Unplayed</button>
+    <button class="btn unplayed" type="button"><span class="spinner" aria-hidden="true"></span><span>Mark as Unplayed</span></button>
   `;
-  actions.querySelector('.btn.unplayed').addEventListener('click', ()=>{
+  const btn = actions.querySelector('.btn.unplayed');
+  btn.addEventListener('click', ()=>{
     const ids=JSON.parse(card.dataset.ids||'[]'); const key=card.dataset.key;
-    togglePlayedForKey(key, ids, false);
+    togglePlayedForKey(key, ids, false, btn);
   });
 }
 function attachRemovedActions(card){
   const actions=card.querySelector('.actions');
   actions.innerHTML=`
-    <button class="btn putback" type="button">Put Back</button>
+    <button class="btn putback" type="button"><span class="spinner" aria-hidden="true"></span><span>Put Back</span></button>
   `;
-  actions.querySelector('.btn.putback').addEventListener('click', ()=>{
+  const btn = actions.querySelector('.btn.putback');
+  btn.addEventListener('click', ()=>{
     lockRender(); pausePolling();
+    setCardBusy(card, true); setBtnLoading(btn, true);
     removedKeySet.delete(card.dataset.key);
     renderAll(rowsCache);
+    setTimeout(()=>{ setCardBusy(card,false); setBtnLoading(btn,false); }, 400);
   });
 }
 
