@@ -77,7 +77,7 @@
   .collapsible.open .collapsible-body{ display:block; }
   .count-pill{ font-size:13px; color:#dcdcdc; opacity:.9; margin-left:8px; }
 
-  .list{ display:grid; gap:10px; } /* no extra padding => no top gap */
+  .list{ display:grid; gap:10px; }
 
   .card{
     background:var(--section);
@@ -88,10 +88,10 @@
     grid-template-columns:64px 1fr 190px;
     gap:12px; align-items:center;
   }
-  /* new nodes: gentler appear */
+  /* gentle first-appear */
   .card.appear{ opacity:0; transform:translateY(8px); }
   .card.appear.card-ready{ transition:opacity .28s ease, transform .28s ease; opacity:1; transform:none; }
-  /* during reorders we disable transitions to avoid flash */
+  /* during reorder we disable transitions to keep it crisp and avoid flash-back */
   .no-anim *{ transition:none!important; }
 
   @media (max-width:760px){ .card{ grid-template-columns:64px 1fr; } .card .actions{ grid-column:1/-1; } }
@@ -101,14 +101,17 @@
   .title{ margin:0 0 2px; font-weight:800; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
   .sub{ margin:0; color:#e6e6e6; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-  /* inline “Requested by …  ▸ Show Names” */
-  .reqline{ display:flex; align-items:center; gap:12px; margin-top:2px; }
-  .caret-link{
-    font-size:14px; color:#eaeaea; cursor:pointer; user-select:none; opacity:.95;
-    display:inline-flex; align-items:center; gap:4px; font-weight:600;
+  /* Requested by … acts as the toggle; caret on the left */
+  .reqline{
+    display:flex; align-items:center; gap:10px; margin-top:2px;
+    cursor:pointer; user-select:none;
   }
-  .caret-link:hover{ opacity:1; text-decoration:underline; }
-  .caret-link .car{ display:inline-block; width:auto; font-size:16px; line-height:1; font-weight:700; }
+  .reqline .car{
+    font-size:18px; line-height:1; font-weight:800; color:#eaeaea; /* no underline */
+  }
+  .reqline .txt{
+    font-size:14px; color:#eaeaea; font-weight:700;
+  }
   .names-box{ margin-top:6px; background:var(--subsection); border:1px solid var(--border); border-radius:10px; padding:8px 10px; display:none; }
   .names-box.open{ display:block; }
   .names-box .hdr{ color:#cfcfcf; font-size:13px; margin:0 0 4px; }
@@ -154,7 +157,7 @@
             <div>Requests <span id="reqCount" class="count-pill">(0)</span></div>
             <div class="twist">▾</div>
           </div>
-        <div id="reqBody" class="collapsible-body">
+          <div id="reqBody" class="collapsible-body">
             <div id="reqList" class="list"></div>
           </div>
         </div>
@@ -213,9 +216,9 @@ let rowsCache=[];
 const removedKeySet=new Set();
 const artCache=new Map();
 
-/* NEW: suppress re-render during local ops to avoid flicker */
-let lastLocalChangeAt=0;
-const SUPPRESS_MS = 1200;
+/* New: local overlay to defeat flicker completely */
+const pendingPlayed = new Map(); // id -> {value:boolean, at:number}
+const OVERLAY_TTL = 8000;       // hold override up to 8s (until server reflects)
 
 /* ===== Utils ===== */
 function pad2(n){return String(n).padStart(2,'0');}
@@ -224,8 +227,6 @@ function formatHeaderDate(s){ const d=new Date(s); if(isNaN(d))return''; return 
 function showInline(msg){ inlineInfo.textContent=msg||''; inlineInfo.classList.remove('good','bad'); if(!msg)return; const m=msg.toLowerCase(); if(m.startsWith('loading')) inlineInfo.classList.add('good'); else if(m.includes('could not load')) inlineInfo.classList.add('bad'); }
 function keySong(song,artist){ return `${(song||'').toLowerCase()}|${(artist||'').toLowerCase()}`;}
 function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-function now(){ return Date.now(); }
-function suppress(){ lastLocalChangeAt = now(); }
 
 /* JSONP */
 function jsonp(url,params={}){ const qs=new URLSearchParams(params); const cb='cb_'+Math.random().toString(36).slice(2); qs.set('callback',cb); qs.set('t',Date.now());
@@ -262,18 +263,30 @@ async function loadActiveEvents(){
 function startPolling(){ stopPolling(); pollTimer=setInterval(fetchRows, POLL_MS); }
 function stopPolling(){ if(pollTimer) clearInterval(pollTimer); pollTimer=null; }
 
+function applyOverlay(rows){
+  const now = Date.now();
+  for(const r of rows){
+    if(pendingPlayed.has(r.id)){
+      const {value,at}=pendingPlayed.get(r.id);
+      if (now - at < OVERLAY_TTL) {
+        r.played = value; // force local truth
+      } else {
+        // drop stale override if server already matches; else extend TTL a bit
+        if (r.played === value) pendingPlayed.delete(r.id);
+        else pendingPlayed.set(r.id,{value,at:now}); // keep holding
+      }
+    }
+  }
+  return rows;
+}
+
 async function fetchRows(){
   if(!currentCode) return;
-  // suppress re-render right after local ops
-  if (now() - lastLocalChangeAt < SUPPRESS_MS) {
-    clearTimeout(fetchRows._t);
-    fetchRows._t = setTimeout(fetchRows, SUPPRESS_MS);
-    return;
-  }
   showInline('Loading your requests...');
   try{
     const r=await jsonp(ENDPOINT_URL,{mode:'read',event:currentCode});
-    rowsCache=Array.isArray(r?.rows)?r.rows:[];
+    const raw = Array.isArray(r?.rows)?r.rows:[];
+    rowsCache = applyOverlay(raw.map(x=>({...x}))); // copy then overlay
     renderAll(rowsCache);
     statusLine.textContent = rowsCache.length ? '' : 'No requests yet.';
   }catch{ statusLine.textContent='Connection error.'; } finally{ showInline(''); }
@@ -281,34 +294,36 @@ async function fetchRows(){
 
 /* Build structures */
 function splitBuckets(rows){
-  const bySong=new Map();           // group by song/artist
+  const bySong=new Map();           // group by song/artist (unplayed & not removed)
   const playedGroups=new Map();
   const spamMap=new Map();
 
   for(const row of rows){
     const song=row.song_title||row.song||''; const artist=row.artist||''; const k=keySong(song,artist);
-    if(!bySong.has(k)) bySong.set(k,{song,artist,ids:[],names:new Set()});
-    if(!row.played) { bySong.get(k).ids.push(row.id); if(row.name) bySong.get(k).names.add(row.name); }
-
-    if(row.played){
-      if(!playedGroups.has(k)) playedGroups.set(k,{key:k,song,artist,ids:[],names:new Set()});
-      const g=playedGroups.get(k); g.ids.push(row.id); if(row.name) g.names.add(row.name);
+    // requests (unplayed + not removed)
+    if(!row.played && !removedKeySet.has(k)){
+      let g=bySong.get(k); if(!g){ g={song,artist,ids:[],names:new Set()}; bySong.set(k,g); }
+      g.ids.push(row.id); if(row.name) g.names.add(row.name);
     }
-
+    // played
+    if(row.played){
+      let pg=playedGroups.get(k); if(!pg){ pg={key:k,song,artist,ids:[],names:new Set()}; playedGroups.set(k,pg); }
+      pg.ids.push(row.id); if(row.name) pg.names.add(row.name);
+    }
+    // spam per person + song
     const kp=`${k}|${(row.name||'').toLowerCase()}`; spamMap.set(kp,(spamMap.get(kp)||0)+1);
   }
 
-  const requests=[];
-  for(const [k,grp] of bySong.entries()){
-    if(grp.ids.length && !removedKeySet.has(k)){
-      requests.push({ key:k, song:grp.song, artist:grp.artist, ids:grp.ids, people:[...grp.names] });
-    }
-  }
+  const requests=[...bySong.entries()].map(([k,g])=>({ key:k, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
 
-  const removed=[];
-  for(const key of removedKeySet){
-    const base=bySong.get(key);
-    if(base){ removed.push({ key, song:base.song, artist:base.artist, ids:base.ids, people:[...base.names] }); }
+  const removed=[]; // show removed only if we can still derive names/ids from rows
+  for(const rk of removedKeySet){
+    const base=rows.find(r=>keySong(r.song_title||r.song,r.artist)===rk && !r.played);
+    if(base){
+      const ids=rows.filter(r=>keySong(r.song_title||r.song,r.artist)===rk && !r.played).map(r=>r.id);
+      const names=[...new Set(rows.filter(r=>ids.includes(r.id)).map(r=>r.name).filter(Boolean))];
+      removed.push({ key:rk, song:base.song_title||base.song, artist:base.artist, ids, people:names });
+    }
   }
 
   const spam=[];
@@ -339,23 +354,19 @@ function buildCardBase(obj){
     <div class="meta">
       <p class="title">${escapeHTML(obj.song||'Unknown Title')}</p>
       <p class="sub">${escapeHTML(obj.artist||'Unknown Artist')}</p>
-      <div class="reqline">
-        <span class="sub req-count">Requested by ${guests} guest${guests===1?'':'s'}</span>
-        <span class="caret-link"><span class="car">▸</span><span class="txt">Show Names</span></span>
-      </div>
+      <div class="reqline"><span class="car">▸</span><span class="txt">Requested by ${guests} guest${guests===1?'':'s'}</span></div>
       ${namesBoxHTML(obj.people)}
     </div>
     <div class="actions"></div>
   `;
   getArtwork(obj.song,obj.artist).then(src=>{ if(src){ const img=el.querySelector('.thumb'); img.src=src; img.alt=`${obj.song} cover`; }});
-  // caret names
-  const box=el.querySelector('.names-box'); const caret=el.querySelector('.caret-link');
-  caret.addEventListener('click',()=>{
+  // toggle via reqline (caret + text)
+  const box=el.querySelector('.names-box'); const reqline=el.querySelector('.reqline'); const car=reqline.querySelector('.car'); const txt=reqline.querySelector('.txt');
+  reqline.addEventListener('click',()=>{
     const open=box.classList.toggle('open');
-    caret.querySelector('.car').textContent=open?'▾':'▸';
-    caret.querySelector('.txt').textContent=open?'Hide Names':'Show Names';
+    car.textContent=open?'▾':'▸';
+    // keep text same; the command is implicit now
   });
-  // finalize appear
   requestAnimationFrame(()=> el.classList.add('card-ready'));
   return el;
 }
@@ -363,16 +374,15 @@ function updateCardBase(node,obj){
   node.dataset.ids=JSON.stringify(obj.ids);
   node.querySelector('.title').textContent=obj.song||'Unknown Title';
   node.querySelector('.sub').textContent=obj.artist||'Unknown Artist';
-  node.querySelector('.req-count').textContent=`Requested by ${obj.people.length} guest${obj.people.length===1?'':'s'}`;
+  node.querySelector('.txt').textContent=`Requested by ${obj.people.length} guest${obj.people.length===1?'':'s'}`;
   const box=node.querySelector('.names-box');
   box.innerHTML=`<p class="hdr">Requesters</p><ul>${obj.people.map(n=>`<li>${escapeHTML(n)}`).join('')}</ul>`;
 }
 
-/* Action button blocks with optimistic render + suppression */
-function setRowsPlayed(ids, playedBool){
-  let touched=false;
-  rowsCache=rowsCache.map(r=> ids.includes(r.id)?(touched=true,{...r,played:!!playedBool}):r);
-  if(touched){ suppress(); renderAll(rowsCache); }
+/* Action button blocks with overlay */
+function recordOverlay(ids, playedBool){
+  const at=Date.now();
+  for(const id of ids){ pendingPlayed.set(id,{value:playedBool, at}); }
 }
 function attachRequestActions(card){
   const actions=card.querySelector('.actions');
@@ -382,12 +392,13 @@ function attachRequestActions(card){
   `;
   actions.querySelector('.btn.played').addEventListener('click', async ()=>{
     const ids=JSON.parse(card.dataset.ids||'[]');
-    setRowsPlayed(ids,true);
+    recordOverlay(ids,true);
+    rowsCache = rowsCache.map(r=> ids.includes(r.id)?({...r,played:true}):r);
+    renderAll(rowsCache);
     try{ await Promise.all(ids.map(id=>jsonp(ENDPOINT_URL,{mode:'setPlayed',id,played:'true'}))); }catch{}
   });
   actions.querySelector('.btn.remove').addEventListener('click', ()=>{
     removedKeySet.add(card.dataset.key);
-    suppress();
     renderAll(rowsCache);
   });
 }
@@ -398,7 +409,9 @@ function attachPlayedActions(card){
   `;
   actions.querySelector('.btn.unplayed').addEventListener('click', async ()=>{
     const ids=JSON.parse(card.dataset.ids||'[]');
-    setRowsPlayed(ids,false);
+    recordOverlay(ids,false);
+    rowsCache = rowsCache.map(r=> ids.includes(r.id)?({...r,played:false}):r);
+    renderAll(rowsCache);
     try{ await Promise.all(ids.map(id=>jsonp(ENDPOINT_URL,{mode:'setPlayed',id,played:'false'}))); }catch{}
   });
 }
@@ -409,15 +422,15 @@ function attachRemovedActions(card){
   `;
   actions.querySelector('.btn.putback').addEventListener('click', ()=>{
     removedKeySet.delete(card.dataset.key);
-    suppress();
     renderAll(rowsCache);
   });
 }
 
-/* Stable renderer */
+/* Stable renderer (keeps DOM nodes, reorders without trashing) */
 function renderList(container, items, makeNode, updateNode){
   const existing = new Map();
   Array.from(container.children).forEach(ch=> existing.set(ch.dataset.key, ch));
+  // remove missing
   existing.forEach((node,key)=>{ if(!items.some(it=>it.key===key)) node.remove(); });
 
   container.classList.add('no-anim');
@@ -440,8 +453,15 @@ function renderList(container, items, makeNode, updateNode){
   requestAnimationFrame(()=> container.classList.remove('no-anim'));
 }
 
-/* Build & render frame */
+/* Build & render */
 function renderAll(rows){
+  // clean expired overlay entries if server now matches
+  const now=Date.now();
+  for(const [id,ov] of [...pendingPlayed.entries()]){
+    const r=rows.find(x=>x.id===id);
+    if(!r || r.played===ov.value || (now-ov.at)>OVERLAY_TTL) pendingPlayed.delete(id);
+  }
+
   const {requests, playedGroups, removed, spam}=splitBuckets(rows);
 
   const sortedReq=[...requests].sort((a,b)=> b.people.length - a.people.length || (a.song||'').localeCompare(b.song||''));
