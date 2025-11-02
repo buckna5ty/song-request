@@ -88,10 +88,8 @@
     grid-template-columns:64px 1fr 190px;
     gap:12px; align-items:center;
   }
-  /* gentle first-appear */
   .card.appear{ opacity:0; transform:translateY(8px); }
   .card.appear.card-ready{ transition:opacity .28s ease, transform .28s ease; opacity:1; transform:none; }
-  /* during reorder we disable transitions to keep it crisp and avoid flash-back */
   .no-anim *{ transition:none!important; }
 
   @media (max-width:760px){ .card{ grid-template-columns:64px 1fr; } .card .actions{ grid-column:1/-1; } }
@@ -101,17 +99,9 @@
   .title{ margin:0 0 2px; font-weight:800; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
   .sub{ margin:0; color:#e6e6e6; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-  /* Requested by … acts as the toggle; caret on the left */
-  .reqline{
-    display:flex; align-items:center; gap:10px; margin-top:2px;
-    cursor:pointer; user-select:none;
-  }
-  .reqline .car{
-    font-size:18px; line-height:1; font-weight:800; color:#eaeaea; /* no underline */
-  }
-  .reqline .txt{
-    font-size:14px; color:#eaeaea; font-weight:700;
-  }
+  .reqline{ display:flex; align-items:center; gap:10px; margin-top:2px; cursor:pointer; user-select:none; }
+  .reqline .car{ font-size:18px; line-height:1; font-weight:800; color:#eaeaea; }
+  .reqline .txt{ font-size:14px; color:#eaeaea; font-weight:700; }
   .names-box{ margin-top:6px; background:var(--subsection); border:1px solid var(--border); border-radius:10px; padding:8px 10px; display:none; }
   .names-box.open{ display:block; }
   .names-box .hdr{ color:#cfcfcf; font-size:13px; margin:0 0 4px; }
@@ -131,6 +121,7 @@
   .btn.unplayed{ background:var(--amber);  border-color:var(--amber);  color:#000; }
   .btn.remove{   background:var(--danger); border-color:var(--danger); color:#fff; }
   .btn.putback{  background:var(--put);    border-color:var(--put);    color:#fff; }
+  .btn[disabled]{ opacity:.7; cursor:not-allowed; }
 
   .footer-line{ margin-top:10px; color:#fff; font-size:12px; }
 </style>
@@ -199,15 +190,15 @@
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxkSPUc2VWQYkhJ_af7CShegZLAMmVgUsTp2nMeVwkkhdFbdQT8wk2s6xBAAynjtLDT/exec';
 const POLL_MS = 5000;
 
-/* Render-lock to prevent flicker during rapid actions */
-const ACTION_RENDER_LOCK_MS = 10000; // adjust 1500–2500 if needed
+/* Render/poll control */
+const ACTION_RENDER_LOCK_MS = 1200;
+const ACTION_POLL_PAUSE_MS  = 1000;
 let renderLockUntil = 0;
+let pollTimer = null;
+let pollPausedUntil = 0;
 function lockRender(){ renderLockUntil = Date.now() + ACTION_RENDER_LOCK_MS; }
 function canRender(){ return Date.now() >= renderLockUntil; }
-function renderAfterLock(){
-  const wait = Math.max(0, renderLockUntil - Date.now() + 30);
-  setTimeout(()=>{ if (canRender()) renderAll(rowsCache); }, wait);
-}
+function pausePolling(){ pollPausedUntil = Date.now() + ACTION_POLL_PAUSE_MS; stopPolling(); setTimeout(()=>{ if(Date.now()>=pollPausedUntil) startPolling(); }, ACTION_POLL_PAUSE_MS); }
 
 /* ===== Elements ===== */
 const $ = s => document.querySelector(s);
@@ -221,14 +212,12 @@ const statusLine=$('#statusLine');
 
 /* ===== State ===== */
 let currentCode='';
-let pollTimer=null;
 let rowsCache=[];
 const removedKeySet=new Set();
 const artCache=new Map();
 
-/* Local overlay for played state */
-const pendingPlayed = new Map(); // id -> {value:boolean, at:number}
-const OVERLAY_TTL = 8000;
+/* In-flight guards per song key (prevents flicker when rapid-clicking) */
+const inFlightByKey = new Map(); // key -> {target:boolean, ts:number}
 
 /* ===== Utils ===== */
 function pad2(n){return String(n).padStart(2,'0');}
@@ -273,50 +262,33 @@ async function loadActiveEvents(){
 function startPolling(){ stopPolling(); pollTimer=setInterval(fetchRows, POLL_MS); }
 function stopPolling(){ if(pollTimer) clearInterval(pollTimer); pollTimer=null; }
 
-function applyOverlay(rows){
-  const now = Date.now();
-  for(const r of rows){
-    if(pendingPlayed.has(r.id)){
-      const {value,at}=pendingPlayed.get(r.id);
-      if (now - at < OVERLAY_TTL) {
-        r.played = value; // force local truth
-      } else {
-        if (r.played === value) pendingPlayed.delete(r.id);
-        else pendingPlayed.set(r.id,{value,at:now});
-      }
-    }
-  }
-  return rows;
-}
-
 async function fetchRows(){
   if(!currentCode) return;
+  if(Date.now() < pollPausedUntil) return;
   showInline('Loading your requests...');
   try{
     const r=await jsonp(ENDPOINT_URL,{mode:'read',event:currentCode});
     const raw = Array.isArray(r?.rows)?r.rows:[];
-    rowsCache = applyOverlay(raw.map(x=>({...x}))); // copy then overlay
-    if (canRender()) {
-      renderAll(rowsCache);
-    } else {
-      renderAfterLock(); // defer paint until burst ends
-    }
-    statusLine.textContent = rowsCache.length ? '' : 'No requests yet.';
+    rowsCache = raw.map(x=>({...x}));
+    if (canRender()) renderAll(rowsCache);
   }catch{ statusLine.textContent='Connection error.'; }
   finally{ showInline(''); }
 }
 
 /* Build structures */
 function splitBuckets(rows){
-  const bySong=new Map();           // group by song/artist (unplayed & not removed)
-  const playedGroups=new Map();
-  const spamMap=new Map();
+  const bySong=new Map(), playedGroups=new Map(), spamMap=new Map();
 
   for(const row of rows){
     const song=row.song_title||row.song||''; const artist=row.artist||''; const k=keySong(song,artist);
-    // requests (unplayed + not removed)
+    // Apply in-flight optimistic state for this song if present
+    if(inFlightByKey.has(k)){
+      const {target}=inFlightByKey.get(k);
+      row.played = target;
+    }
+    // requests
     if(!row.played && !removedKeySet.has(k)){
-      let g=bySong.get(k); if(!g){ g={song,artist,ids:[],names:new Set()}; bySong.set(k,g); }
+      let g=bySong.get(k); if(!g){ g={key:k,song,artist,ids:[],names:new Set()}; bySong.set(k,g); }
       g.ids.push(row.id); if(row.name) g.names.add(row.name);
     }
     // played
@@ -328,15 +300,15 @@ function splitBuckets(rows){
     const kp=`${k}|${(row.name||'').toLowerCase()}`; spamMap.set(kp,(spamMap.get(kp)||0)+1);
   }
 
-  const requests=[...bySong.entries()].map(([k,g])=>({ key:k, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
+  const requests=[...bySong.values()].map(g=>({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
+  const played  =[...playedGroups.values()].map(g=>({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
 
-  const removed=[]; // show removed only if we can still derive names/ids from rows
+  const removed=[];
   for(const rk of removedKeySet){
-    const base=rows.find(r=>keySong(r.song_title||r.song,r.artist)===rk && !r.played);
-    if(base){
-      const ids=rows.filter(r=>keySong(r.song_title||r.song,r.artist)===rk && !r.played).map(r=>r.id);
-      const names=[...new Set(rows.filter(r=>ids.includes(r.id)).map(r=>r.name).filter(Boolean))];
-      removed.push({ key:rk, song:base.song_title||base.song, artist:base.artist, ids, people:names });
+    const rel=rows.filter(r=> keySong(r.song_title||r.song,r.artist)===rk && !r.played);
+    if(rel.length){
+      const names=[...new Set(rel.map(r=>r.name).filter(Boolean))];
+      const base=rel[0]; removed.push({ key:rk, song:base.song_title||base.song, artist:base.artist, ids:rel.map(r=>r.id), people:names });
     }
   }
 
@@ -349,14 +321,13 @@ function splitBuckets(rows){
     }
   }
 
-  return { requests, playedGroups:[...playedGroups.values()], removed, spam };
+  return { requests, played, removed, spam };
 }
 
-/* Card helpers */
+/* Card UI helpers */
 function namesBoxHTML(names){
   return `<div class="names-box"><p class="hdr">Requesters</p><ul>${names.map(n=>`<li>${escapeHTML(n)}`).join('')}</ul></div>`;
 }
-
 function buildCardBase(obj){
   const guests=obj.people.length;
   const el=document.createElement('div');
@@ -374,12 +345,8 @@ function buildCardBase(obj){
     <div class="actions"></div>
   `;
   getArtwork(obj.song,obj.artist).then(src=>{ if(src){ const img=el.querySelector('.thumb'); img.src=src; img.alt=`${obj.song} cover`; }});
-  // toggle via reqline (caret + text)
   const box=el.querySelector('.names-box'); const reqline=el.querySelector('.reqline'); const car=reqline.querySelector('.car');
-  reqline.addEventListener('click',()=>{
-    const open=box.classList.toggle('open');
-    car.textContent=open?'▾':'▸';
-  });
+  reqline.addEventListener('click',()=>{ const open=box.classList.toggle('open'); car.textContent=open?'▾':'▸'; });
   requestAnimationFrame(()=> el.classList.add('card-ready'));
   return el;
 }
@@ -388,76 +355,83 @@ function updateCardBase(node,obj){
   node.querySelector('.title').textContent=obj.song||'Unknown Title';
   node.querySelector('.sub').textContent=obj.artist||'Unknown Artist';
   node.querySelector('.txt').textContent=`Requested by ${obj.people.length} guest${obj.people.length===1?'':'s'}`;
-  const box=node.querySelector('.names-box');
-  box.innerHTML=`<p class="hdr">Requesters</p><ul>${obj.people.map(n=>`<li>${escapeHTML(n)}`).join('')}</ul>`;
+  node.querySelector('.names-box').innerHTML=`<p class="hdr">Requesters</p><ul>${obj.people.map(n=>`<li>${escapeHTML(n)}`).join('')}</ul>`;
 }
 
-/* Action button blocks with render-lock + overlay */
-function recordOverlay(ids, playedBool){
-  const at=Date.now();
-  for(const id of ids){ pendingPlayed.set(id,{value:playedBool, at}); }
+/* Action drivers (transactional per song) */
+async function togglePlayedForKey(key, ids, targetPlayed){
+  // Coalesce rapid clicks: remember last intent and if already in-flight, just update target
+  const now=Date.now();
+  const prev=inFlightByKey.get(key);
+  inFlightByKey.set(key,{target:targetPlayed, ts:now});
+
+  // Optimistic local state
+  lockRender(); pausePolling();
+  rowsCache = rowsCache.map(r => (ids.includes(r.id) ? {...r, played:targetPlayed} : r));
+  renderAll(rowsCache);
+
+  // Disable buttons on this card while in-flight
+  const card = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
+  if (card) card.querySelectorAll('.btn').forEach(b=> b.disabled = true);
+
+  // Send writes (one burst)
+  try{
+    await Promise.all(ids.map(id => jsonp(ENDPOINT_URL,{mode:'setPlayed',id,played:String(targetPlayed)})));
+  }catch(_e){ /* ignore; UI stays optimistic until next poll */ }
+
+  // Only finalize if no newer intent superseded this one
+  const final = inFlightByKey.get(key);
+  if (!final || final.ts !== now) return; // superseded; let the newest call finalize
+
+  // Re-enable buttons, clear in-flight, force a fresh read once
+  if (card) card.querySelectorAll('.btn').forEach(b=> b.disabled = false);
+  inFlightByKey.delete(key);
+  await fetchRows(); // single pull to sync; polling restarts after pause window
 }
 
-/* Requests list actions */
+/* Attach actions */
 function attachRequestActions(card){
   const actions=card.querySelector('.actions');
   actions.innerHTML=`
     <button class="btn played" type="button">Mark as Played</button>
     <button class="btn remove" type="button">Remove</button>
   `;
-  actions.querySelector('.btn.played').addEventListener('click', async ()=>{
-    lockRender();
-    const ids=JSON.parse(card.dataset.ids||'[]');
-    recordOverlay(ids,true);
-    rowsCache = rowsCache.map(r=> ids.includes(r.id)?({...r,played:true}):r);
-    renderAll(rowsCache);
-    renderAfterLock();
-    try{ await Promise.all(ids.map(id=>jsonp(ENDPOINT_URL,{mode:'setPlayed',id,played:'true'}))); }catch{}
+  actions.querySelector('.btn.played').addEventListener('click', ()=>{
+    const ids=JSON.parse(card.dataset.ids||'[]'); const key=card.dataset.key;
+    togglePlayedForKey(key, ids, true);
   });
   actions.querySelector('.btn.remove').addEventListener('click', ()=>{
-    lockRender();
+    lockRender(); pausePolling();
     removedKeySet.add(card.dataset.key);
     renderAll(rowsCache);
-    renderAfterLock();
   });
 }
-
-/* Played list actions */
 function attachPlayedActions(card){
   const actions=card.querySelector('.actions');
   actions.innerHTML=`
     <button class="btn unplayed" type="button">Mark as Unplayed</button>
   `;
-  actions.querySelector('.btn.unplayed').addEventListener('click', async ()=>{
-    lockRender();
-    const ids=JSON.parse(card.dataset.ids||'[]');
-    recordOverlay(ids,false);
-    rowsCache = rowsCache.map(r=> ids.includes(r.id)?({...r,played:false}):r);
-    renderAll(rowsCache);
-    renderAfterLock();
-    try{ await Promise.all(ids.map(id=>jsonp(ENDPOINT_URL,{mode:'setPlayed',id,played:'false'}))); }catch{}
+  actions.querySelector('.btn.unplayed').addEventListener('click', ()=>{
+    const ids=JSON.parse(card.dataset.ids||'[]'); const key=card.dataset.key;
+    togglePlayedForKey(key, ids, false);
   });
 }
-
-/* Removed list actions */
 function attachRemovedActions(card){
   const actions=card.querySelector('.actions');
   actions.innerHTML=`
     <button class="btn putback" type="button">Put Back</button>
   `;
   actions.querySelector('.btn.putback').addEventListener('click', ()=>{
-    lockRender();
+    lockRender(); pausePolling();
     removedKeySet.delete(card.dataset.key);
     renderAll(rowsCache);
-    renderAfterLock();
   });
 }
 
-/* Stable renderer (keeps DOM nodes, reorders without trashing) */
+/* Stable renderer */
 function renderList(container, items, makeNode, updateNode){
   const existing = new Map();
   Array.from(container.children).forEach(ch=> existing.set(ch.dataset.key, ch));
-  // remove missing
   existing.forEach((node,key)=>{ if(!items.some(it=>it.key===key)) node.remove(); });
 
   container.classList.add('no-anim');
@@ -482,14 +456,7 @@ function renderList(container, items, makeNode, updateNode){
 
 /* Build & render */
 function renderAll(rows){
-  // clean expired overlay entries if server now matches
-  const now=Date.now();
-  for(const [id,ov] of [...pendingPlayed.entries()]){
-    const r=rows.find(x=>x.id===id);
-    if(!r || r.played===ov.value || (now-ov.at)>OVERLAY_TTL) pendingPlayed.delete(id);
-  }
-
-  const {requests, playedGroups, removed, spam}=splitBuckets(rows);
+  const {requests, played, removed, spam}=splitBuckets(rows);
 
   const sortedReq=[...requests].sort((a,b)=> b.people.length - a.people.length || (a.song||'').localeCompare(b.song||''));
   renderList(reqList, sortedReq,
@@ -497,8 +464,8 @@ function renderAll(rows){
     (node,obj)=> updateCardBase(node,obj)
   );
 
-  const pg=[...playedGroups].sort((a,b)=>(a.song||'').localeCompare(b.song||''));
-  renderList(playedList, pg.map(x=>({key:x.key,song:x.song,artist:x.artist,ids:x.ids,people:[...x.names]})),
+  const pg=[...played].sort((a,b)=>(a.song||'').localeCompare(b.song||''));
+  renderList(playedList, pg,
     (obj)=>{ const el=buildCardBase(obj); attachPlayedActions(el); return el; },
     (node,obj)=> updateCardBase(node,obj)
   );
@@ -508,7 +475,6 @@ function renderAll(rows){
     (node,obj)=> updateCardBase(node,obj)
   );
 
-  // Spam
   spamList.innerHTML='';
   for(const s of spam){
     const el=document.createElement('div'); el.className='card';
@@ -559,6 +525,3 @@ eventSel.addEventListener('change', ()=>{ currentCode=eventSel.value||''; remove
 </script>
 </body>
 </html>
-
-
-
