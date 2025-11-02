@@ -33,16 +33,18 @@
     margin:0; background:var(--bg); color:var(--ink);
     font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   }
+
+  /* Match index.html overall paddings/spacing */
   .wrap{ max-width:var(--maxw); margin:0 auto; padding:16px 14px 56px; }
 
-  /* Centered DCE logo (bigger, like index.html) */
+  /* --- Header (match guest page) --- */
   .dce-logo{ text-align:center; margin:14px 0 6px; }
-  .dce-logo img{ max-width:min(260px,60vw); height:auto; }
-
+  .dce-logo img{ max-width:min(220px,60vw); height:auto; }
   .page-title{
     text-align:center;
-    margin:24px 0 18px; /* increased top margin to match request page spacing */
-    letter-spacing:.06em; font-weight:800;
+    margin:0 auto 26px;            /* << same bottom gap as guest page */
+    letter-spacing:.06em;
+    font-weight:800;
     font-size:clamp(22px,5.5vw,36px);
   }
 
@@ -134,11 +136,10 @@
 </head>
 <body>
   <div class="wrap">
-    <!-- centered logo -->
+    <!-- centered logo, same sizing as index.html -->
     <div class="dce-logo">
       <img src="assets/dce-logo.png" alt="David Charles Events" onerror="this.style.display='none'">
     </div>
-
     <div class="page-title">REQUESTS</div>
 
     <div class="panel">
@@ -230,7 +231,6 @@ const artCache=new Map();
 
 /* In-flight guards per song key */
 const inFlightByKey = new Map(); // key -> {target:boolean, ts:number}
-/* Bucket pin per song key (force which bucket to render into briefly) */
 const bucketHoldByKey = new Map(); // key -> {bucket:'requests'|'played', until:number}
 
 /* ===== Utils ===== */
@@ -317,11 +317,10 @@ function splitBuckets(rows){
     const kp=`${k}|${(row.name||'').toLowerCase()}`; spamMap.set(kp,(spamMap.get(kp)||0)+1);
   }
 
-  // Convert to arrays
   let requests=[...bySong.values()].map(g=>({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
   let played  =[...playedGroups.values()].map(g=>({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
 
-  // Bucket hold override (pin membership briefly to avoid flicker)
+  // Bucket hold override
   if (bucketHoldByKey.size){
     const pinTo = (arrFrom, arrTo, keySetToPin) => {
       for (const key of keySetToPin){
@@ -350,7 +349,6 @@ function splitBuckets(rows){
     if (toPlayed.size)   pinTo(requests, played, toPlayed);
   }
 
-  // Removed tab
   const removed=[];
   for(const rk of removedKeySet){
     const rel=rows.filter(r=> keySong(r.song_title||r.song,r.artist)===rk && !r.played);
@@ -360,7 +358,6 @@ function splitBuckets(rows){
     }
   }
 
-  // Spam
   const spam=[];
   for(const [kp,count] of spamMap.entries()){
     if(count>1){
@@ -407,7 +404,7 @@ function updateCardBase(node,obj){
   node.querySelector('.names-box').innerHTML=`<p class="hdr">Requesters</p><ul>${obj.people.map(n=>`<li>${escapeHTML(n)}`).join('')}</ul>`;
 }
 
-/* Action drivers (transactional per song + bucket pin) */
+/* Action drivers */
 async function togglePlayedForKey(key, ids, targetPlayed){
   const now=Date.now();
   inFlightByKey.set(key,{target:targetPlayed, ts:now});
@@ -422,7 +419,7 @@ async function togglePlayedForKey(key, ids, targetPlayed){
 
   try{
     await Promise.all(ids.map(id => jsonp(ENDPOINT_URL,{mode:'setPlayed',id,played:String(targetPlayed)})));
-  }catch(_e){ /* reconcile on next pull */ }
+  }catch(_e){}
 
   const final = inFlightByKey.get(key);
   if (!final || final.ts !== now) return;
