@@ -200,7 +200,7 @@ const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxkSPUc2VWQYkhJ_af
 const POLL_MS = 5000;
 
 /* Render-lock to prevent flicker during rapid actions */
-const ACTION_RENDER_LOCK_MS = 1800; // adjust 1500–2500 if needed
+const ACTION_RENDER_LOCK_MS = 2500; // adjust 1500–2500 if needed
 let renderLockUntil = 0;
 function lockRender(){ renderLockUntil = Date.now() + ACTION_RENDER_LOCK_MS; }
 function canRender(){ return Date.now() >= renderLockUntil; }
@@ -559,3 +559,4 @@ eventSel.addEventListener('change', ()=>{ currentCode=eventSel.value||''; remove
 </script>
 </body>
 </html>
+
