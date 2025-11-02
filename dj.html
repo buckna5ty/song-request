@@ -40,16 +40,26 @@
     font-size:clamp(22px,5.5vw,36px);
   }
 
-  .panel{ background:var(--section); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:14px; }
+  .panel{
+    background:var(--section);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:14px;
+    margin-bottom:14px;
+  }
   label{ display:block; font-size:14px; color:var(--muted); margin:0 0 6px; }
-  select{ height:46px; border-radius:12px; border:1px solid #3a3a3a; background:#2a2a2a; color:#fff; font-size:15px; padding:0 12px; width:100%; }
-
+  select{
+    height:46px; border-radius:12px; border:1px solid #3a3a3a;
+    background:#2a2a2a; color:#fff; font-size:15px; padding:0 12px; width:100%;
+  }
   .inline-info{ margin-top:8px; font-size:14px; min-height:22px; font-weight:500; }
   .inline-info.good{ color:#34d399; }
   .inline-info.bad{ color:#ef4444; }
 
   /* Folder tabs */
-  .tabs-bar{ display:flex; align-items:flex-end; gap:0; border-bottom:1px solid var(--border); padding:0 6px; margin-bottom:10px; }
+  .tabs-bar{
+    display:flex; align-items:flex-end; gap:0; border-bottom:1px solid var(--border); padding:0 6px; margin-bottom:10px;
+  }
   .tab-btn{
     height:36px; padding:0 14px; font-size:13px; color:#fff;
     background:#2f2f2f; border:1px solid var(--border); border-bottom:none;
@@ -67,7 +77,7 @@
   .collapsible.open .collapsible-body{ display:block; }
   .count-pill{ font-size:13px; color:#dcdcdc; opacity:.9; margin-left:8px; }
 
-  .list{ display:grid; gap:10px; will-change:transform; }
+  .list{ display:grid; gap:10px; }
 
   .card{
     background:var(--section);
@@ -78,6 +88,12 @@
     grid-template-columns:64px 1fr 190px;
     gap:12px; align-items:center;
   }
+  /* gentle first-appear */
+  .card.appear{ opacity:0; transform:translateY(8px); }
+  .card.appear.card-ready{ transition:opacity .28s ease, transform .28s ease; opacity:1; transform:none; }
+  /* during reorder we disable transitions to keep it crisp and avoid flash-back */
+  .no-anim *{ transition:none!important; }
+
   @media (max-width:760px){ .card{ grid-template-columns:64px 1fr; } .card .actions{ grid-column:1/-1; } }
 
   .thumb{ width:64px;height:64px;border-radius:10px;background:#1f1f1f;object-fit:cover;display:block; }
@@ -85,11 +101,17 @@
   .title{ margin:0 0 2px; font-weight:800; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
   .sub{ margin:0; color:#e6e6e6; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-  /* Requested by… is the toggle; caret on the left */
-  .reqline{ display:flex; align-items:center; gap:10px; margin-top:2px; cursor:pointer; user-select:none; }
-  .reqline .car{ font-size:20px; line-height:1; font-weight:900; color:#eaeaea; }
-  .reqline .txt{ font-size:14px; color:#eaeaea; font-weight:800; }
-
+  /* Requested by … acts as the toggle; caret on the left */
+  .reqline{
+    display:flex; align-items:center; gap:10px; margin-top:2px;
+    cursor:pointer; user-select:none;
+  }
+  .reqline .car{
+    font-size:18px; line-height:1; font-weight:800; color:#eaeaea; /* no underline */
+  }
+  .reqline .txt{
+    font-size:14px; color:#eaeaea; font-weight:700;
+  }
   .names-box{ margin-top:6px; background:var(--subsection); border:1px solid var(--border); border-radius:10px; padding:8px 10px; display:none; }
   .names-box.open{ display:block; }
   .names-box .hdr{ color:#cfcfcf; font-size:13px; margin:0 0 4px; }
@@ -110,7 +132,7 @@
   .btn.remove{   background:var(--danger); border-color:var(--danger); color:#fff; }
   .btn.putback{  background:var(--put);    border-color:var(--put);    color:#fff; }
 
-  .footer-line{ margin-top:10px; color:#fff; font-size:12px; min-height:16px; }
+  .footer-line{ margin-top:10px; color:#fff; font-size:12px; }
 </style>
 </head>
 <body>
@@ -176,7 +198,6 @@
 /* ===== Config ===== */
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxkSPUc2VWQYkhJ_af7CShegZLAMmVgUsTp2nMeVwkkhdFbdQT8wk2s6xBAAynjtLDT/exec';
 const POLL_MS = 5000;
-const ACTION_COOLDOWN_MS = 900; // defer renders during burst clicks
 
 /* ===== Elements ===== */
 const $ = s => document.querySelector(s);
@@ -195,14 +216,9 @@ let rowsCache=[];
 const removedKeySet=new Set();
 const artCache=new Map();
 
-/* optimistic overlay for played state */
+/* New: local overlay to defeat flicker completely */
 const pendingPlayed = new Map(); // id -> {value:boolean, at:number}
-const OVERLAY_TTL = 8000;
-
-/* render hold during action burst */
-let holdUntil = 0;
-function inHold(){ return Date.now() < holdUntil; }
-function bumpHold(){ holdUntil = Date.now() + ACTION_COOLDOWN_MS; }
+const OVERLAY_TTL = 8000;       // hold override up to 8s (until server reflects)
 
 /* ===== Utils ===== */
 function pad2(n){return String(n).padStart(2,'0');}
@@ -253,10 +269,11 @@ function applyOverlay(rows){
     if(pendingPlayed.has(r.id)){
       const {value,at}=pendingPlayed.get(r.id);
       if (now - at < OVERLAY_TTL) {
-        r.played = value;
+        r.played = value; // force local truth
       } else {
+        // drop stale override if server already matches; else extend TTL a bit
         if (r.played === value) pendingPlayed.delete(r.id);
-        else pendingPlayed.set(r.id,{value,at:now});
+        else pendingPlayed.set(r.id,{value,at:now}); // keep holding
       }
     }
   }
@@ -265,34 +282,41 @@ function applyOverlay(rows){
 
 async function fetchRows(){
   if(!currentCode) return;
+  showInline('Loading your requests...');
   try{
     const r=await jsonp(ENDPOINT_URL,{mode:'read',event:currentCode});
     const raw = Array.isArray(r?.rows)?r.rows:[];
-    rowsCache = applyOverlay(raw.map(x=>({...x})));
-    if(!inHold()){ renderAll(rowsCache); }
+    rowsCache = applyOverlay(raw.map(x=>({...x}))); // copy then overlay
+    renderAll(rowsCache);
     statusLine.textContent = rowsCache.length ? '' : 'No requests yet.';
-  }catch{ if(!inHold()) statusLine.textContent='Connection error.'; }
+  }catch{ statusLine.textContent='Connection error.'; } finally{ showInline(''); }
 }
 
-/* Buckets */
+/* Build structures */
 function splitBuckets(rows){
-  const bySong=new Map(), playedGroups=new Map(), spamMap=new Map();
+  const bySong=new Map();           // group by song/artist (unplayed & not removed)
+  const playedGroups=new Map();
+  const spamMap=new Map();
 
   for(const row of rows){
     const song=row.song_title||row.song||''; const artist=row.artist||''; const k=keySong(song,artist);
+    // requests (unplayed + not removed)
     if(!row.played && !removedKeySet.has(k)){
       let g=bySong.get(k); if(!g){ g={song,artist,ids:[],names:new Set()}; bySong.set(k,g); }
       g.ids.push(row.id); if(row.name) g.names.add(row.name);
     }
+    // played
     if(row.played){
       let pg=playedGroups.get(k); if(!pg){ pg={key:k,song,artist,ids:[],names:new Set()}; playedGroups.set(k,pg); }
       pg.ids.push(row.id); if(row.name) pg.names.add(row.name);
     }
+    // spam per person + song
     const kp=`${k}|${(row.name||'').toLowerCase()}`; spamMap.set(kp,(spamMap.get(kp)||0)+1);
   }
 
   const requests=[...bySong.entries()].map(([k,g])=>({ key:k, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
-  const removed=[];
+
+  const removed=[]; // show removed only if we can still derive names/ids from rows
   for(const rk of removedKeySet){
     const base=rows.find(r=>keySong(r.song_title||r.song,r.artist)===rk && !r.played);
     if(base){
@@ -314,14 +338,15 @@ function splitBuckets(rows){
   return { requests, playedGroups:[...playedGroups.values()], removed, spam };
 }
 
-/* Names + card */
+/* Card helpers */
 function namesBoxHTML(names){
   return `<div class="names-box"><p class="hdr">Requesters</p><ul>${names.map(n=>`<li>${escapeHTML(n)}`).join('')}</ul></div>`;
 }
+
 function buildCardBase(obj){
   const guests=obj.people.length;
   const el=document.createElement('div');
-  el.className='card';
+  el.className='card appear';
   el.dataset.key=obj.key;
   el.dataset.ids=JSON.stringify(obj.ids);
   el.innerHTML=`
@@ -335,8 +360,14 @@ function buildCardBase(obj){
     <div class="actions"></div>
   `;
   getArtwork(obj.song,obj.artist).then(src=>{ if(src){ const img=el.querySelector('.thumb'); img.src=src; img.alt=`${obj.song} cover`; }});
-  const box=el.querySelector('.names-box'); const reqline=el.querySelector('.reqline'); const car=reqline.querySelector('.car');
-  reqline.addEventListener('click',()=>{ const open=box.classList.toggle('open'); car.textContent=open?'▾':'▸'; });
+  // toggle via reqline (caret + text)
+  const box=el.querySelector('.names-box'); const reqline=el.querySelector('.reqline'); const car=reqline.querySelector('.car'); const txt=reqline.querySelector('.txt');
+  reqline.addEventListener('click',()=>{
+    const open=box.classList.toggle('open');
+    car.textContent=open?'▾':'▸';
+    // keep text same; the command is implicit now
+  });
+  requestAnimationFrame(()=> el.classList.add('card-ready'));
   return el;
 }
 function updateCardBase(node,obj){
@@ -348,9 +379,11 @@ function updateCardBase(node,obj){
   box.innerHTML=`<p class="hdr">Requesters</p><ul>${obj.people.map(n=>`<li>${escapeHTML(n)}`).join('')}</ul>`;
 }
 
-/* actions */
-function recordOverlay(ids, playedBool){ const at=Date.now(); for(const id of ids){ pendingPlayed.set(id,{value:playedBool, at}); } bumpHold(); }
-
+/* Action button blocks with overlay */
+function recordOverlay(ids, playedBool){
+  const at=Date.now();
+  for(const id of ids){ pendingPlayed.set(id,{value:playedBool, at}); }
+}
 function attachRequestActions(card){
   const actions=card.querySelector('.actions');
   actions.innerHTML=`
@@ -366,7 +399,6 @@ function attachRequestActions(card){
   });
   actions.querySelector('.btn.remove').addEventListener('click', ()=>{
     removedKeySet.add(card.dataset.key);
-    bumpHold();
     renderAll(rowsCache);
   });
 }
@@ -390,36 +422,25 @@ function attachRemovedActions(card){
   `;
   actions.querySelector('.btn.putback').addEventListener('click', ()=>{
     removedKeySet.delete(card.dataset.key);
-    bumpHold();
     renderAll(rowsCache);
   });
 }
 
-/* FLIP list renderer */
-function renderListFLIP(container, items, makeNode, updateNode){
-  // Snapshot first positions
-  const first = new Map();
-  Array.from(container.children).forEach(ch=> first.set(ch.dataset.key, ch.getBoundingClientRect()));
-
+/* Stable renderer (keeps DOM nodes, reorders without trashing) */
+function renderList(container, items, makeNode, updateNode){
   const existing = new Map();
   Array.from(container.children).forEach(ch=> existing.set(ch.dataset.key, ch));
-
-  // Remove missing
+  // remove missing
   existing.forEach((node,key)=>{ if(!items.some(it=>it.key===key)) node.remove(); });
 
-  // Insert / reorder
+  container.classList.add('no-anim');
+
   let cursor = container.firstChild;
   for(const it of items){
     let node = existing.get(it.key);
     if(!node){
       node = makeNode(it);
-      node.style.opacity='0';
       container.insertBefore(node, cursor || null);
-      requestAnimationFrame(()=>{
-        node.style.transition='opacity .18s ease';
-        node.style.opacity='1';
-        node.addEventListener('transitionend',()=>{ node.style.transition=''; },{once:true});
-      });
     }else{
       updateNode(node,it);
       if(node !== cursor){
@@ -429,32 +450,12 @@ function renderListFLIP(container, items, makeNode, updateNode){
     cursor = node.nextSibling;
   }
 
-  // Snapshot last and animate
-  const last = new Map();
-  Array.from(container.children).forEach(ch=> last.set(ch.dataset.key, ch.getBoundingClientRect()));
-
-  Array.from(container.children).forEach(node=>{
-    const k=node.dataset.key;
-    const a=first.get(k), b=last.get(k);
-    if(!a||!b) return;
-    const dx=a.left - b.left;
-    const dy=a.top  - b.top;
-    if(dx||dy){
-      node.style.transform=`translate(${dx}px,${dy}px)`;
-      node.style.transition='transform .22s ease, opacity .22s ease';
-      requestAnimationFrame(()=>{
-        node.style.transform='translate(0,0)';
-      });
-      node.addEventListener('transitionend',()=>{ node.style.transition=''; },{once:true});
-    }
-  });
+  requestAnimationFrame(()=> container.classList.remove('no-anim'));
 }
 
 /* Build & render */
 function renderAll(rows){
-  if(inHold()){ return; } // hard stop: wait until burst ends
-
-  // scrub overlay if server matches
+  // clean expired overlay entries if server now matches
   const now=Date.now();
   for(const [id,ov] of [...pendingPlayed.entries()]){
     const r=rows.find(x=>x.id===id);
@@ -464,29 +465,22 @@ function renderAll(rows){
   const {requests, playedGroups, removed, spam}=splitBuckets(rows);
 
   const sortedReq=[...requests].sort((a,b)=> b.people.length - a.people.length || (a.song||'').localeCompare(b.song||''));
-  renderListFLIP(
-    reqList,
-    sortedReq,
+  renderList(reqList, sortedReq,
     (obj)=>{ const el=buildCardBase(obj); attachRequestActions(el); return el; },
     (node,obj)=> updateCardBase(node,obj)
   );
 
   const pg=[...playedGroups].sort((a,b)=>(a.song||'').localeCompare(b.song||''));
-  renderListFLIP(
-    playedList,
-    pg.map(x=>({key:x.key,song:x.song,artist:x.artist,ids:x.ids,people:[...x.names]})),
+  renderList(playedList, pg.map(x=>({key:x.key,song:x.song,artist:x.artist,ids:x.ids,people:[...x.names]})),
     (obj)=>{ const el=buildCardBase(obj); attachPlayedActions(el); return el; },
     (node,obj)=> updateCardBase(node,obj)
   );
 
-  renderListFLIP(
-    removedList,
-    removed,
+  renderList(removedList, removed,
     (obj)=>{ const el=buildCardBase(obj); attachRemovedActions(el); return el; },
     (node,obj)=> updateCardBase(node,obj)
   );
 
-  // Spam (no FLIP needed)
   spamList.innerHTML='';
   for(const s of spam){
     const el=document.createElement('div'); el.className='card';
@@ -533,9 +527,6 @@ eventSel.addEventListener('change', ()=>{ currentCode=eventSel.value||''; remove
   initCollapsibles();
   setTab('requests');
   if(eventSel.value){ currentCode=eventSel.value; await fetchRows(); startPolling(); }
-
-  // keep trying to render after actions finish
-  setInterval(()=>{ if(!inHold() && currentCode){ renderAll(rowsCache); } }, 120);
 })();
 </script>
 </body>
