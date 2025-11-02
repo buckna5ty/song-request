@@ -34,21 +34,9 @@
     font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   }
 
-  /* Top-left logo bar */
-  .topbar{
-    max-width:var(--maxw);
-    margin:0 auto;
-    padding:10px 14px 0;
-    display:flex;
-    align-items:center;
-  }
-  .topbar .logo{
-    display:inline-block;
-    line-height:0;
-  }
-  .topbar .logo img{
-    height:28px; width:auto;
-  }
+  /* Centered logo (matches index.html vibe) */
+  .dce-logo{ text-align:center; margin:14px 0 6px; }
+  .dce-logo img{ max-width:min(220px,60vw); height:auto; }
 
   .wrap{ max-width:var(--maxw); margin:0 auto; padding:8px 14px 56px; }
   .page-title{
@@ -163,11 +151,9 @@
 </style>
 </head>
 <body>
-  <!-- Top-left logo -->
-  <div class="topbar">
-    <a class="logo" href="#" aria-label="David Charles Events">
-      <img src="assets/dce-logo.png" alt="David Charles Events" onerror="this.style.display='none'"/>
-    </a>
+  <!-- Centered logo like index.html -->
+  <div class="dce-logo">
+    <img src="assets/dce-logo.png" alt="David Charles Events" onerror="this.style.display='none'">
   </div>
 
   <div class="wrap">
@@ -619,6 +605,9 @@ tabRequestsBtn.addEventListener('click',()=>setTab('requests'));
 tabSpamBtn.addEventListener('click',()=>setTab('spam'));
 
 /* Init */
+function startPolling(){ stopPolling(); pollTimer=setInterval(fetchRows, POLL_MS); }
+function stopPolling(){ if(pollTimer) clearInterval(pollTimer); pollTimer=null; }
+
 eventSel.addEventListener('change', ()=>{ currentCode=eventSel.value||''; removedKeySet.clear(); fetchRows(); startPolling(); });
 
 (async function boot(){
