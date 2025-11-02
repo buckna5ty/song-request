@@ -192,7 +192,8 @@ const POLL_MS = 5000;
 
 /* Render/poll control */
 const ACTION_RENDER_LOCK_MS = 1200;
-const ACTION_POLL_PAUSE_MS  = 1000;
+const ACTION_POLL_PAUSE_MS  = 1500;   // a bit longer to cover unplayed path
+const BUCKET_HOLD_MS        = 2500;   // pin a card to target bucket shortly
 let renderLockUntil = 0;
 let pollTimer = null;
 let pollPausedUntil = 0;
@@ -216,8 +217,10 @@ let rowsCache=[];
 const removedKeySet=new Set();
 const artCache=new Map();
 
-/* In-flight guards per song key (prevents flicker when rapid-clicking) */
+/* In-flight guards per song key */
 const inFlightByKey = new Map(); // key -> {target:boolean, ts:number}
+/* Bucket pin per song key (force which bucket to render into briefly) */
+const bucketHoldByKey = new Map(); // key -> {bucket:'requests'|'played', until:number}
 
 /* ===== Utils ===== */
 function pad2(n){return String(n).padStart(2,'0');}
@@ -278,31 +281,69 @@ async function fetchRows(){
 /* Build structures */
 function splitBuckets(rows){
   const bySong=new Map(), playedGroups=new Map(), spamMap=new Map();
+  const now = Date.now();
 
   for(const row of rows){
     const song=row.song_title||row.song||''; const artist=row.artist||''; const k=keySong(song,artist);
-    // Apply in-flight optimistic state for this song if present
+
+    // Apply in-flight optimistic state
     if(inFlightByKey.has(k)){
       const {target}=inFlightByKey.get(k);
       row.played = target;
     }
-    // requests
+
+    // Build base groups
     if(!row.played && !removedKeySet.has(k)){
       let g=bySong.get(k); if(!g){ g={key:k,song,artist,ids:[],names:new Set()}; bySong.set(k,g); }
       g.ids.push(row.id); if(row.name) g.names.add(row.name);
     }
-    // played
     if(row.played){
       let pg=playedGroups.get(k); if(!pg){ pg={key:k,song,artist,ids:[],names:new Set()}; playedGroups.set(k,pg); }
       pg.ids.push(row.id); if(row.name) pg.names.add(row.name);
     }
+
     // spam per person + song
     const kp=`${k}|${(row.name||'').toLowerCase()}`; spamMap.set(kp,(spamMap.get(kp)||0)+1);
   }
 
-  const requests=[...bySong.values()].map(g=>({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
-  const played  =[...playedGroups.values()].map(g=>({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
+  // Convert to arrays
+  let requests=[...bySong.values()].map(g=>({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
+  let played  =[...playedGroups.values()].map(g=>({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
 
+  // Bucket hold override (pin membership briefly to avoid flicker)
+  // If a key is pinned to 'requests', ensure it is in requests and not in played (and vice versa)
+  if (bucketHoldByKey.size){
+    const pinTo = (arrFrom, arrTo, keySetToPin) => {
+      // remove from source if pinned to target
+      for (const key of keySetToPin){
+        const idx = arrFrom.findIndex(x=>x.key===key);
+        if (idx>=0) arrFrom.splice(idx,1);
+      }
+      // ensure present in target
+      for (const key of keySetToPin){
+        if (!arrTo.some(x=>x.key===key)) {
+          // try to synthesize from rows (names/ids) – find any latest data for this key
+          const any = rows.find(r=> keySong(r.song_title||r.song,r.artist)===key);
+          if (any){
+            const ids = rows.filter(r=> keySong(r.song_title||r.song,r.artist)===key).map(r=>r.id);
+            const names=[...new Set(rows.filter(r=> keySong(r.song_title||r.song,r.artist)===key).map(r=>r.name).filter(Boolean))];
+            arrTo.push({ key, song:any.song_title||any.song, artist:any.artist, ids, people:names });
+          }
+        }
+      }
+    };
+
+    const toRequests=new Set(), toPlayed=new Set();
+    for (const [k,hold] of bucketHoldByKey.entries()){
+      if (now > hold.until){ bucketHoldByKey.delete(k); continue; }
+      if (hold.bucket==='requests') toRequests.add(k);
+      else if (hold.bucket==='played') toPlayed.add(k);
+    }
+    if (toRequests.size) pinTo(played, requests, toRequests);
+    if (toPlayed.size)   pinTo(requests, played, toPlayed);
+  }
+
+  // Removed tab
   const removed=[];
   for(const rk of removedKeySet){
     const rel=rows.filter(r=> keySong(r.song_title||r.song,r.artist)===rk && !r.played);
@@ -312,6 +353,7 @@ function splitBuckets(rows){
     }
   }
 
+  // Spam
   const spam=[];
   for(const [kp,count] of spamMap.entries()){
     if(count>1){
@@ -358,12 +400,13 @@ function updateCardBase(node,obj){
   node.querySelector('.names-box').innerHTML=`<p class="hdr">Requesters</p><ul>${obj.people.map(n=>`<li>${escapeHTML(n)}`).join('')}</ul>`;
 }
 
-/* Action drivers (transactional per song) */
+/* Action drivers (transactional per song + bucket pin) */
 async function togglePlayedForKey(key, ids, targetPlayed){
-  // Coalesce rapid clicks: remember last intent and if already in-flight, just update target
   const now=Date.now();
-  const prev=inFlightByKey.get(key);
+  // Coalesce rapid clicks
   inFlightByKey.set(key,{target:targetPlayed, ts:now});
+  // Pin bucket to avoid flicker
+  bucketHoldByKey.set(key, { bucket: targetPlayed ? 'played' : 'requests', until: now + BUCKET_HOLD_MS });
 
   // Optimistic local state
   lockRender(); pausePolling();
@@ -374,19 +417,18 @@ async function togglePlayedForKey(key, ids, targetPlayed){
   const card = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
   if (card) card.querySelectorAll('.btn').forEach(b=> b.disabled = true);
 
-  // Send writes (one burst)
+  // Write burst
   try{
     await Promise.all(ids.map(id => jsonp(ENDPOINT_URL,{mode:'setPlayed',id,played:String(targetPlayed)})));
-  }catch(_e){ /* ignore; UI stays optimistic until next poll */ }
+  }catch(_e){ /* we'll reconcile on next pull */ }
 
-  // Only finalize if no newer intent superseded this one
+  // Only finalize if not superseded
   const final = inFlightByKey.get(key);
-  if (!final || final.ts !== now) return; // superseded; let the newest call finalize
+  if (!final || final.ts !== now) return;
 
-  // Re-enable buttons, clear in-flight, force a fresh read once
   if (card) card.querySelectorAll('.btn').forEach(b=> b.disabled = false);
   inFlightByKey.delete(key);
-  await fetchRows(); // single pull to sync; polling restarts after pause window
+  await fetchRows(); // sync once; polling resumes after pause window
 }
 
 /* Attach actions */
