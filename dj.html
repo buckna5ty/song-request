@@ -199,6 +199,16 @@
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxkSPUc2VWQYkhJ_af7CShegZLAMmVgUsTp2nMeVwkkhdFbdQT8wk2s6xBAAynjtLDT/exec';
 const POLL_MS = 5000;
 
+/* Render-lock to prevent flicker during rapid actions */
+const ACTION_RENDER_LOCK_MS = 1800; // adjust 1500–2500 if needed
+let renderLockUntil = 0;
+function lockRender(){ renderLockUntil = Date.now() + ACTION_RENDER_LOCK_MS; }
+function canRender(){ return Date.now() >= renderLockUntil; }
+function renderAfterLock(){
+  const wait = Math.max(0, renderLockUntil - Date.now() + 30);
+  setTimeout(()=>{ if (canRender()) renderAll(rowsCache); }, wait);
+}
+
 /* ===== Elements ===== */
 const $ = s => document.querySelector(s);
 const eventSel=$('#eventSel'), inlineInfo=$('#inlineInfo');
@@ -216,9 +226,9 @@ let rowsCache=[];
 const removedKeySet=new Set();
 const artCache=new Map();
 
-/* New: local overlay to defeat flicker completely */
+/* Local overlay for played state */
 const pendingPlayed = new Map(); // id -> {value:boolean, at:number}
-const OVERLAY_TTL = 8000;       // hold override up to 8s (until server reflects)
+const OVERLAY_TTL = 8000;
 
 /* ===== Utils ===== */
 function pad2(n){return String(n).padStart(2,'0');}
@@ -271,9 +281,8 @@ function applyOverlay(rows){
       if (now - at < OVERLAY_TTL) {
         r.played = value; // force local truth
       } else {
-        // drop stale override if server already matches; else extend TTL a bit
         if (r.played === value) pendingPlayed.delete(r.id);
-        else pendingPlayed.set(r.id,{value,at:now}); // keep holding
+        else pendingPlayed.set(r.id,{value,at:now});
       }
     }
   }
@@ -287,9 +296,14 @@ async function fetchRows(){
     const r=await jsonp(ENDPOINT_URL,{mode:'read',event:currentCode});
     const raw = Array.isArray(r?.rows)?r.rows:[];
     rowsCache = applyOverlay(raw.map(x=>({...x}))); // copy then overlay
-    renderAll(rowsCache);
+    if (canRender()) {
+      renderAll(rowsCache);
+    } else {
+      renderAfterLock(); // defer paint until burst ends
+    }
     statusLine.textContent = rowsCache.length ? '' : 'No requests yet.';
-  }catch{ statusLine.textContent='Connection error.'; } finally{ showInline(''); }
+  }catch{ statusLine.textContent='Connection error.'; }
+  finally{ showInline(''); }
 }
 
 /* Build structures */
@@ -361,11 +375,10 @@ function buildCardBase(obj){
   `;
   getArtwork(obj.song,obj.artist).then(src=>{ if(src){ const img=el.querySelector('.thumb'); img.src=src; img.alt=`${obj.song} cover`; }});
   // toggle via reqline (caret + text)
-  const box=el.querySelector('.names-box'); const reqline=el.querySelector('.reqline'); const car=reqline.querySelector('.car'); const txt=reqline.querySelector('.txt');
+  const box=el.querySelector('.names-box'); const reqline=el.querySelector('.reqline'); const car=reqline.querySelector('.car');
   reqline.addEventListener('click',()=>{
     const open=box.classList.toggle('open');
     car.textContent=open?'▾':'▸';
-    // keep text same; the command is implicit now
   });
   requestAnimationFrame(()=> el.classList.add('card-ready'));
   return el;
@@ -379,11 +392,13 @@ function updateCardBase(node,obj){
   box.innerHTML=`<p class="hdr">Requesters</p><ul>${obj.people.map(n=>`<li>${escapeHTML(n)}`).join('')}</ul>`;
 }
 
-/* Action button blocks with overlay */
+/* Action button blocks with render-lock + overlay */
 function recordOverlay(ids, playedBool){
   const at=Date.now();
   for(const id of ids){ pendingPlayed.set(id,{value:playedBool, at}); }
 }
+
+/* Requests list actions */
 function attachRequestActions(card){
   const actions=card.querySelector('.actions');
   actions.innerHTML=`
@@ -391,38 +406,50 @@ function attachRequestActions(card){
     <button class="btn remove" type="button">Remove</button>
   `;
   actions.querySelector('.btn.played').addEventListener('click', async ()=>{
+    lockRender();
     const ids=JSON.parse(card.dataset.ids||'[]');
     recordOverlay(ids,true);
     rowsCache = rowsCache.map(r=> ids.includes(r.id)?({...r,played:true}):r);
     renderAll(rowsCache);
+    renderAfterLock();
     try{ await Promise.all(ids.map(id=>jsonp(ENDPOINT_URL,{mode:'setPlayed',id,played:'true'}))); }catch{}
   });
   actions.querySelector('.btn.remove').addEventListener('click', ()=>{
+    lockRender();
     removedKeySet.add(card.dataset.key);
     renderAll(rowsCache);
+    renderAfterLock();
   });
 }
+
+/* Played list actions */
 function attachPlayedActions(card){
   const actions=card.querySelector('.actions');
   actions.innerHTML=`
     <button class="btn unplayed" type="button">Mark as Unplayed</button>
   `;
   actions.querySelector('.btn.unplayed').addEventListener('click', async ()=>{
+    lockRender();
     const ids=JSON.parse(card.dataset.ids||'[]');
     recordOverlay(ids,false);
     rowsCache = rowsCache.map(r=> ids.includes(r.id)?({...r,played:false}):r);
     renderAll(rowsCache);
+    renderAfterLock();
     try{ await Promise.all(ids.map(id=>jsonp(ENDPOINT_URL,{mode:'setPlayed',id,played:'false'}))); }catch{}
   });
 }
+
+/* Removed list actions */
 function attachRemovedActions(card){
   const actions=card.querySelector('.actions');
   actions.innerHTML=`
     <button class="btn putback" type="button">Put Back</button>
   `;
   actions.querySelector('.btn.putback').addEventListener('click', ()=>{
+    lockRender();
     removedKeySet.delete(card.dataset.key);
     renderAll(rowsCache);
+    renderAfterLock();
   });
 }
 
@@ -481,6 +508,7 @@ function renderAll(rows){
     (node,obj)=> updateCardBase(node,obj)
   );
 
+  // Spam
   spamList.innerHTML='';
   for(const s of spam){
     const el=document.createElement('div'); el.className='card';
