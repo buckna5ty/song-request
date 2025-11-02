@@ -63,9 +63,9 @@
   .inline-info{
     margin-top:8px;
     font-size:14px;
-    min-height:22px; /* reserve space so layout doesn't jump */
+    min-height:22px; /* reserve space */
     font-weight:500;
-    color:#e7e7e7; /* default */
+    color:#e7e7e7;
   }
   .inline-info.good{ color:#34d399; } /* green */
   .inline-info.bad{  color:#ef4444; } /* red */
@@ -125,7 +125,7 @@
     grid-template-columns:64px 1fr 190px;
     gap:12px; align-items:center;
 
-    /* FLIP animation: we animate transform/opacity */
+    /* FLIP animation */
     will-change: transform, opacity;
     transition: transform var(--anim-ms) var(--anim-ease), opacity var(--anim-ms) var(--anim-ease);
   }
@@ -149,7 +149,7 @@
 
   .actions{ display:grid; gap:6px; }
 
-  /* smaller buttons + narrower width */
+  /* compact buttons */
   .btn{
     display:inline-flex; align-items:center; justify-content:center;
     padding:0 10px; height:32px; font-size:12px; line-height:1;
@@ -179,7 +179,7 @@
 
   .footer-line{ margin-top:10px; color:#fff; font-size:12px; }
 
-  /* helper classes for enter/exit */
+  /* enter/exit helpers */
   .enter{ opacity:0; transform:translateY(8px); }
   .enter-active{ opacity:1; transform:none; }
   .exit{ opacity:1; transform:none; }
@@ -190,14 +190,14 @@
   <div class="wrap">
     <div class="page-title">REQUESTS</div>
 
-    <!-- Event chooser panel -->
+    <!-- Event chooser -->
     <div class="panel">
       <label for="eventSel">Select Your Event</label>
       <select id="eventSel"></select>
       <div id="inlineInfo" class="inline-info" aria-live="polite"></div>
     </div>
 
-    <!-- Tabs + content panel -->
+    <!-- Tabs + content -->
     <div class="panel">
       <div class="tabs-wrap">
         <div class="tabs-bar">
@@ -206,7 +206,7 @@
         </div>
       </div>
 
-      <!-- Requests tab pane -->
+      <!-- Requests tab -->
       <div id="tabRequestsPane">
         <div class="collapsible open" id="reqWrap">
           <div class="collapsible-header" data-target="reqBody">
@@ -241,7 +241,7 @@
         <div class="footer-line" id="statusLine"></div>
       </div>
 
-      <!-- Spam tab pane -->
+      <!-- Spam tab -->
       <div id="tabSpamPane" class="hidden">
         <div class="h2">
           Spammed Requests
@@ -281,11 +281,11 @@ const statusLine    = $('#statusLine');
 /* ===== State ===== */
 let currentCode = '';
 let pollTimer   = null;
-let rowsCache   = [];
+let rowsCache   = [];          // latest rows from backend
 const artCache      = new Map();
-const removedKeySet = new Set();
+const removedKeySet = new Set(); // local-only "removed" by song key
 
-/* ===== small utils ===== */
+/* ===== utils ===== */
 function pad2(n){ return String(n).padStart(2,'0'); }
 function dow3(n){ return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][n] || ''; }
 function formatHeaderDate(dateStr){
@@ -295,16 +295,14 @@ function formatHeaderDate(dateStr){
     return `${dow3(d.getDay())} ${pad2(d.getMonth()+1)}.${pad2(d.getDate())}.${String(d.getFullYear()).slice(-2)}`;
   }catch{ return ''; }
 }
-
 function showInline(msg){
   inlineInfo.textContent = msg || '';
   inlineInfo.classList.remove('good','bad');
   if (!msg) return;
   const lower = msg.toLowerCase();
-  if (lower.startsWith('loading')) { inlineInfo.classList.add('good'); }
-  else if (lower.includes('could not load')) { inlineInfo.classList.add('bad'); }
+  if (lower.startsWith('loading')) inlineInfo.classList.add('good');
+  else if (lower.includes('could not load')) inlineInfo.classList.add('bad');
 }
-
 function keySong(song, artist){ return `${(song||'').toLowerCase()}|${(artist||'').toLowerCase()}`; }
 function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function checksum(rows){ let s=0; for(const r of rows){ s+= (r.id||'').length + (r.played?7:3);} return s+':'+rows.length; }
@@ -343,7 +341,6 @@ async function loadActiveEvents(){
   try{
     const res  = await jsonp(ENDPOINT_URL, { mode:'listActive' });
     const list = Array.isArray(res?.events) ? res.events : [];
-
     list.sort((a,b)=> new Date(a.date||0) - new Date(b.date||0));
 
     eventSel.innerHTML = '';
@@ -387,7 +384,7 @@ async function fetchRows(force=false){
     const rows = Array.isArray(res?.rows) ? res.rows : [];
     const changed = force || rows.length !== rowsCache.length || checksum(rows) !== checksum(rowsCache);
     rowsCache = rows;
-    if (changed) renderAll(rows);
+    if (changed) renderAll(rows);           // animate resort here
     statusLine.textContent = rows.length ? '' : 'No requests yet.';
   }catch(e){
     statusLine.textContent = 'Connection error.';
@@ -479,10 +476,9 @@ function flipAnimate(container, firstPos){
     const last = el.getBoundingClientRect();
     const first = firstPos.get(el.dataset.key);
     if (!first) {
-      // entering element: animate from .enter to normal
+      // entering element
       el.classList.add('enter');
-      // force style
-      void el.offsetWidth;
+      void el.offsetWidth; // force
       el.classList.add('enter-active');
       el.addEventListener('transitionend', ()=>{
         el.classList.remove('enter','enter-active');
@@ -493,8 +489,7 @@ function flipAnimate(container, firstPos){
     const dy = first.top  - last.top;
     if (dx || dy){
       el.style.transform = `translate(${dx}px, ${dy}px)`;
-      // force reflow
-      el.getBoundingClientRect();
+      el.getBoundingClientRect(); // reflow
       el.style.transition = `transform var(--anim-ms) var(--anim-ease)`;
       el.style.transform = `translate(0,0)`;
       el.addEventListener('transitionend', ()=>{
@@ -514,18 +509,17 @@ function diffReorder(container, items, keyFn, upsert){
 
   const desiredKeys = new Set(items.map(it=>keyFn(it)));
 
-  // Remove cards not present anymore (fade out)
+  // remove cards that no longer exist (fade out)
   existing.forEach((node, key)=>{
     if (!desiredKeys.has(key)){
       node.classList.add('exit');
-      // force reflow
       node.getBoundingClientRect();
       node.classList.add('exit-active');
       node.addEventListener('transitionend', ()=> node.remove(), {once:true});
     }
   });
 
-  // Build/Update in desired order
+  // add/update in desired order
   const frag = document.createDocumentFragment();
   for (const it of items){
     const k = keyFn(it);
@@ -533,14 +527,13 @@ function diffReorder(container, items, keyFn, upsert){
     if (node){
       upsert(node, it);
     }else{
-      node = upsert(null, it); // create
-      node.classList.add('enter'); // start hidden/shifted
+      node = upsert(null, it);
+      node.classList.add('enter'); // animate in
     }
     frag.appendChild(node);
   }
 
   container.appendChild(frag);
-  // Animate reordering & enters
   requestAnimationFrame(()=> flipAnimate(container, first));
 }
 
@@ -608,27 +601,18 @@ function addRequestButtons(card){
 
   const playBtn = actions.querySelector('.btn.played');
   playBtn.addEventListener('click', async ()=>{
-    reqList.removeChild(card);
-    addPlayedCardFromRequestCard(card);
-    updateCounts();
+    // optimistic local update: set rowsCache played=true for these ids
     const ids = JSON.parse(card.dataset.ids||'[]');
-    try{
-      await Promise.all(ids.map(id => jsonp(ENDPOINT_URL, { mode:'setPlayed', id, played:'true' })));
-      fetchRows(true);
-    }catch(e){
-      playedList.removeChild(card);
-      addRequestButtons(card);
-      reqList.appendChild(card);
-      updateCounts();
-    }
+    setRowsPlayed(ids, true);          // <— immediate local resort/animate
+    // backend write (fire-and-forget)
+    try{ await Promise.all(ids.map(id => jsonp(ENDPOINT_URL, { mode:'setPlayed', id, played:'true' }))); }
+    catch(_e){}
   });
 
   const rmBtn = actions.querySelector('.btn.remove');
   rmBtn.addEventListener('click', ()=>{
     removedKeySet.add(card.dataset.key);
-    reqList.removeChild(card);
-    addRemovedCardFromRequestCard(card);
-    updateCounts();
+    resortRequestsOnly();              // <— re-render/animate after removal
   });
 }
 
@@ -642,26 +626,15 @@ function addPlayedButtons(card){
 
   const unBtn = actions.querySelector('.btn.unplayed');
   unBtn.addEventListener('click', async ()=>{
-    playedList.removeChild(card);
-    addRequestButtons(card);
-    reqList.appendChild(card);
-    updateCounts();
     const ids = JSON.parse(card.dataset.ids||'[]');
-    try{
-      await Promise.all(ids.map(id => jsonp(ENDPOINT_URL, { mode:'setPlayed', id, played:'false' })));
-      fetchRows(true);
-    }catch(e){
-      reqList.removeChild(card);
-      addPlayedButtons(card);
-      playedList.appendChild(card);
-      updateCounts();
-    }
+    setRowsPlayed(ids, false);         // <— immediate local resort/animate
+    try{ await Promise.all(ids.map(id => jsonp(ENDPOINT_URL, { mode:'setPlayed', id, played:'false' }))); }
+    catch(_e){}
   });
 }
 
 function addRemovedButtons(card){
   const actions = card.querySelector('.actions');
-  /* Put Back above Show Names */
   actions.innerHTML = `
     <button class="btn putback" type="button">Put Back</button>
     <button class="btn names"   type="button">Show Names</button>
@@ -671,10 +644,7 @@ function addRemovedButtons(card){
   const putBtn = actions.querySelector('.btn.putback');
   putBtn.addEventListener('click', ()=>{
     removedKeySet.delete(card.dataset.key);
-    removedList.removeChild(card);
-    addRequestButtons(card);
-    reqList.appendChild(card);
-    updateCounts();
+    resortRequestsOnly();              // <— immediate local resort/animate
   });
 }
 
@@ -685,20 +655,13 @@ function upsertRequestNode(node, item){
     addRequestButtons(node);
   }else{
     updateBaseCard(node, item);
-    // keep buttons as-is
   }
   return node;
 }
-
-/* Played/remain as before (no reordering animation needed there) */
 function buildPlayedCard(obj){
   const card = buildBaseCard(obj);
   addPlayedButtons(card);
   return card;
-}
-function addPlayedCardFromRequestCard(card){
-  addPlayedButtons(card);
-  playedList.appendChild(card);
 }
 function buildSpamCard(s){
   const card = document.createElement('div');
@@ -715,12 +678,8 @@ function buildSpamCard(s){
   setThumb(card.querySelector('.thumb'), s.song, s.artist);
   return card;
 }
-function addRemovedCardFromRequestCard(card){
-  addRemovedButtons(card);
-  removedList.appendChild(card);
-}
 
-/* ===== render main ===== */
+/* ===== Rendering ===== */
 function renderAll(rows){
   const { requests, playedGroups, spam } = splitBuckets(rows);
 
@@ -737,7 +696,7 @@ function renderAll(rows){
     (node,it)=> upsertRequestNode(node, it)
   );
 
-  // Played (no animation reordering needed)
+  // Played (rebuild; count is the only important thing)
   playedList.innerHTML = '';
   for (const g of playedGroups){
     const card = buildPlayedCard({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.people] });
@@ -757,6 +716,25 @@ function updateCounts(){
   playedCountEl.textContent  = `(${playedList.children.length})`;
   removedCountEl.textContent = `(${removedList.children.length})`;
   spamCountTop.textContent   = `(${spamList.children.length})`;
+}
+
+/* ===== Local-mutating helpers (instant UI resort) ===== */
+function setRowsPlayed(ids, playedBool){
+  // mutate rowsCache to reflect local action
+  let touched = false;
+  rowsCache = rowsCache.map(r=>{
+    if (ids.includes(r.id)){
+      touched = true;
+      return {...r, played: !!playedBool};
+    }
+    return r;
+  });
+  if (touched) renderAll(rowsCache);
+}
+
+function resortRequestsOnly(){
+  // Just re-render from current rowsCache and local removed set
+  renderAll(rowsCache);
 }
 
 /* ===== collapsibles & tabs ===== */
