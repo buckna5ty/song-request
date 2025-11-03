@@ -34,15 +34,14 @@
     font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   }
 
-  /* Match index.html overall paddings/spacing */
   .wrap{ max-width:var(--maxw); margin:0 auto; padding:16px 14px 56px; }
 
-  /* --- Header (match guest page) --- */
+  /* Header matching index.html */
   .dce-logo{ text-align:center; margin:14px 0 6px; }
   .dce-logo img{ max-width:min(220px,60vw); height:auto; }
   .page-title{
     text-align:center;
-    margin:0 auto 26px;            /* << same bottom gap as guest page */
+    margin:0 auto 26px;
     letter-spacing:.06em;
     font-weight:800;
     font-size:clamp(22px,5.5vw,36px);
@@ -60,11 +59,40 @@
     height:46px; border-radius:12px; border:1px solid #3a3a3a;
     background:#2a2a2a; color:#fff; font-size:15px; padding:0 12px; width:100%;
   }
-  .inline-info{ margin-top:8px; font-size:14px; min-height:22px; font-weight:500; }
-  .inline-info.good{ color:#34d399; }
-  .inline-info.bad{ color:#ef4444; }
 
-  /* Folder tabs */
+  /* Inline info bar area stays reserved (no layout shift) */
+  .inline-row{
+    display:flex; align-items:center; gap:10px;
+    margin-top:8px; min-height:24px;
+  }
+  .inline-text{ font-size:14px; font-weight:600; }
+  .inline-text.good{ color:#34d399; }
+  .inline-text.bad{ color:#ef4444; }
+
+  /* Progress bar (shown only on first load / event change) */
+  .progress{
+    position:relative; height:6px; flex:1 1 240px; max-width:360px;
+    background:#2a2a2a; border-radius:999px; overflow:hidden; border:1px solid #333;
+    display:none;
+  }
+  .progress.show{ display:block; }
+  .progress::after{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(90deg, rgba(29,206,201,.15) 0%, rgba(29,206,201,.65) 50%, rgba(29,206,201,.15) 100%);
+    transform:translateX(-100%); animation:bar 1.4s linear infinite;
+  }
+  @keyframes bar{ to{ transform:translateX(100%); } }
+
+  /* Subtle polling spinner (right aligned, no text) */
+  .spin{
+    margin-left:auto; width:18px; height:18px; border-radius:50%;
+    border:2px solid rgba(255,255,255,.25); border-top-color:#bbb;
+    animation:spin .9s linear infinite; display:none;
+  }
+  .spin.show{ display:inline-block; }
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+
+  /* Tabs (folder style) */
   .tabs-bar{
     display:flex; align-items:flex-end; gap:0; border-bottom:1px solid var(--border); padding:0 6px; margin-bottom:10px;
   }
@@ -136,7 +164,7 @@
 </head>
 <body>
   <div class="wrap">
-    <!-- centered logo, same sizing as index.html -->
+    <!-- Centered logo like index.html -->
     <div class="dce-logo">
       <img src="assets/dce-logo.png" alt="David Charles Events" onerror="this.style.display='none'">
     </div>
@@ -145,7 +173,13 @@
     <div class="panel">
       <label for="eventSel">Select Your Event</label>
       <select id="eventSel"></select>
-      <div id="inlineInfo" class="inline-info" aria-live="polite"></div>
+
+      <!-- Inline info row (reserved height, no layout shift) -->
+      <div class="inline-row">
+        <span id="inlineText" class="inline-text"></span>
+        <div id="inlineProgress" class="progress"></div>
+        <span id="inlineSpin" class="spin" aria-hidden="true"></span>
+      </div>
     </div>
 
     <div class="panel">
@@ -215,7 +249,12 @@ function pausePolling(){ pollPausedUntil = Date.now() + ACTION_POLL_PAUSE_MS; st
 
 /* ===== Elements ===== */
 const $ = s => document.querySelector(s);
-const eventSel=$('#eventSel'), inlineInfo=$('#inlineInfo');
+const eventSel=$('#eventSel');
+
+const inlineText=$('#inlineText');
+const inlineProgress=$('#inlineProgress');
+const inlineSpin=$('#inlineSpin');
+
 const tabRequestsBtn=$('#tabRequests'), tabSpamBtn=$('#tabSpam');
 const tabRequestsPane=$('#tabRequestsPane'), tabSpamPane=$('#tabSpamPane');
 
@@ -229,15 +268,43 @@ let rowsCache=[];
 const removedKeySet=new Set();
 const artCache=new Map();
 
-/* In-flight guards per song key */
-const inFlightByKey = new Map(); // key -> {target:boolean, ts:number}
-const bucketHoldByKey = new Map(); // key -> {bucket:'requests'|'played', until:number}
+const inFlightByKey = new Map();
+const bucketHoldByKey = new Map();
+
+let initialRequestsLoaded = false; // controls bar vs spinner
+
+/* ===== Inline UI helpers ===== */
+function showFullLoading(msg='Loading your requests...'){
+  inlineText.textContent = msg;
+  inlineText.classList.remove('bad');
+  inlineText.classList.add('good');
+  inlineProgress.classList.add('show');
+  inlineSpin.classList.remove('show');
+}
+function showSpinnerOnly(){
+  inlineText.textContent = '';
+  inlineText.classList.remove('good','bad');
+  inlineProgress.classList.remove('show');
+  inlineSpin.classList.add('show');
+}
+function clearInline(){
+  inlineText.textContent = '';
+  inlineText.classList.remove('good','bad');
+  inlineProgress.classList.remove('show');
+  inlineSpin.classList.remove('show');
+}
+function showEventsError(){
+  inlineText.textContent = 'Could not load events.';
+  inlineText.classList.remove('good');
+  inlineText.classList.add('bad');
+  inlineProgress.classList.remove('show');
+  inlineSpin.classList.remove('show');
+}
 
 /* ===== Utils ===== */
 function pad2(n){return String(n).padStart(2,'0');}
 function dow3(n){return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][n]||'';}
 function formatHeaderDate(s){ const d=new Date(s); if(isNaN(d))return''; return `${dow3(d.getDay())} ${pad2(d.getMonth()+1)}.${pad2(d.getDate())}.${String(d.getFullYear()).slice(-2)}`;}
-function showInline(msg){ inlineInfo.textContent=msg||''; inlineInfo.classList.remove('good','bad'); if(!msg)return; const m=msg.toLowerCase(); if(m.startsWith('loading')) inlineInfo.classList.add('good'); else if(m.includes('could not load')) inlineInfo.classList.add('bad'); }
 function keySong(song,artist){ return `${(song||'').toLowerCase()}|${(artist||'').toLowerCase()}`;}
 function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
@@ -260,33 +327,49 @@ async function getArtwork(song,artist){
 
 /* Events */
 async function loadActiveEvents(){
-  showInline('Loading your events...');
+  showFullLoading('Loading your events...');
   try{
     const r=await jsonp(ENDPOINT_URL,{mode:'listActive'}); const list=Array.isArray(r?.events)?r.events:[];
     list.sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
     eventSel.innerHTML='';
-    if(!list.length){ const opt=document.createElement('option'); opt.value=''; opt.textContent='No active events'; eventSel.appendChild(opt); currentCode=''; showInline('Could not load events.'); return; }
-    for(const ev of list){ const opt=document.createElement('option'); opt.value=ev.code; const d=formatHeaderDate(ev.date); opt.textContent=d?`${d} - ${ev.name}`:(ev.name||ev.code); eventSel.appendChild(opt); }
-    const pre=(new URLSearchParams(location.search).get('event')||'').trim(); if(pre&&[...eventSel.options].some(o=>o.value===pre)) eventSel.value=pre;
-    currentCode=eventSel.value||''; showInline('');
-  }catch{ showInline('Could not load events.'); }
+    if(!list.length){ const opt=document.createElement('option'); opt.value=''; opt.textContent='No active events'; eventSel.appendChild(opt); currentCode=''; showEventsError(); return; }
+    for(const ev of list){
+      const opt=document.createElement('option'); opt.value=ev.code;
+      const d=formatHeaderDate(ev.date); opt.textContent=d?`${d} - ${ev.name}`:(ev.name||ev.code);
+      eventSel.appendChild(opt);
+    }
+    const pre=(new URLSearchParams(location.search).get('event')||'').trim();
+    if(pre&&[...eventSel.options].some(o=>o.value===pre)) eventSel.value=pre;
+    currentCode=eventSel.value||'';
+    clearInline();
+  }catch{ showEventsError(); }
 }
 
 /* Polling */
-function startPolling(){ stopPolling(); pollTimer=setInterval(fetchRows, POLL_MS); }
+function startPolling(){ stopPolling(); pollTimer=setInterval(()=>fetchRows({background:true}), POLL_MS); }
 function stopPolling(){ if(pollTimer) clearInterval(pollTimer); pollTimer=null; }
 
-async function fetchRows(){
+async function fetchRows({background=false} = {}){
   if(!currentCode) return;
   if(Date.now() < pollPausedUntil) return;
-  showInline('Loading your requests...');
+
+  // Display mode: first load / event change -> bar; background polls -> spinner
+  if (!initialRequestsLoaded || !background) showFullLoading('Loading your requests...');
+  else showSpinnerOnly();
+
   try{
     const r=await jsonp(ENDPOINT_URL,{mode:'read',event:currentCode});
     const raw = Array.isArray(r?.rows)?r.rows:[];
     rowsCache = raw.map(x=>({...x}));
     if (canRender()) renderAll(rowsCache);
-  }catch{ statusLine.textContent='Connection error.'; }
-  finally{ showInline(''); }
+    initialRequestsLoaded = true;
+  }catch{
+    statusLine.textContent='Connection error.';
+  } finally{
+    // Clear for full loads; for background we keep only spinner during fetch
+    if (!background) clearInline();
+    else inlineSpin.classList.remove('show'); // hide spinner after cycle
+  }
 }
 
 /* Build structures */
@@ -297,13 +380,11 @@ function splitBuckets(rows){
   for(const row of rows){
     const song=row.song_title||row.song||''; const artist=row.artist||''; const k=keySong(song,artist);
 
-    // Apply in-flight optimistic state
     if(inFlightByKey.has(k)){
       const {target}=inFlightByKey.get(k);
       row.played = target;
     }
 
-    // Build base groups
     if(!row.played && !removedKeySet.has(k)){
       let g=bySong.get(k); if(!g){ g={key:k,song,artist,ids:[],names:new Set()}; bySong.set(k,g); }
       g.ids.push(row.id); if(row.name) g.names.add(row.name);
@@ -312,15 +393,12 @@ function splitBuckets(rows){
       let pg=playedGroups.get(k); if(!pg){ pg={key:k,song,artist,ids:[],names:new Set()}; playedGroups.set(k,pg); }
       pg.ids.push(row.id); if(row.name) pg.names.add(row.name);
     }
-
-    // spam per person + song
     const kp=`${k}|${(row.name||'').toLowerCase()}`; spamMap.set(kp,(spamMap.get(kp)||0)+1);
   }
 
   let requests=[...bySong.values()].map(g=>({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
   let played  =[...playedGroups.values()].map(g=>({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
 
-  // Bucket hold override
   if (bucketHoldByKey.size){
     const pinTo = (arrFrom, arrTo, keySetToPin) => {
       for (const key of keySetToPin){
@@ -370,7 +448,7 @@ function splitBuckets(rows){
   return { requests, played, removed, spam };
 }
 
-/* Card UI helpers */
+/* Card helpers */
 function namesBoxHTML(names){
   return `<div class="names-box"><p class="hdr">Requesters</p><ul>${names.map(n=>`<li>${escapeHTML(n)}`).join('')}</ul></div>`;
 }
@@ -404,7 +482,7 @@ function updateCardBase(node,obj){
   node.querySelector('.names-box').innerHTML=`<p class="hdr">Requesters</p><ul>${obj.people.map(n=>`<li>${escapeHTML(n)}`).join('')}</ul>`;
 }
 
-/* Action drivers */
+/* Actions */
 async function togglePlayedForKey(key, ids, targetPlayed){
   const now=Date.now();
   inFlightByKey.set(key,{target:targetPlayed, ts:now});
@@ -419,17 +497,16 @@ async function togglePlayedForKey(key, ids, targetPlayed){
 
   try{
     await Promise.all(ids.map(id => jsonp(ENDPOINT_URL,{mode:'setPlayed',id,played:String(targetPlayed)})));
-  }catch(_e){}
+  }catch{}
 
   const final = inFlightByKey.get(key);
   if (!final || final.ts !== now) return;
 
   if (card) card.querySelectorAll('.btn').forEach(b=> b.disabled = false);
   inFlightByKey.delete(key);
-  await fetchRows();
+  await fetchRows({background:false});
 }
 
-/* Attach actions */
 function attachRequestActions(card){
   const actions=card.querySelector('.actions');
   actions.innerHTML=`
@@ -554,13 +631,23 @@ tabRequestsBtn.addEventListener('click',()=>setTab('requests'));
 tabSpamBtn.addEventListener('click',()=>setTab('spam'));
 
 /* Init */
-eventSel.addEventListener('change', ()=>{ currentCode=eventSel.value||''; removedKeySet.clear(); fetchRows(); startPolling(); });
+eventSel.addEventListener('change', async ()=>{
+  currentCode=eventSel.value||''; removedKeySet.clear();
+  initialRequestsLoaded = false;              // force full-bar load on event change
+  await fetchRows({background:false});        // show “Loading your requests…” + bar
+  startPolling();
+});
 
 (async function boot(){
   await loadActiveEvents();
   initCollapsibles();
   setTab('requests');
-  if(eventSel.value){ currentCode=eventSel.value; await fetchRows(); startPolling(); }
+  if(eventSel.value){
+    currentCode=eventSel.value;
+    initialRequestsLoaded = false;
+    await fetchRows({background:false});      // first load: full bar
+    startPolling();                           // subsequent polls show spinner only
+  }
 })();
 </script>
 </body>
