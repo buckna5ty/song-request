@@ -60,7 +60,7 @@
     background:#2a2a2a; color:#fff; font-size:15px; padding:0 12px; width:100%;
   }
 
-  /* Inline info bar area stays reserved (no layout shift) */
+  /* Inline info row stays reserved (no layout shift) */
   .inline-row{
     display:flex; align-items:center; gap:10px;
     margin-top:8px; min-height:24px;
@@ -69,7 +69,7 @@
   .inline-text.good{ color:#34d399; }
   .inline-text.bad{ color:#ef4444; }
 
-  /* Progress bar (shown only on first load / event change) */
+  /* Progress bar (first load / event change) */
   .progress{
     position:relative; height:6px; flex:1 1 240px; max-width:360px;
     background:#2a2a2a; border-radius:999px; overflow:hidden; border:1px solid #333;
@@ -83,7 +83,7 @@
   }
   @keyframes bar{ to{ transform:translateX(100%); } }
 
-  /* Subtle polling spinner (right aligned, no text) */
+  /* Subtle polling spinner (no text) */
   .spin{
     margin-left:auto; width:18px; height:18px; border-radius:50%;
     border:2px solid rgba(255,255,255,.25); border-top-color:#bbb;
@@ -164,7 +164,7 @@
 </head>
 <body>
   <div class="wrap">
-    <!-- Centered logo like index.html -->
+    <!-- Centered logo -->
     <div class="dce-logo">
       <img src="assets/dce-logo.png" alt="David Charles Events" onerror="this.style.display='none'">
     </div>
@@ -174,7 +174,7 @@
       <label for="eventSel">Select Your Event</label>
       <select id="eventSel"></select>
 
-      <!-- Inline info row (reserved height, no layout shift) -->
+      <!-- Inline info row (reserved height) -->
       <div class="inline-row">
         <span id="inlineText" class="inline-text"></span>
         <div id="inlineProgress" class="progress"></div>
@@ -353,7 +353,6 @@ async function fetchRows({background=false} = {}){
   if(!currentCode) return;
   if(Date.now() < pollPausedUntil) return;
 
-  // Display mode: first load / event change -> bar; background polls -> spinner
   if (!initialRequestsLoaded || !background) showFullLoading('Loading your requests...');
   else showSpinnerOnly();
 
@@ -366,9 +365,8 @@ async function fetchRows({background=false} = {}){
   }catch{
     statusLine.textContent='Connection error.';
   } finally{
-    // Clear for full loads; for background we keep only spinner during fetch
     if (!background) clearInline();
-    else inlineSpin.classList.remove('show'); // hide spinner after cycle
+    else inlineSpin.classList.remove('show');
   }
 }
 
@@ -504,7 +502,7 @@ async function togglePlayedForKey(key, ids, targetPlayed){
 
   if (card) card.querySelectorAll('.btn').forEach(b=> b.disabled = false);
   inFlightByKey.delete(key);
-  await fetchRows({background:false});
+  await fetchRows({background:true});   /* <<< only spinner after actions */
 }
 
 function attachRequestActions(card){
@@ -633,8 +631,8 @@ tabSpamBtn.addEventListener('click',()=>setTab('spam'));
 /* Init */
 eventSel.addEventListener('change', async ()=>{
   currentCode=eventSel.value||''; removedKeySet.clear();
-  initialRequestsLoaded = false;              // force full-bar load on event change
-  await fetchRows({background:false});        // show “Loading your requests…” + bar
+  initialRequestsLoaded = false;              // full-bar load on event change
+  await fetchRows({background:false});        // show full text + bar
   startPolling();
 });
 
@@ -646,7 +644,7 @@ eventSel.addEventListener('change', async ()=>{
     currentCode=eventSel.value;
     initialRequestsLoaded = false;
     await fetchRows({background:false});      // first load: full bar
-    startPolling();                           // subsequent polls show spinner only
+    startPolling();                           // background polls: spinner only
   }
 })();
 </script>
