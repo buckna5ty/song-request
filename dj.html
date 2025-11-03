@@ -122,7 +122,9 @@
     padding:10px;
     display:grid;
     grid-template-columns:64px 1fr 190px;
-    gap:12px; align-items:center;
+    gap:12px;
+    /* Pin children to the TOP so art/buttons don't recenter on expand */
+    align-items:start;
   }
   .card.appear{ opacity:0; transform:translateY(8px); }
   .card.appear.card-ready{ transition:opacity .28s ease, transform .28s ease; opacity:1; transform:none; }
@@ -130,7 +132,7 @@
 
   @media (max-width:760px){ .card{ grid-template-columns:64px 1fr; } .card .actions{ grid-column:1/-1; } }
 
-  .thumb{ width:64px;height:64px;border-radius:10px;background:#1f1f1f;object-fit:cover;display:block; }
+  .thumb{ width:64px;height:64px;border-radius:10px;background:#1f1f1f;object-fit:cover;display:block; align-self:start; }
   .meta{ min-width:0; }
   .title{ margin:0 0 2px; font-weight:800; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
   .sub{ margin:0; color:#e6e6e6; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -144,7 +146,7 @@
   .names-box ul{ margin:0; padding-left:18px; }
   .names-box li{ margin:3px 0; color:#fafafa; font-size:13px; }
 
-  .actions{ display:grid; gap:6px; }
+  .actions{ display:grid; gap:6px; align-self:start; }
   .btn{
     display:inline-flex; align-items:center; justify-content:center;
     padding:0 10px; height:30px; font-size:12px; line-height:1;
@@ -502,7 +504,7 @@ async function togglePlayedForKey(key, ids, targetPlayed){
 
   if (card) card.querySelectorAll('.btn').forEach(b=> b.disabled = false);
   inFlightByKey.delete(key);
-  await fetchRows({background:true});   /* <<< only spinner after actions */
+  await fetchRows({background:true});   /* spinner-only after actions */
 }
 
 function attachRequestActions(card){
