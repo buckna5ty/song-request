@@ -30,57 +30,38 @@
   }
   .row{ width:100%; max-width:var(--field-max); margin:0 auto; }
   label{ display:block; font-size:14px; color:var(--muted); margin:10px 0 6px; }
-  input[type="text"]{
-    width:100%; height:52px; padding:0 14px; border:1px solid var(--border); border-radius:var(--radius);
-    background:var(--surface); color:var(--ink); font-size:16px; outline:none;
-    transition: box-shadow .12s ease, border-color .12s ease;
-    font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  }
-  input[type="text"]::placeholder{ color:#9e9e9e; }
-  input[type="text"]:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring); }
   .field{ position:relative; }
   .search{ width:100%; height:52px; padding:0 42px 0 14px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); color:var(--ink); font-size:16px; transition: box-shadow .12s ease, border-color .12s ease; }
   .search::placeholder{ color:#9e9e9e; }
   .search:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring); }
   .clear{
-    position:absolute; right:8px; top:50%; transform:translateY(-50%); width:32px; height:32px; border-radius:50%;
-    display:none; align-items:center; justify-content:center; border:1px solid var(--border); background:#2b2b2b; color:#e0e0e0;
-    cursor:pointer; user-select:none; line-height:1; font-size:18px;
+    position:absolute; right:8px; top:50%; transform:translateY(-50%); width:32px;
+    height:32px; border-radius:50%; border:1px solid var(--border); background:var(--surface-2); color:#fff;
+    display:grid; place-items:center; cursor:pointer; opacity:.8;
   }
-  .clear.show{ display:flex; }
-  .clear:active{ transform:translateY(-50%) scale(0.98); }
-  .results{ margin-top:6px; }
-  .hidden{ display:none !important; }
-  .item{
-    display:grid; grid-template-columns:56px 1fr; align-items:center; gap:12px; padding:10px;
-    border:1px solid var(--border); border-radius:12px; background:var(--surface-2);
-    transition:background .15s,transform .06s,border-color .15s; cursor:pointer; margin-bottom:8px;
-  }
-  .item:hover{ background:var(--surface-2-hover); } .item:active{ transform:scale(.995); }
-  .cover{ width:56px;height:56px;border-radius:10px;object-fit:cover;background:#1f1f1f; color:#9aa6b2; display:grid; place-items:center; font-size:12px; }
-  .info{ min-width:0; }
-  .ttl{ margin:0 0 2px; font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
-  .art{ margin:0; color:#cfcfcf; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .selected{ margin-top:6px; border:1px solid var(--border); border-radius:12px; background:var(--surface); display:none; }
-  .selected.active{ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring); }
-  .sel-inner{ display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:center; padding:10px; }
-  .sel-cover{ width:72px;height:72px;border-radius:12px;object-fit:cover;background:#1f1f1f;color:#9aa6b2;display:grid;place-items:center;font-size:14px; }
-  .sel-text{ min-width:0; }
-  .sel-title{ margin:0 0 2px; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
-  .sel-artist{ margin:0; color:#cfcfcf; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .status{ margin-top:6px; font-size:13px; color:var(--muted); min-height:0; }
-
-  .actions{ width:100%; max-width:var(--field-max); margin:20px auto 0; } /* 20px gap requested */
+  .clear.show{ opacity:1; }
+  .results{ margin-top:10px; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--surface); }
+  .result{ display:grid; grid-template-columns:72px 1fr auto; gap:10px; padding:8px; align-items:center; border-bottom:1px solid var(--border); }
+  .result:last-child{ border-bottom:none; }
+  .art{ width:72px; height:72px; background:#2a2a2a; border-radius:10px; display:grid; place-items:center; overflow:hidden; }
+  .art img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .meta .t{ margin:0; font-weight:700; font-size:15px; color:#fff; line-height:1.2; }
+  .meta .a{ margin:3px 0 0; color:#dcdcdc; font-size:13px; }
+  .pick{ background:#2a2a2a; border:1px solid #444; color:#fff; border-radius:10px; height:36px; padding:0 12px; cursor:pointer; }
+  .selected{ display:none; margin-top:12px; }
+  .selected.active{ display:block; }
+  .sel-inner{ display:grid; grid-template-columns:84px 1fr; gap:10px; align-items:center; border:1px solid var(--border); background:var(--surface); border-radius:12px; padding:8px; }
+  .sel-cover{ width:84px; height:84px; background:#2a2a2a; border-radius:10px; display:grid; place-items:center; }
+  .sel-title{ margin:0; font-size:16px; font-weight:700; }
+  .sel-artist{ margin:2px 0 0; font-size:13px; color:#dcdcdc; }
+  .status{ min-height:18px; margin:10px 0 0; color:var(--muted); font-size:13px; }
+  .actions{ width:100%; max-width:var(--field-max); margin:16px auto 0; display:flex; justify-content:center; }
   .btn{
-    width:100%; height:54px; border:1px solid var(--accent); background:var(--accent); color:#000000;
-    border-radius:14px; cursor:pointer; font-weight:800; letter-spacing:.03em; font-size:16px; text-transform:uppercase;
-    display:inline-flex; align-items:center; justify-content:center; transform:translateZ(0); transition:transform .06s, filter .15s, opacity .15s, background .15s;
-    box-shadow:0 2px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.15);
-    font-family:"Adventor", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    display:inline-flex; align-items:center; justify-content:center; gap:10px;
+    padding:0 18px; height:46px; border-radius:12px; border:1px solid transparent; cursor:pointer;
+    box-shadow:0 2px 0 rgba(0,0,0,.35), 0 8px 14px rgba(0,0,0,.15);
+    background:var(--accent); color:#052911; font-weight:700; letter-spacing:.04em;
   }
-  .btn:hover{ filter:brightness(1.05); }
-  .btn:active{ transform:scale(0.985); }
-  .btn[disabled]{ opacity:.75; cursor:not-allowed; }
   .btn .spin{ width:18px; height:18px; margin-right:10px; border-radius:50%; border:2px solid rgba(6,44,42,.4); border-top-color:#062c2a; animation:spin .8s linear infinite; display:none; }
   .btn.loading .spin{ display:inline-block; }
   @keyframes spin{ to{ transform:rotate(360deg);} }
@@ -148,7 +129,8 @@
 </div>
 
 <script>
-const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxT9ELlP_dJ9myw2Z5_kNYIPlJIlHQbbho9L6BehI68DTpOJNSPgxCd9MSPL_Y5PKm-5g/exec';
+const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxaN-0GQmvwy3G9GKD4hqZ1D6mjrIbBNDZZW-uGbuHIpiVTQ0BtOkmlQzSqjU6yjkmJ-g/exec';
+const SPOTIFY_HELPER_URL = ''; // TODO: set to your Netlify/Cloudflare helper when we build it (e.g., https://your-domain/api/search)
 const REDIRECT_DELAY_MS = 2200;
 
 const urlp = new URLSearchParams(location.search);
@@ -178,8 +160,8 @@ if (DEBUG) showDebug();
 
 function setStatus(m='',err=false){ statusEl.textContent=m; statusEl.style.color=err?'#ffb4b4':'var(--muted)'; }
 function clearResults(){ resultsEl.innerHTML=''; }
-function showResults(){ resultsEl.classList.remove('hidden'); }
-function hideResults(){ resultsEl.classList.add('hidden'); clearResults(); }
+function showResults(){ resultsEl.style.display='block'; }
+function hideResults(){ resultsEl.style.display='none'; clearResults(); }
 function hideSelected(){
   selectedBox.style.display='none'; selectedBox.classList.remove('active');
   if(selCoverEl && selCoverEl.tagName.toLowerCase()==='img'){ selCoverEl.outerHTML=`<div id="selCover" class="sel-cover" aria-hidden="true">♪</div>`; selCoverEl=document.getElementById('selCover'); }
@@ -187,108 +169,176 @@ function hideSelected(){
 }
 
 /* JSONP */
-function jsonp(url, cbParam='callback'){
+function jsonp(url, params = {}){
+  const qs=new URLSearchParams(params); const cb='cb_'+Math.random().toString(36).slice(2);
+  qs.set('callback',cb); qs.set('t',Date.now());
   return new Promise((res,rej)=>{
-    const cb='cb_'+Math.random().toString(36).slice(2);
-    const s=document.createElement('script');
-    s.src = url + (url.includes('?')?'&':'?') + cbParam + '=' + cb + '&t=' + Date.now();
-    const kill=setTimeout(()=>{ cleanup(); rej(new Error('timeout')); }, 9000);
-    function cleanup(){ clearTimeout(kill); try{ delete window[cb]; }catch{} s.remove(); }
-    window[cb]=(data)=>{ cleanup(); res(data); };
-    s.onerror=()=>{ cleanup(); rej(new Error('jsonp error')); };
-    document.body.appendChild(s);
+    const s=document.createElement('script'); s.src=url+(url.includes('?')?'&':'?')+qs.toString();
+    const kill=setTimeout(()=>{cleanup(); rej(new Error('timeout'));},9000);
+    function cleanup(){clearTimeout(kill); try{delete window[cb];}catch{} s.remove();}
+    window[cb]=(d)=>{cleanup(); res(d);}; s.onerror=()=>{cleanup(); rej(new Error('jsonp'));}; document.body.appendChild(s);
   });
 }
 
-/* Search providers */
+/* Event config */
+let EVENT_PROVIDER = 'apple';
+let EVENT_MARKET = 'US';
+let EXPLICIT_ALLOWED = true;
+
+async function loadConfig(){
+  if(!EVENT_CODE) return;
+  try{
+    const r = await jsonp(ENDPOINT_URL, {mode:'getEventConfig', event:EVENT_CODE});
+    if(r && r.ok && r.config){
+      EVENT_PROVIDER = (r.config.provider||'apple').toLowerCase();
+      EVENT_MARKET = (r.config.market||'US').toUpperCase();
+      EXPLICIT_ALLOWED = !!r.config.explicitAllowed;
+      if (DEBUG) showDebug(`Event: ${EVENT_CODE} • ${EVENT_PROVIDER.toUpperCase()} • ${EVENT_MARKET} • Explicit ${EXPLICIT_ALLOWED?'ON':'OFF'}`);
+      if (EVENT_PROVIDER==='spotify' && !SPOTIFY_HELPER_URL){
+        setStatus('Admin note: Spotify helper not configured yet. We will add it next.', true);
+      }
+    }
+  }catch{
+    // leave defaults
+  }
+}
+
+/* Apple Search */
 async function searchITunes(term){
   try{
-    const data = await jsonp(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=8`, 'callback');
-    return (data?.results||[]).map(t=>({title:t.trackName, artist:t.artistName, cover:t.artworkUrl100||t.artworkUrl60, link:t.trackViewUrl}));
-  }catch(_e){
-    try{
-      const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=musicTrack&limit=8`, {mode:'cors', cache:'no-store'});
-      if (r.ok) {
-        const data = await r.json();
-        return (data?.results||[]).map(t=>({title:t.trackName, artist:t.artistName, cover:t.artworkUrl100||t.artworkUrl60, link:t.trackViewUrl}));
-      }
-    }catch(__e){}
-  }
-  return [];
-}
-async function searchDeezer(term){
-  try{
-    const data=await jsonp(`https://api.deezer.com/search?q=${encodeURIComponent(term)}&limit=8&output=jsonp`,'callback');
-    return (data?.data||[]).map(d=>({title:d.title, artist:d?.artist?.name||'', cover:d?.album?.cover_medium||d?.album?.cover||'', link:d.link||''}));
-  }catch(_e){ return []; }
-}
-async function searchMB(term){
-  try{
-    const r=await fetch(`https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(term)}&fmt=json&limit=8`,{
-      headers:{'User-Agent':'DCE-SongRequest/1.0 (https://www.davidcharlesevents.com)'}, cache:'no-store'
-    });
-    if(!r.ok) return [];
-    const data=await r.json();
-    return (data.recordings||[]).map(rec=>{
-      const ac=rec['artist-credit']; const artist=ac && ac[0] && ac[0].name ? ac[0].name : '';
-      return {title:rec.title, artist, cover:'', link:`https://musicbrainz.org/recording/${rec.id}`};
-    });
-  }catch(_e){ return []; }
+    const data = await jsonp('https://itunes.apple.com/search', {term, entity:'musicTrack', country:EVENT_MARKET, limit:12});
+    let results = Array.isArray(data?.results) ? data.results : [];
+    if(!EXPLICIT_ALLOWED){
+      results = results.filter(x => String(x.trackExplicitness||'').toLowerCase()!=='explicit');
+    }
+    return results.map(x=>({
+      provider:'apple',
+      trackId: x.trackId,
+      title: x.trackName,
+      artist: x.artistName,
+      album: x.collectionName || '',
+      artwork: x.artworkUrl100 || x.artworkUrl60 || '',
+      url: x.trackViewUrl, // track link to store
+      albumUrl: x.collectionViewUrl || '',
+      artistUrl: x.artistViewUrl || ''
+    }));
+  }catch{ return []; }
 }
 
-/* Render */
+/* Spotify Search (via helper) */
+async function searchSpotify(term){
+  if(!SPOTIFY_HELPER_URL) return [];
+  try{
+    const u = new URL(SPOTIFY_HELPER_URL);
+    u.searchParams.set('q', term);
+    u.searchParams.set('market', EVENT_MARKET);
+    u.searchParams.set('limit', '12');
+    // Expect unified items from helper
+    const res = await fetch(u.toString(), {mode:'cors'});
+    if(!res.ok) return [];
+    const data = await res.json();
+    let items = Array.isArray(data?.items) ? data.items : [];
+    if(!EXPLICIT_ALLOWED){
+      items = items.filter(x => !x.explicit); // helper returns explicit boolean
+    }
+    return items.map(x=>({
+      provider:'spotify',
+      trackId: x.trackId,               // e.g., 3n3Ppam7vgaVa1iaRUc9Lp
+      title: x.title,
+      artist: x.artist,
+      album: x.album,
+      artwork: x.artwork || '',
+      url: `https://open.spotify.com/track/${x.trackId}`,  // track link to store
+      albumUrl: `https://open.spotify.com/album/${x.albumId}`,
+      artistUrl: `https://open.spotify.com/artist/${x.artistId}`,
+      uri: `spotify:track:${x.trackId}` // for app-open later (DJ page)
+    }));
+  }catch{ return []; }
+}
+
+/* Rendering */
+function resultRow(item){
+  const row=document.createElement('div'); row.className='result';
+  const art=document.createElement('div'); art.className='art';
+  if(item.artwork){ const img=new Image(); img.src=item.artwork; img.alt=''; art.appendChild(img); } else { art.textContent='♪'; }
+  const meta=document.createElement('div'); meta.className='meta';
+  const t=document.createElement('p'); t.className='t'; t.textContent=item.title||'';
+  const a=document.createElement('p'); a.className='a'; a.textContent=item.artist||'';
+  meta.append(t,a);
+  const btn=document.createElement('button'); btn.className='pick'; btn.textContent='Select';
+  btn.onclick=()=>{
+    // store selections
+    titleInput.value=item.title||'';
+    artistInput.value=item.artist||'';
+    linkInput.value=item.url||'';
+    // show selected UI
+    selTitle.textContent=item.title||''; selArtist.textContent=item.artist||'';
+    selectedBox.style.display='block'; selectedBox.classList.add('active');
+    // cover
+    if(item.artwork){
+      const img=new Image(); img.src=item.artwork; img.alt=''; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover';
+      document.getElementById('selCover').replaceWith(img); img.id='selCover'; selCoverEl=img;
+    }else{
+      if(selCoverEl && selCoverEl.tagName.toLowerCase()==='img'){ selCoverEl.outerHTML=`<div id="selCover" class="sel-cover" aria-hidden="true">♪</div>`; selCoverEl=document.getElementById('selCover'); }
+    }
+    setStatus('Ready to submit.');
+  };
+  row.append(art, meta, btn);
+  return row;
+}
+
 function render(list){
-  clearResults(); if(!list.length){ setStatus('No results'); return; } setStatus('');
+  clearResults();
+  for(const item of list){ resultsEl.appendChild(resultRow(item)); }
   showResults();
-  list.forEach(({title,artist,cover,link})=>{
-    const div=document.createElement('div'); div.className='item'; div.setAttribute('role','button'); div.setAttribute('tabindex','0');
-    const coverHTML=cover?`<img class="cover" src="${cover}" alt="Album cover" loading="lazy" decoding="async" width="56" height="56">`:`<div class="cover" aria-hidden="true">♪</div>`;
-    div.innerHTML=`${coverHTML}<div class="info"><p class="ttl">${title||'Unknown Title'}</p><p class="art">${artist||'Unknown Artist'}</p></div>`;
-    const choose=()=>useSong({title,artist,cover,link}, div);
-    div.onclick=choose; div.onkeyup=e=>{ if(e.key==='Enter'||e.key===' ') choose(); };
-    resultsEl.appendChild(div);
-  });
-}
-function showSelectedCard({title,artist,cover}){
-  if(cover){ const img=document.createElement('img'); img.src=cover; img.alt='Album cover'; img.className='sel-cover'; img.loading='lazy'; img.decoding='async'; if(selCoverEl) selCoverEl.replaceWith(img); selCoverEl=img; }
-  else{ if(!selCoverEl || selCoverEl.tagName.toLowerCase()==='img'){ const box=document.createElement('div'); box.id='selCover'; box.className='sel-cover'; box.setAttribute('aria-hidden','true'); box.textContent='♪'; if(selCoverEl) selCoverEl.replaceWith(box); selCoverEl=box; } }
-  selTitle.textContent=title||'Unknown Title'; selArtist.textContent=artist||'Unknown Artist';
-  selectedBox.style.display='block'; selectedBox.classList.add('active');
-}
-function useSong({title,artist,cover,link}, el){
-  document.querySelectorAll('.item').forEach(x=>x.classList.remove('selected')); el?.classList.add('selected');
-  titleInput.value = title || ''; artistInput.value = artist || ''; linkInput.value = link || '';
-  showSelectedCard({title,artist,cover,link}); hideResults();
 }
 
-/* Search events */
-let debounce=null,lastTerm='';
+/* Search handlers */
+let lastTerm='';
 q.addEventListener('input', ()=>{
-  const raw=q.value; if(raw.length>=1) clearBtn.classList.add('show'); else clearBtn.classList.remove('show');
-  const t=raw.trim(); if(t===lastTerm) return; lastTerm=t;
-  clearTimeout(debounce);
-  debounce=setTimeout(async()=>{
-    if(!t){ setStatus(''); hideResults(); return; }
-    setStatus('Searching…');
-    let list=await searchITunes(t);
-    if(!list.length) list=await searchDeezer(t);
-    if(!list.length) list=await searchMB(t);
+  const t=q.value.trim();
+  clearBtn.classList.toggle('show', !!t);
+  if(!t){ setStatus(''); hideResults(); hideSelected(); return; }
+  if(t===lastTerm) return;
+  lastTerm=t;
+  setStatus('Searching…');
+  window.clearTimeout(q._timer);
+  q._timer=setTimeout(async ()=>{
+    let list=[];
+    if (EVENT_PROVIDER==='apple'){
+      list = await searchITunes(t);
+    } else if (EVENT_PROVIDER==='spotify'){
+      list = await searchSpotify(t);
+      if (!SPOTIFY_HELPER_URL && list.length===0){
+        setStatus('Spotify not configured yet — we’ll add your helper next.', true);
+      }
+    } else {
+      list = []; // future adapters
+    }
     if(list.length) render(list); else { setStatus('No results'); hideResults(); }
   }, 240);
 });
+
 q.addEventListener('keydown', e=>{
   if(e.key==='Enter'){
     e.preventDefault();
     const t=q.value.trim(); if(!t) return;
     setStatus('Searching…');
     (async()=>{
-      let list=await searchITunes(t);
-      if(!list.length) list=await searchDeezer(t);
-      if(!list.length) list=await searchMB(t);
+      let list=[];
+      if (EVENT_PROVIDER==='apple'){
+        list = await searchITunes(t);
+      } else if (EVENT_PROVIDER==='spotify'){
+        list = await searchSpotify(t);
+        if (!SPOTIFY_HELPER_URL && list.length===0){
+          setStatus('Spotify not configured yet — we’ll add your helper next.', true);
+        }
+      }
       if(list.length) render(list); else { setStatus('No results'); hideResults(); }
     })();
   }
 });
+
 clearBtn.addEventListener('click', ()=>{
   q.value=''; lastTerm=''; clearBtn.classList.remove('show'); setStatus(''); hideResults(); hideSelected();
   titleInput.value=''; artistInput.value=''; linkInput.value=''; q.focus({preventScroll:true});
@@ -318,7 +368,7 @@ function writeRequest(){
 }
 submitBtn.addEventListener('click', writeRequest);
 
-window.addEventListener('load', ()=>{ if (DEBUG) showDebug(); nameInput.focus({preventScroll:true}); });
+window.addEventListener('load', async ()=>{ await loadConfig(); if (DEBUG) showDebug(); nameInput.focus({preventScroll:true}); });
 </script>
 </body>
 </html>
