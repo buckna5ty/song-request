@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>DCE • EVENT SETUP</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#212121;
+    --section:#363636;     /* section background */
+    --surface:#424242;     /* not used much here, but matches DJ */
+    --border:#3a3a3a;
+    --ink:#f2f2f2;
+    --muted:#e6e6e6;
+    --accent:#1dcec9;
+    --ring:rgba(255,255,255,.22);
+
+    --r-lg:16px; --r-md:12px; --w:980px;
+
+    --font-head:"Adventor", "Roboto", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    --font-ui:"Roboto", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  @font-face{
+    font-family:"Adventor";
+    src:url("texgyreadventor-regular.otf") format("opentype");
+    font-weight:400; font-style:normal; font-display:swap;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-ui); font-weight:300; }
+
+  .wrap{ max-width:var(--w); margin:0 auto; padding:18px 12px 64px; }
+  .title{
+    text-align:center; margin:8px 0 18px; letter-spacing:.04em;
+    font-family:var(--font-head); font-weight:400; font-size:clamp(22px,5.4vw,36px);
+  }
+
+  .grid{ display:grid; grid-template-columns:1fr; gap:16px; }
+  @media(min-width:900px){ .grid{ grid-template-columns:1fr 1fr; } }
+
+  .card{
+    background:var(--section); border:1px solid var(--border); border-radius:var(--r-lg); padding:16px;
+    box-shadow:0 4px 14px rgba(0,0,0,.25);
+  }
+  .card h2{ margin:0 0 12px; font-size:18px; font-family:var(--font-ui); font-weight:400; }
+
+  .field{ margin-bottom:10px; }
+  .label{ display:block; font-size:13px; color:var(--muted); margin:0 0 6px; font-weight:300; }
+  .input,.date{
+    width:100%; height:48px; padding:0 14px; border:1px solid var(--border); border-radius:12px;
+    background:#2b2b2b; color:var(--ink); outline:none; font-size:16px; transition: box-shadow .12s ease, border-color .12s ease; font-weight:300;
+  }
+  .input:focus,.date:focus{ border-color:#e6e6e6; box-shadow:0 0 0 3px var(--ring); }
+
+  .row{ display:flex; gap:10px; } .row > *{ flex:1; }
+
+  .btn{
+    height:44px; padding:0 14px; border:1px solid var(--accent); background:var(--accent); color:#000;
+    border-radius:12px; cursor:pointer; user-select:none; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    transition:transform .06s ease, filter .15s ease, box-shadow .06s ease;
+    box-shadow:0 2px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.15);
+    font-family:var(--font-ui); font-weight:400; letter-spacing:.02em;
+  }
+  .btn:hover{ filter:brightness(1.05); }
+  .btn:active{ transform:translateY(1px); box-shadow:inset 0 2px 0 rgba(0,0,0,.25); }
+  .btn.secondary{ background:#4f4f4f; color:#fff; border-color:#4a4a4a; }
+  .btn.warn{ background:#ef4444; border-color:#ef4444; color:#fff; }
+  .small{ height:38px; padding:0 12px; border-radius:10px; font-weight:400; }
+
+  .events{ display:flex; flex-direction:column; gap:12px; }
+  .event{ border:1px solid var(--border); border-radius:12px; background:#4a4a4a; padding:12px; }
+  .event-h{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .event-title{ margin:0; font-weight:400; color:#fff; font-size:16px; font-family:var(--font-ui); }
+  .event-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .qr-wrap{ margin-top:10px; display:none; }
+  .qr-wrap.show{ display:block; }
+  .qr{ background:#fff; border-radius:12px; padding:8px; display:inline-block; }
+  .help{ font-size:12px; color:#f0f0f0; margin-top:6px; font-weight:300; }
+  .status{ font-size:13px; color:#f0f0f0; min-height:18px; margin-top:8px; font-weight:300; }
+
+  .gate{ position:fixed; inset:0; background:rgba(33,33,33,.98); display:flex; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(2px); }
+  .gate-card{ width:min(420px,90vw); background:var(--section); border:1px solid var(--border); border-radius:16px; padding:18px; text-align:center; box-shadow:0 12px 32px rgba(0,0,0,.35); }
+  .gate-card h1{ margin:6px 0 12px; font-size:20px; font-family:var(--font-head); font-weight:400; }
+  .pin-input{ width:100%; letter-spacing:0.35em; text-align:center; font-weight:400; font-size:20px; }
+  .err{ color:#ffb4b4; font-size:13px; min-height:16px; margin-top:6px; }
+  .flex{ display:flex; gap:8px; flex-wrap:wrap; }
+  .right{ margin-left:auto; }
+</style>
+</head>
+<body>
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <h1>Enter Admin PIN</h1>
+    <input id="pin" class="input pin-input" type="password" inputmode="numeric" placeholder="••••" maxlength="8" />
+    <div class="flex" style="margin-top:12px; justify-content:center;">
+      <button class="btn small" id="pinGo">Unlock</button>
+    </div>
+    <div id="pinErr" class="err"></div>
+    <div class="help">Tip: PIN is saved on this device so you won’t be asked again.</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="title">EVENT SETUP</div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Create Event</h2>
+      <div class="field">
+        <label class="label" for="evtDate">Event Date</label>
+        <input id="evtDate" class="date" type="date" />
+      </div>
+      <div class="field">
+        <label class="label" for="evtName">Event Name</label>
+        <input id="evtName" class="input" type="text" placeholder="e.g., Holbert / Scally Wedding" />
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <button id="btnCreate" class="btn">Create Event</button>
+        <button id="btnClear" class="btn secondary">Clear</button>
+      </div>
+      <!-- removed status line per request -->
+    </section>
+
+    <section class="card">
+      <h2>Active Events</h2>
+      <div id="events" class="events"><div class="status">Loading…</div></div>
+      <div class="row" style="margin-top:10px;">
+        <button id="btnRefresh" class="btn secondary">Refresh</button>
+      </div>
+      <div class="help">Links open the guest request page with the event code preselected.</div>
+    </section>
+  </div>
+</div>
+
+<script>
+const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxkSPUc2VWQYkhJ_af7CShegZLAMmVgUsTp2nMeVwkkhdFbdQT8wk2s6xBAAynjtLDT/exec';
+const GUEST_BASE = 'https://requests.davidcharlesevents.com/';
+const ADMIN_PIN = '9453';
+
+/* PIN gate */
+const gate = document.getElementById('gate');
+const pinInput = document.getElementById('pin');
+const pinGo = document.getElementById('pinGo');
+const pinErr = document.getElementById('pinErr');
+function focusPinSoon(){ setTimeout(()=>{ try{ pinInput.focus({preventScroll:true}); }catch{} }, 30); }
+function unlockIfValid(pin){
+  if (String(pin).trim() === ADMIN_PIN) { try{ localStorage.setItem('dce_admin_ok','1'); }catch{} gate.style.display='none'; }
+  else { pinErr.textContent = 'Incorrect PIN.'; focusPinSoon(); }
+}
+pinGo.addEventListener('click', ()=> unlockIfValid(pinInput.value));
+pinInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') unlockIfValid(pinInput.value); });
+try{ if (localStorage.getItem('dce_admin_ok') === '1') gate.style.display='none'; else focusPinSoon(); }catch{ focusPinSoon(); }
+
+/* Helpers */
+const $ = s=>document.querySelector(s);
+function j2qs(o){ return new URLSearchParams(o).toString(); }
+function jsonp(url, cbParam='callback'){
+  return new Promise((res,rej)=>{
+    const cb='cb_'+Math.random().toString(36).slice(2);
+    const s=document.createElement('script');
+    s.src = url + (url.includes('?')?'&':'?') + cbParam + '=' + cb + '&t=' + Date.now();
+    const kill=setTimeout(()=>{ cleanup(); rej(new Error('timeout')); }, 9000);
+    function cleanup(){ clearTimeout(kill); try{ delete window[cb]; }catch{} s.remove(); }
+    window[cb]=(data)=>{ cleanup(); res(data); };
+    s.onerror=()=>{ cleanup(); rej(new Error('jsonp error')); };
+    document.body.appendChild(s);
+  });
+}
+function fmtTitle(dateIso, name){
+  const d = new Date(dateIso);
+  const dow = d.toLocaleDateString(undefined,{weekday:'short'}); // Wed
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${dow} ${mm}.${dd}.${yy} - ${name}`;
+}
+function slugify(name, dateStr){
+  const d = dateStr ? new Date(dateStr) : new Date();
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), da = String(d.getDate()).padStart(2,'0');
+  const base = (name||'event').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+  return `${base}_${y}${m}${da}`;
+}
+function guestUrlFor(code){ const u=new URL(GUEST_BASE); u.searchParams.set('event',code); return u.toString(); }
+
+/* Create */
+const evtDate=$('#evtDate'), evtName=$('#evtName');
+const btnCreate=$('#btnCreate'), btnClear=$('#btnClear');
+
+btnClear.addEventListener('click', ()=>{ evtDate.value=''; evtName.value=''; });
+
+const eventsEl=$('#events');
+const eventsMap=new Map();
+const qrOpen=new Set();
+
+function renderEvents(list){
+  if (!list || !list.length){ eventsEl.innerHTML = `<div class="status">No Active Events.</div>`; return; }
+  eventsEl.innerHTML='';
+  list.forEach(ev=>{
+    const card=document.createElement('div'); card.className='event'; card.dataset.code=ev.code;
+
+    const h=document.createElement('div'); h.className='event-h';
+    h.innerHTML = `<h3 class="event-title">${fmtTitle(ev.date, ev.name)}</h3>`;
+    card.appendChild(h);
+
+    const actions=document.createElement('div'); actions.className='event-actions';
+
+    const btnPrev=document.createElement('button'); btnPrev.className='btn secondary small'; btnPrev.textContent='Preview Request Page';
+    btnPrev.onclick=()=> window.open(guestUrlFor(ev.code),'_blank','noopener');
+
+    const btnCopy=document.createElement('button'); btnCopy.className='btn secondary small'; btnCopy.textContent='Copy Link';
+    btnCopy.onclick=async()=>{ try{ await navigator.clipboard.writeText(guestUrlFor(ev.code)); btnCopy.textContent='Copied!'; setTimeout(()=>btnCopy.textContent='Copy Link',900);}catch{ alert(guestUrlFor(ev.code)); }};
+
+    const btnQR=document.createElement('button'); btnQR.className='btn secondary small'; btnQR.textContent='Show/Hide QR';
+    const qrC=document.createElement('div'); qrC.className='qr-wrap';
+    const qrInner=document.createElement('div'); qrInner.className='qr';
+    const qrImg=document.createElement('img'); qrImg.width=240; qrImg.height=240; qrImg.decoding='async'; qrImg.loading='lazy';
+    qrInner.appendChild(qrImg);
+    const helper=document.createElement('div'); helper.className='help'; helper.textContent='Scan to open the guest request page.';
+    qrC.append(qrInner, helper);
+    btnQR.onclick=()=>{
+      qrC.classList.toggle('show');
+      if (qrC.classList.contains('show')) {
+        qrOpen.add(ev.code);
+        const url = encodeURIComponent(guestUrlFor(ev.code));
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${url}`;
+        qrImg.alt = `QR for ${ev.name}`;
+      } else { qrOpen.delete(ev.code); }
+    };
+
+    const btnCSV=document.createElement('button'); btnCSV.className='btn secondary small'; btnCSV.textContent='Download CSV';
+    btnCSV.onclick=()=> downloadCSV(ev.code, `${ev.code}.csv`);
+
+    const btnDel=document.createElement('button'); btnDel.className='btn warn small right'; btnDel.textContent='Delete Event';
+    btnDel.onclick=()=> deleteEvent(ev.code, card);
+
+    actions.append(btnPrev, btnCopy, btnQR, btnCSV, btnDel);
+    card.appendChild(actions);
+    card.appendChild(qrC);
+
+    if (qrOpen.has(ev.code)) {
+      qrC.classList.add('show');
+      const url = encodeURIComponent(guestUrlFor(ev.code));
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${url}`;
+      qrImg.alt = `QR for ${ev.name}`;
+    }
+
+    eventsEl.appendChild(card);
+  });
+}
+function upsertEvent(ev){
+  eventsMap.set(ev.code, ev);
+  const list=[...eventsMap.values()].sort((a,b)=> new Date(b.date)-new Date(a.date));
+  renderEvents(list);
+}
+
+async function createEvent(){
+  const name=(evtName.value||'').trim(); const date=(evtDate.value||'').trim();
+  if (!name || !date){ return; }
+  const code=slugify(name, date);
+
+  // optimistic add (fast, no flicker)
+  const optimistic = {code, name, date:new Date(date).toISOString(), active:true};
+  upsertEvent(optimistic);
+
+  btnCreate.setAttribute('disabled','disabled');
+  try{
+    const r=await jsonp(`${ENDPOINT_URL}?${j2qs({ mode:'createEvent', name, date, code, active:'1' })}`);
+    if (!(r && r.ok)){
+      // rollback if failed
+      eventsMap.delete(code); refreshInBackground();
+    } else {
+      evtName.value=''; evtDate.value='';
+      setTimeout(refreshInBackground, 400);
+    }
+  }catch{
+    eventsMap.delete(code); refreshInBackground();
+  }finally{ btnCreate.removeAttribute('disabled'); }
+}
+btnCreate.addEventListener('click', createEvent);
+
+function refreshInBackground(){
+  (async()=>{
+    try{
+      const r=await jsonp(`${ENDPOINT_URL}?${j2qs({mode:'listActive'})}`);
+      if (r && r.ok && Array.isArray(r.events)){
+        eventsMap.clear();
+        r.events.forEach(e=> eventsMap.set(e.code, e));
+        const list=[...eventsMap.values()].sort((a,b)=> new Date(b.date)-new Date(a.date));
+        renderEvents(list);
+        if (list.length===0) eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
+      } else {
+        eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
+      }
+    }catch{
+      eventsEl.innerHTML = `<div class="status">Unable to load events.</div>`;
+    }
+  })();
+}
+
+document.getElementById('btnRefresh').addEventListener('click', refreshInBackground);
+
+/* CSV (header-agnostic) */
+function pick(obj, ...cands){
+  for (const k of cands){ if (obj[k]!==undefined) return obj[k]; }
+  for (const k of Object.keys(obj)){ if (cands.some(c=>c.toLowerCase()===k.toLowerCase())) return obj[k]; }
+  return '';
+}
+async function downloadCSV(code, filename='requests.csv'){
+  try{
+    const r=await jsonp(`${ENDPOINT_URL}?${j2qs({mode:'read', event: code})}`);
+    if (!r || !r.ok){ alert('No data.'); return; }
+    const rows=Array.isArray(r.rows)?r.rows:[];
+    const headers=['Timestamp','Name','Song Title','Artist','Link','Event','ID','Played'];
+    const lines=[headers.join(',')];
+    rows.forEach(obj=>{
+      const t=(pick(obj,'timestamp','Timestamp')||'').toString().replace(/,/g,' ');
+      const n=(pick(obj,'name','Name')||'').toString().replace(/"/g,'""');
+      const st=(pick(obj,'song_title','Song Title','Title','Song')||'').toString().replace(/"/g,'""');
+      const ar=(pick(obj,'artist','Artist')||'').toString().replace(/"/g,'""');
+      const lk=(pick(obj,'link','Link')||'').toString().replace(/"/g,'""');
+      const ev=(pick(obj,'event','Event','Event Code')||code).toString().replace(/"/g,'""');
+      const id=(pick(obj,'id','ID')||'').toString().replace(/"/g,'""');
+      const pl=(String(pick(obj,'played','Played')).toUpperCase()==='TRUE' || pick(obj,'played','Played')==='1')?'TRUE':'';
+      lines.push([`"${t}"`,`"${n}"`,`"${st}"`,`"${ar}"`,`"${lk}"`,`"${ev}"`,`"${id}"`,`"${pl}"`].join(','));
+    });
+    const csv=lines.join('\r\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }catch{ alert('Could not generate CSV.'); }
+}
+
+/* Delete event */
+async function deleteEvent(code, cardEl){
+  const sure=confirm('Delete this event and all of its rows? This cannot be undone.');
+  if(!sure) return;
+  cardEl.remove(); eventsMap.delete(code);
+  if (!eventsEl.children.length) eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
+  try{
+    const r=await jsonp(`${ENDPOINT_URL}?${j2qs({ mode:'deleteEvent', event: code, wipe:'1' })}`);
+    if (!(r && r.ok)){ alert(r && r.error ? r.error : 'Failed to delete.'); refreshInBackground(); }
+    else { setTimeout(refreshInBackground, 400); }
+  }catch{ alert('Network error.'); refreshInBackground(); }
+}
+
+/* Initial load */
+async function loadEventsFirst(){
+  try{
+    const r=await jsonp(`${ENDPOINT_URL}?${j2qs({mode:'listActive'})}`);
+    if (r && r.ok && Array.isArray(r.events)){
+      eventsMap.clear(); r.events.forEach(ev=> eventsMap.set(ev.code, ev));
+      const list=[...eventsMap.values()].sort((a,b)=> new Date(b.date)-new Date(a.date));
+      renderEvents(list);
+      if (list.length===0) eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
+    }else{
+      eventsEl.innerHTML = `<div class="status">No Active Events.</div>`;
+    }
+  }catch{
+    eventsEl.innerHTML = `<div class="status">Unable to load events.</div>`;
+  }
+}
+window.addEventListener('load', loadEventsFirst);
+</script>
+</body>
+</html>
+
