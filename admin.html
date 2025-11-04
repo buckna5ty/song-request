@@ -9,7 +9,8 @@
 <style>
   :root{
     --bg:#212121;
-    --section:#363636;
+    --section:#363636;     /* section background */
+    --surface:#424242;     /* not used much here, but matches DJ */
     --border:#3a3a3a;
     --ink:#f2f2f2;
     --muted:#e6e6e6;
@@ -18,8 +19,8 @@
 
     --r-lg:16px; --r-md:12px; --w:980px;
 
-    --font-head:"Adventor","Roboto",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-    --font-ui:"Roboto",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    --font-head:"Adventor", "Roboto", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    --font-ui:"Roboto", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   }
 
   @font-face{
@@ -160,7 +161,10 @@
 
 <script>
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxaN-0GQmvwy3G9GKD4hqZ1D6mjrIbBNDZZW-uGbuHIpiVTQ0BtOkmlQzSqjU6yjkmJ-g/exec';
-const GUEST_BASE = location.origin.replace(/\/admin\.html.*/,'/') + 'index.html';
+
+/* FIXED: build guest link to /index.html?event=CODE (explicit, bulletproof) */
+const GUEST_BASE = 'https://requests.davidcharlesevents.com/index.html';
+
 const ADMIN_PIN = '9453';
 
 /* ===== PIN gate ===== */
@@ -211,8 +215,9 @@ function slugify(name, date){
   return `${y}${m}${day}-${base||'event'}`;
 }
 
+/* now always builds https://requests.davidcharlesevents.com/index.html?event=CODE */
 function guestUrlFor(code){
-  const u = new URL(GUEST_BASE, location.href);
+  const u = new URL(GUEST_BASE);
   u.searchParams.set('event', code);
   return u.toString();
 }
@@ -301,7 +306,6 @@ function renderEvents(list){
           explicitAllowed: ex.checked ? '1' : '0'
         });
         if(r && r.ok){
-          // refresh the list to update pills
           await refresh();
         }
       }finally{
