@@ -130,7 +130,7 @@
 
 <script>
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxaN-0GQmvwy3G9GKD4hqZ1D6mjrIbBNDZZW-uGbuHIpiVTQ0BtOkmlQzSqjU6yjkmJ-g/exec';
-const SPOTIFY_HELPER_URL = ''; // TODO: set to your Netlify/Cloudflare helper when we build it (e.g., https://your-domain/api/search)
+const SPOTIFY_HELPER_URL = ''; // set later
 const REDIRECT_DELAY_MS = 2200;
 
 const urlp = new URLSearchParams(location.search);
@@ -218,7 +218,7 @@ async function searchITunes(term){
       artist: x.artistName,
       album: x.collectionName || '',
       artwork: x.artworkUrl100 || x.artworkUrl60 || '',
-      url: x.trackViewUrl, // track link to store
+      url: x.trackViewUrl,
       albumUrl: x.collectionViewUrl || '',
       artistUrl: x.artistViewUrl || ''
     }));
@@ -233,25 +233,24 @@ async function searchSpotify(term){
     u.searchParams.set('q', term);
     u.searchParams.set('market', EVENT_MARKET);
     u.searchParams.set('limit', '12');
-    // Expect unified items from helper
     const res = await fetch(u.toString(), {mode:'cors'});
     if(!res.ok) return [];
     const data = await res.json();
     let items = Array.isArray(data?.items) ? data.items : [];
     if(!EXPLICIT_ALLOWED){
-      items = items.filter(x => !x.explicit); // helper returns explicit boolean
+      items = items.filter(x => !x.explicit);
     }
     return items.map(x=>({
       provider:'spotify',
-      trackId: x.trackId,               // e.g., 3n3Ppam7vgaVa1iaRUc9Lp
+      trackId: x.trackId,
       title: x.title,
       artist: x.artist,
       album: x.album,
       artwork: x.artwork || '',
-      url: `https://open.spotify.com/track/${x.trackId}`,  // track link to store
+      url: `https://open.spotify.com/track/${x.trackId}`,
       albumUrl: `https://open.spotify.com/album/${x.albumId}`,
       artistUrl: `https://open.spotify.com/artist/${x.artistId}`,
-      uri: `spotify:track:${x.trackId}` // for app-open later (DJ page)
+      uri: `spotify:track:${x.trackId}`
     }));
   }catch{ return []; }
 }
@@ -267,14 +266,11 @@ function resultRow(item){
   meta.append(t,a);
   const btn=document.createElement('button'); btn.className='pick'; btn.textContent='Select';
   btn.onclick=()=>{
-    // store selections
     titleInput.value=item.title||'';
     artistInput.value=item.artist||'';
     linkInput.value=item.url||'';
-    // show selected UI
     selTitle.textContent=item.title||''; selArtist.textContent=item.artist||'';
     selectedBox.style.display='block'; selectedBox.classList.add('active');
-    // cover
     if(item.artwork){
       const img=new Image(); img.src=item.artwork; img.alt=''; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover';
       document.getElementById('selCover').replaceWith(img); img.id='selCover'; selCoverEl=img;
@@ -313,7 +309,7 @@ q.addEventListener('input', ()=>{
         setStatus('Spotify not configured yet — we’ll add your helper next.', true);
       }
     } else {
-      list = []; // future adapters
+      list = [];
     }
     if(list.length) render(list); else { setStatus('No results'); hideResults(); }
   }, 240);
@@ -347,7 +343,7 @@ clearBtn.addEventListener('click', ()=>{
 /* Submit */
 function openThankYou(){ tyOverlay.style.display='flex'; }
 function setBtnLoading(on){
-  if(on){ submitBtn.classList.add('loading'); submitBtn.setAttribute('disabled','disabled'); btnTxt.textContent='Sending…'; }
+  if(on){ submitBtn.classList.add('loading'); submitBtn.setAttribute('disabled','disabled'); btnTxt.textContent='SUBMITTING…'; }
   else{ submitBtn.classList.remove('loading'); submitBtn.removeAttribute('disabled'); btnTxt.textContent='SUBMIT'; }
 }
 function redirectBack(){
@@ -362,13 +358,4 @@ function writeRequest(){
   setBtnLoading(true); openThankYou();
   const qs=new URLSearchParams({ mode:'write', event:EVENT_CODE, name:nameVal, song_title:titleVal, artist:artistVal, link:linkVal, ua:navigator.userAgent, referer:document.referrer||location.href });
   const cb='cb_'+Math.random().toString(36).slice(2); window[cb]=(data)=>{ try{ delete window[cb]; }catch{} };
-  const s=document.createElement('script'); s.src=ENDPOINT_URL+'?'+qs.toString()+'&callback='+cb+'&t='+Date.now(); s.onerror=()=>{ try{ delete window[cb]; }catch{} };
-  document.body.appendChild(s);
-  setTimeout(()=>{ setBtnLoading(false); nameInput.value=''; q.value=''; lastTerm=''; clearBtn.classList.remove('show'); setStatus(''); hideResults(); hideSelected(); redirectBack(); }, REDIRECT_DELAY_MS);
-}
-submitBtn.addEventListener('click', writeRequest);
-
-window.addEventListener('load', async ()=>{ await loadConfig(); if (DEBUG) showDebug(); nameInput.focus({preventScroll:true}); });
-</script>
-</body>
-</html>
+  const s=document.createElement('script'); s.src=ENDPOINT_URL+'?'+qs.toString()+'&callback='+cb+'&t='+Date.now(); s.onerror=()=>{ try{ delete window_
