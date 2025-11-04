@@ -36,7 +36,6 @@
 
   .wrap{ max-width:var(--maxw); margin:0 auto; padding:16px 14px 56px; }
 
-  /* Header matching index.html */
   .dce-logo{ text-align:center; margin:14px 0 6px; }
   .dce-logo img{ max-width:min(220px,60vw); height:auto; }
   .page-title{
@@ -60,7 +59,6 @@
     background:#2a2a2a; color:#fff; font-size:15px; padding:0 12px; width:100%;
   }
 
-  /* Inline info row stays reserved (no layout shift) */
   .inline-row{
     display:flex; align-items:center; gap:10px;
     margin-top:8px; min-height:24px;
@@ -69,7 +67,6 @@
   .inline-text.good{ color:#34d399; }
   .inline-text.bad{ color:#ef4444; }
 
-  /* Progress bar (first load / event change) */
   .progress{
     position:relative; height:6px; flex:1 1 240px; max-width:360px;
     background:#2a2a2a; border-radius:999px; overflow:hidden; border:1px solid #333;
@@ -78,72 +75,37 @@
   .progress.show{ display:block; }
   .progress::after{
     content:""; position:absolute; inset:0;
-    background:linear-gradient(90deg, rgba(29,206,201,.15) 0%, rgba(29,206,201,.65) 50%, rgba(29,206,201,.15) 100%);
-    transform:translateX(-100%); animation:bar 1.4s linear infinite;
+    background:linear-gradient(90deg, rgba(29,206,201,0) 0%, rgba(29,206,201,.9) 50%, rgba(29,206,201,0) 100%);
+    animation:bar 1.5s linear infinite;
   }
-  @keyframes bar{ to{ transform:translateX(100%); } }
+  @keyframes bar{ 0%{ transform:translateX(-60%);} 100%{ transform:translateX(60%);} }
 
-  /* Subtle polling spinner (no text) */
   .spin{
-    margin-left:auto; width:18px; height:18px; border-radius:50%;
-    border:2px solid rgba(255,255,255,.25); border-top-color:#bbb;
-    animation:spin .9s linear infinite; display:none;
+    width:20px; height:20px; border-radius:50%; border:2px solid #999; border-top-color:#fff;
+    display:none; animation:spin .8s linear infinite;
   }
   .spin.show{ display:inline-block; }
-  @keyframes spin{ to{ transform:rotate(360deg);} }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
 
-  /* Tabs (folder style) */
-  .tabs-bar{
-    display:flex; align-items:flex-end; gap:0; border-bottom:1px solid var(--border); padding:0 6px; margin-bottom:10px;
-  }
-  .tab-btn{
-    height:36px; padding:0 14px; font-size:13px; color:#fff;
-    background:#2f2f2f; border:1px solid var(--border); border-bottom:none;
-    border-top-left-radius:10px; border-top-right-radius:10px;
-    margin:0 6px; transform:translateY(1px); cursor:pointer;
-  }
-  .tab-btn.active{ background:var(--subsection); transform:translateY(0); }
-  .hidden{ display:none!important; }
+  .tabs-bar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+  .tab{ background:#2a2a2a; border:1px solid #3a3a3a; color:#fff; padding:8px 10px; border-radius:10px; font-size:13px; }
+  .col{ background:var(--subsection); border:1px solid var(--border); border-radius:12px; padding:10px; }
+  .cols{ display:grid; grid-template-columns:1fr; gap:10px; }
+  @media(min-width:980px){ .cols{ grid-template-columns:1fr 1fr; } }
 
-  /* Collapsibles */
-  .collapsible{ background:var(--subsection); border:1px solid var(--border); border-radius:12px; padding:10px; margin-top:10px; }
-  .collapsible-header{ display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
-  .twist{ width:18px; height:18px; display:grid; place-items:center; margin-left:8px; }
-  .collapsible-body{ display:none; margin-top:10px; }
-  .collapsible.open .collapsible-body{ display:block; }
-  .count-pill{ font-size:13px; color:#dcdcdc; opacity:.9; margin-left:8px; }
-
-  .list{ display:grid; gap:10px; }
-
-  .card{
-    background:var(--section);
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:10px;
-    display:grid;
-    grid-template-columns:64px 1fr 190px;
-    gap:12px;
-    /* Pin children to the TOP so art/buttons don't recenter on expand */
-    align-items:start;
-  }
-  .card.appear{ opacity:0; transform:translateY(8px); }
-  .card.appear.card-ready{ transition:opacity .28s ease, transform .28s ease; opacity:1; transform:none; }
-  .no-anim *{ transition:none!important; }
-
-  @media (max-width:760px){ .card{ grid-template-columns:64px 1fr; } .card .actions{ grid-column:1/-1; } }
-
-  .thumb{ width:64px;height:64px;border-radius:10px;background:#1f1f1f;object-fit:cover;display:block; align-self:start; }
-  .meta{ min-width:0; }
-  .title{ margin:0 0 2px; font-weight:800; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
+  .card{ display:grid; grid-template-columns:64px 1fr 88px; gap:10px; padding:8px; border:1px solid #3a3a3a; border-radius:10px; background:#2a2a2a; margin-bottom:8px; }
+  .cover{ width:64px; height:64px; border-radius:8px; overflow:hidden; background:#1f1f1f; display:grid; place-items:center; }
+  .cover img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .title{ margin:0; font-size:15px; font-weight:800; color:#fff; }
   .sub{ margin:0; color:#e6e6e6; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
   .reqline{ display:flex; align-items:center; gap:10px; margin-top:2px; cursor:pointer; user-select:none; }
   .reqline .car{ font-size:18px; line-height:1; font-weight:800; color:#eaeaea; }
   .reqline .txt{ font-size:14px; color:#eaeaea; font-weight:700; }
+
   .names-box{ margin-top:6px; background:var(--subsection); border:1px solid var(--border); border-radius:10px; padding:8px 10px; display:none; }
   .names-box.open{ display:block; }
   .names-box .hdr{ color:#cfcfcf; font-size:13px; margin:0 0 4px; }
-  .names-box ul{ margin:0; padding-left:18px; }
   .names-box li{ margin:3px 0; color:#fafafa; font-size:13px; }
 
   .actions{ display:grid; gap:6px; align-self:start; }
@@ -166,7 +128,6 @@
 </head>
 <body>
   <div class="wrap">
-    <!-- Centered logo -->
     <div class="dce-logo">
       <img src="assets/dce-logo.png" alt="David Charles Events" onerror="this.style.display='none'">
     </div>
@@ -176,7 +137,6 @@
       <label for="eventSel">Select Your Event</label>
       <select id="eventSel"></select>
 
-      <!-- Inline info row (reserved height) -->
       <div class="inline-row">
         <span id="inlineText" class="inline-text"></span>
         <div id="inlineProgress" class="progress"></div>
@@ -186,122 +146,45 @@
 
     <div class="panel">
       <div class="tabs-bar">
-        <button id="tabRequests" class="tab-btn active" type="button">Requests</button>
-        <button id="tabSpam" class="tab-btn" type="button">Spam</button>
+        <span class="tab">Requests</span>
+        <span class="tab">Played</span>
+        <span class="tab">Removed</span>
+        <span class="tab">Spam</span>
+        <span class="tab" id="provBadge">Provider: —</span>
       </div>
-
-      <div id="tabRequestsPane">
-        <div class="collapsible open" id="reqWrap">
-          <div class="collapsible-header" data-target="reqBody">
-            <div>Requests <span id="reqCount" class="count-pill">(0)</span></div>
-            <div class="twist">▾</div>
-          </div>
-          <div id="reqBody" class="collapsible-body">
-            <div id="reqList" class="list"></div>
-          </div>
+      <div class="cols">
+        <div class="col">
+          <div id="requests"></div>
         </div>
-
-        <div class="collapsible" id="playedWrap">
-          <div class="collapsible-header" data-target="playedBody">
-            <div>Played Songs <span id="playedCount" class="count-pill">(0)</span></div>
-            <div class="twist">▸</div>
-          </div>
-          <div id="playedBody" class="collapsible-body">
-            <div id="playedList" class="list"></div>
-          </div>
+        <div class="col">
+          <div id="played"></div>
+          <div class="footer-line">Click a song to see requesters. Use buttons to mark Played / Unplayed or Remove / Put Back.</div>
         </div>
-
-        <div class="collapsible" id="removedWrap">
-          <div class="collapsible-header" data-target="removedBody">
-            <div>Removed Songs <span id="removedCount" class="count-pill">(0)</span></div>
-            <div class="twist">▸</div>
-          </div>
-          <div id="removedBody" class="collapsible-body">
-            <div id="removedList" class="list"></div>
-          </div>
-        </div>
-
-        <div class="footer-line" id="statusLine"></div>
-      </div>
-
-      <div id="tabSpamPane" class="hidden">
-        <div style="margin:6px 0 10px; font-size:18px; font-weight:800;">
-          Spammed Requests <span id="spamCountTop" class="count-pill">(0)</span>
-        </div>
-        <div id="spamList" class="list"></div>
       </div>
     </div>
   </div>
 
 <script>
-/* ===== Config ===== */
-const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxkSPUc2VWQYkhJ_af7CShegZLAMmVgUsTp2nMeVwkkhdFbdQT8wk2s6xBAAynjtLDT/exec';
+const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxaN-0GQmvwy3G9GKD4hqZ1D6mjrIbBNDZZW-uGbuHIpiVTQ0BtOkmlQzSqjU6yjkmJ-g/exec';
+const SPOTIFY_HELPER_URL = ''; // to be added later
 const POLL_MS = 5000;
 
-/* Render/poll control */
-const ACTION_RENDER_LOCK_MS = 1200;
-const ACTION_POLL_PAUSE_MS  = 1500;
-const BUCKET_HOLD_MS        = 2500;
-let renderLockUntil = 0;
+const eventSel = document.getElementById('eventSel');
+const inlineText = document.getElementById('inlineText');
+const inlineProgress = document.getElementById('inlineProgress');
+const inlineSpin = document.getElementById('inlineSpin');
+const provBadge = document.getElementById('provBadge');
+const requestsEl = document.getElementById('requests');
+const playedEl = document.getElementById('played');
+
+let currentCode = '';
 let pollTimer = null;
-let pollPausedUntil = 0;
-function lockRender(){ renderLockUntil = Date.now() + ACTION_RENDER_LOCK_MS; }
-function canRender(){ return Date.now() >= renderLockUntil; }
-function pausePolling(){ pollPausedUntil = Date.now() + ACTION_POLL_PAUSE_MS; stopPolling(); setTimeout(()=>{ if(Date.now()>=pollPausedUntil) startPolling(); }, ACTION_POLL_PAUSE_MS); }
+let rowsCache = [];
+let initialRequestsLoaded = false;
 
-/* ===== Elements ===== */
-const $ = s => document.querySelector(s);
-const eventSel=$('#eventSel');
-
-const inlineText=$('#inlineText');
-const inlineProgress=$('#inlineProgress');
-const inlineSpin=$('#inlineSpin');
-
-const tabRequestsBtn=$('#tabRequests'), tabSpamBtn=$('#tabSpam');
-const tabRequestsPane=$('#tabRequestsPane'), tabSpamPane=$('#tabSpamPane');
-
-const reqList=$('#reqList'), playedList=$('#playedList'), removedList=$('#removedList'), spamList=$('#spamList');
-const reqCountEl=$('#reqCount'), playedCountEl=$('#playedCount'), removedCountEl=$('#removedCount'), spamCountTop=$('#spamCountTop');
-const statusLine=$('#statusLine');
-
-/* ===== State ===== */
-let currentCode='';
-let rowsCache=[];
-const removedKeySet=new Set();
-const artCache=new Map();
-
-const inFlightByKey = new Map();
-const bucketHoldByKey = new Map();
-
-let initialRequestsLoaded = false; // controls bar vs spinner
-
-/* ===== Inline UI helpers ===== */
-function showFullLoading(msg='Loading your requests...'){
-  inlineText.textContent = msg;
-  inlineText.classList.remove('bad');
-  inlineText.classList.add('good');
-  inlineProgress.classList.add('show');
-  inlineSpin.classList.remove('show');
-}
-function showSpinnerOnly(){
-  inlineText.textContent = '';
-  inlineText.classList.remove('good','bad');
-  inlineProgress.classList.remove('show');
-  inlineSpin.classList.add('show');
-}
-function clearInline(){
-  inlineText.textContent = '';
-  inlineText.classList.remove('good','bad');
-  inlineProgress.classList.remove('show');
-  inlineSpin.classList.remove('show');
-}
-function showEventsError(){
-  inlineText.textContent = 'Could not load events.';
-  inlineText.classList.remove('good');
-  inlineText.classList.add('bad');
-  inlineProgress.classList.remove('show');
-  inlineSpin.classList.remove('show');
-}
+let EVENT_PROVIDER = 'apple';
+let EVENT_MARKET = 'US';
+let EXPLICIT_ALLOWED = true;
 
 /* ===== Utils ===== */
 function pad2(n){return String(n).padStart(2,'0');}
@@ -319,17 +202,48 @@ function jsonp(url,params={}){ const qs=new URLSearchParams(params); const cb='c
   });
 }
 
-/* Artwork */
-async function getArtwork(song,artist){
-  const k=keySong(song,artist); if(artCache.has(k)) return artCache.get(k);
-  try{ const data=await jsonp('https://itunes.apple.com/search',{term:`${song} ${artist}`.trim(),entity:'musicTrack',limit:1});
-    const url=data?.results?.[0]?.artworkUrl100||data?.results?.[0]?.artworkUrl60||''; artCache.set(k,url||''); return url||'';
-  }catch{ artCache.set(k,''); return ''; }
+/* Inline UI helpers */
+function showFullLoading(msg='Loading your requests.'){
+  inlineText.textContent = msg;
+  inlineText.classList.remove('bad'); inlineText.classList.add('good');
+  inlineProgress.classList.add('show');
+  inlineSpin.classList.remove('show');
+}
+function showSpinnerOnly(){
+  inlineText.textContent = '';
+  inlineText.classList.remove('good','bad');
+  inlineProgress.classList.remove('show');
+  inlineSpin.classList.add('show');
+}
+function clearInline(){
+  inlineText.textContent = '';
+  inlineText.classList.remove('good','bad');
+  inlineProgress.classList.remove('show');
+  inlineSpin.classList.remove('show');
+}
+function showEventsError(){
+  inlineText.textContent = 'Could not load events.';
+  inlineText.classList.remove('good'); inlineText.classList.add('bad');
+  inlineProgress.classList.remove('show'); inlineSpin.classList.remove('show');
 }
 
-/* Events */
+/* Event config */
+async function loadEventConfig(code){
+  EVENT_PROVIDER='apple'; EVENT_MARKET='US'; EXPLICIT_ALLOWED=true;
+  try{
+    const r=await jsonp(ENDPOINT_URL,{mode:'getEventConfig', event:code});
+    if(r && r.ok && r.config){
+      EVENT_PROVIDER = (r.config.provider||'apple').toLowerCase();
+      EVENT_MARKET = (r.config.market||'US').toUpperCase();
+      EXPLICIT_ALLOWED = !!r.config.explicitAllowed;
+    }
+  }catch{}
+  provBadge.textContent = `Provider: ${EVENT_PROVIDER.toUpperCase()}`;
+}
+
+/* Active events */
 async function loadActiveEvents(){
-  showFullLoading('Loading your events...');
+  showFullLoading('Loading your events.');
   try{
     const r=await jsonp(ENDPOINT_URL,{mode:'listActive'}); const list=Array.isArray(r?.events)?r.events:[];
     list.sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
@@ -341,313 +255,240 @@ async function loadActiveEvents(){
       eventSel.appendChild(opt);
     }
     const pre=(new URLSearchParams(location.search).get('event')||'').trim();
-    if(pre&&[...eventSel.options].some(o=>o.value===pre)) eventSel.value=pre;
+    if(pre && Array.from(eventSel.options).some(o=>o.value===pre)) eventSel.value=pre;
     currentCode=eventSel.value||'';
     clearInline();
   }catch{ showEventsError(); }
 }
 
-/* Polling */
 function startPolling(){ stopPolling(); pollTimer=setInterval(()=>fetchRows({background:true}), POLL_MS); }
 function stopPolling(){ if(pollTimer) clearInterval(pollTimer); pollTimer=null; }
 
+/* Fetch rows */
 async function fetchRows({background=false} = {}){
   if(!currentCode) return;
-  if(Date.now() < pollPausedUntil) return;
-
-  if (!initialRequestsLoaded || !background) showFullLoading('Loading your requests...');
+  if (!initialRequestsLoaded || !background) showFullLoading('Loading your requests.');
   else showSpinnerOnly();
 
   try{
     const r=await jsonp(ENDPOINT_URL,{mode:'read',event:currentCode});
     const raw = Array.isArray(r?.rows)?r.rows:[];
     rowsCache = raw.map(x=>({...x}));
-    if (canRender()) renderAll(rowsCache);
+    renderAll(rowsCache);
     initialRequestsLoaded = true;
   }catch{
-    statusLine.textContent='Connection error.';
+    inlineText.textContent='Connection error.'; inlineText.classList.add('bad');
   } finally{
-    if (!background) clearInline();
-    else inlineSpin.classList.remove('show');
+    if (!background) clearInline(); else inlineSpin.classList.remove('show');
   }
 }
 
-/* Build structures */
+/* Split buckets */
 function splitBuckets(rows){
-  const bySong=new Map(), playedGroups=new Map(), spamMap=new Map();
-  const now = Date.now();
+  const bySong=new Map(), playedGroups=new Map();
 
   for(const row of rows){
     const song=row.song_title||row.song||''; const artist=row.artist||''; const k=keySong(song,artist);
 
-    if(inFlightByKey.has(k)){
-      const {target}=inFlightByKey.get(k);
-      row.played = target;
-    }
-
-    if(!row.played && !removedKeySet.has(k)){
-      let g=bySong.get(k); if(!g){ g={key:k,song,artist,ids:[],names:new Set()}; bySong.set(k,g); }
+    if(!row.played){
+      let g=bySong.get(k); if(!g){ g={key:k,song,artist,ids:[],names:new Set(), link:row.link||''}; bySong.set(k,g); }
       g.ids.push(row.id); if(row.name) g.names.add(row.name);
-    }
-    if(row.played){
-      let pg=playedGroups.get(k); if(!pg){ pg={key:k,song,artist,ids:[],names:new Set()}; playedGroups.set(k,pg); }
-      pg.ids.push(row.id); if(row.name) pg.names.add(row.name);
-    }
-    const kp=`${k}|${(row.name||'').toLowerCase()}`; spamMap.set(kp,(spamMap.get(kp)||0)+1);
-  }
-
-  let requests=[...bySong.values()].map(g=>({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
-  let played  =[...playedGroups.values()].map(g=>({ key:g.key, song:g.song, artist:g.artist, ids:g.ids, people:[...g.names] }));
-
-  if (bucketHoldByKey.size){
-    const pinTo = (arrFrom, arrTo, keySetToPin) => {
-      for (const key of keySetToPin){
-        const idx = arrFrom.findIndex(x=>x.key===key);
-        if (idx>=0) arrFrom.splice(idx,1);
-      }
-      for (const key of keySetToPin){
-        if (!arrTo.some(x=>x.key===key)) {
-          const any = rows.find(r=> keySong(r.song_title||r.song,r.artist)===key);
-          if (any){
-            const ids = rows.filter(r=> keySong(r.song_title||r.song,r.artist)===key).map(r=>r.id);
-            const names=[...new Set(rows.filter(r=> keySong(r.song_title||r.song,r.artist)===key).map(r=>r.name).filter(Boolean))];
-            arrTo.push({ key, song:any.song_title||any.song, artist:any.artist, ids, people:names });
-          }
-        }
-      }
-    };
-
-    const toRequests=new Set(), toPlayed=new Set();
-    for (const [k,hold] of bucketHoldByKey.entries()){
-      if (now > hold.until){ bucketHoldByKey.delete(k); continue; }
-      if (hold.bucket==='requests') toRequests.add(k);
-      else if (hold.bucket==='played') toPlayed.add(k);
-    }
-    if (toRequests.size) pinTo(played, requests, toRequests);
-    if (toPlayed.size)   pinTo(requests, played, toPlayed);
-  }
-
-  const removed=[];
-  for(const rk of removedKeySet){
-    const rel=rows.filter(r=> keySong(r.song_title||r.song,r.artist)===rk && !r.played);
-    if(rel.length){
-      const names=[...new Set(rel.map(r=>r.name).filter(Boolean))];
-      const base=rel[0]; removed.push({ key:rk, song:base.song_title||base.song, artist:base.artist, ids:rel.map(r=>r.id), people:names });
-    }
-  }
-
-  const spam=[];
-  for(const [kp,count] of spamMap.entries()){
-    if(count>1){
-      const [songLower,artistLower,nameLower]=kp.split('|');
-      const any=rows.find(x=> keySong(x.song_title||x.song,x.artist)===`${songLower}|${artistLower}` && String(x.name||'').toLowerCase()===nameLower );
-      if(any){ spam.push({ song:any.song_title||any.song, artist:any.artist, name:any.name, count }); }
-    }
-  }
-
-  return { requests, played, removed, spam };
-}
-
-/* Card helpers */
-function namesBoxHTML(names){
-  return `<div class="names-box"><p class="hdr">Requesters</p><ul>${names.map(n=>`<li>${escapeHTML(n)}`).join('')}</ul></div>`;
-}
-function buildCardBase(obj){
-  const guests=obj.people.length;
-  const el=document.createElement('div');
-  el.className='card appear';
-  el.dataset.key=obj.key;
-  el.dataset.ids=JSON.stringify(obj.ids);
-  el.innerHTML=`
-    <img class="thumb" alt="">
-    <div class="meta">
-      <p class="title">${escapeHTML(obj.song||'Unknown Title')}</p>
-      <p class="sub">${escapeHTML(obj.artist||'Unknown Artist')}</p>
-      <div class="reqline"><span class="car">▸</span><span class="txt">Requested by ${guests} guest${guests===1?'':'s'}</span></div>
-      ${namesBoxHTML(obj.people)}
-    </div>
-    <div class="actions"></div>
-  `;
-  getArtwork(obj.song,obj.artist).then(src=>{ if(src){ const img=el.querySelector('.thumb'); img.src=src; img.alt=`${obj.song} cover`; }});
-  const box=el.querySelector('.names-box'); const reqline=el.querySelector('.reqline'); const car=reqline.querySelector('.car');
-  reqline.addEventListener('click',()=>{ const open=box.classList.toggle('open'); car.textContent=open?'▾':'▸'; });
-  requestAnimationFrame(()=> el.classList.add('card-ready'));
-  return el;
-}
-function updateCardBase(node,obj){
-  node.dataset.ids=JSON.stringify(obj.ids);
-  node.querySelector('.title').textContent=obj.song||'Unknown Title';
-  node.querySelector('.sub').textContent=obj.artist||'Unknown Artist';
-  node.querySelector('.txt').textContent=`Requested by ${obj.people.length} guest${obj.people.length===1?'':'s'}`;
-  node.querySelector('.names-box').innerHTML=`<p class="hdr">Requesters</p><ul>${obj.people.map(n=>`<li>${escapeHTML(n)}`).join('')}</ul>`;
-}
-
-/* Actions */
-async function togglePlayedForKey(key, ids, targetPlayed){
-  const now=Date.now();
-  inFlightByKey.set(key,{target:targetPlayed, ts:now});
-  bucketHoldByKey.set(key, { bucket: targetPlayed ? 'played' : 'requests', until: now + BUCKET_HOLD_MS });
-
-  lockRender(); pausePolling();
-  rowsCache = rowsCache.map(r => (ids.includes(r.id) ? {...r, played:targetPlayed} : r));
-  renderAll(rowsCache);
-
-  const card = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
-  if (card) card.querySelectorAll('.btn').forEach(b=> b.disabled = true);
-
-  try{
-    await Promise.all(ids.map(id => jsonp(ENDPOINT_URL,{mode:'setPlayed',id,played:String(targetPlayed)})));
-  }catch{}
-
-  const final = inFlightByKey.get(key);
-  if (!final || final.ts !== now) return;
-
-  if (card) card.querySelectorAll('.btn').forEach(b=> b.disabled = false);
-  inFlightByKey.delete(key);
-  await fetchRows({background:true});   /* spinner-only after actions */
-}
-
-function attachRequestActions(card){
-  const actions=card.querySelector('.actions');
-  actions.innerHTML=`
-    <button class="btn played" type="button">Mark as Played</button>
-    <button class="btn remove" type="button">Remove</button>
-  `;
-  actions.querySelector('.btn.played').addEventListener('click', ()=>{
-    const ids=JSON.parse(card.dataset.ids||'[]'); const key=card.dataset.key;
-    togglePlayedForKey(key, ids, true);
-  });
-  actions.querySelector('.btn.remove').addEventListener('click', ()=>{
-    lockRender(); pausePolling();
-    removedKeySet.add(card.dataset.key);
-    renderAll(rowsCache);
-  });
-}
-function attachPlayedActions(card){
-  const actions=card.querySelector('.actions');
-  actions.innerHTML=`
-    <button class="btn unplayed" type="button">Mark as Unplayed</button>
-  `;
-  actions.querySelector('.btn.unplayed').addEventListener('click', ()=>{
-    const ids=JSON.parse(card.dataset.ids||'[]'); const key=card.dataset.key;
-    togglePlayedForKey(key, ids, false);
-  });
-}
-function attachRemovedActions(card){
-  const actions=card.querySelector('.actions');
-  actions.innerHTML=`
-    <button class="btn putback" type="button">Put Back</button>
-  `;
-  actions.querySelector('.btn.putback').addEventListener('click', ()=>{
-    lockRender(); pausePolling();
-    removedKeySet.delete(card.dataset.key);
-    renderAll(rowsCache);
-  });
-}
-
-/* Stable renderer */
-function renderList(container, items, makeNode, updateNode){
-  const existing = new Map();
-  Array.from(container.children).forEach(ch=> existing.set(ch.dataset.key, ch));
-  existing.forEach((node,key)=>{ if(!items.some(it=>it.key===key)) node.remove(); });
-
-  container.classList.add('no-anim');
-
-  let cursor = container.firstChild;
-  for(const it of items){
-    let node = existing.get(it.key);
-    if(!node){
-      node = makeNode(it);
-      container.insertBefore(node, cursor || null);
+      if(!g.link && row.link) g.link = row.link;
     }else{
-      updateNode(node,it);
-      if(node !== cursor){
-        container.insertBefore(node, cursor || null);
+      let pg=playedGroups.get(k); if(!pg){ pg={key:k,song,artist,ids:[],names:new Set(), link:row.link||''}; playedGroups.set(k,pg); }
+      pg.ids.push(row.id); if(row.name) pg.names.add(row.name);
+      if(!pg.link && row.link) pg.link = row.link;
+    }
+  }
+
+  const requests = Array.from(bySong.values()).map(g=>({
+    key:g.key, song:g.song, artist:g.artist, count:g.ids.length, ids:g.ids, names:Array.from(g.names), link:g.link||''
+  })).sort((a,b)=> a.song.localeCompare(b.song));
+
+  const played = Array.from(playedGroups.values()).map(g=>({
+    key:g.key, song:g.song, artist:g.artist, count:g.ids.length, ids:g.ids, names:Array.from(g.names), link:g.link||''
+  })).sort((a,b)=> a.song.localeCompare(b.song));
+
+  return {requests, played};
+}
+
+/* Artwork (Apple quick lookup) */
+const artCache=new Map();
+async function getArtworkApple(song,artist){
+  const k=keySong(song,artist); if(artCache.has(k)) return artCache.get(k);
+  try{
+    const data=await jsonp('https://itunes.apple.com/search',{term:`${song} ${artist}`.trim(),entity:'musicTrack',limit:1});
+    const url=data?.results?.[0]?.artworkUrl100||data?.results?.[0]?.artworkUrl60||'';
+    artCache.set(k,url||''); return url||'';
+  }catch{ artCache.set(k,''); return ''; }
+}
+
+/* Link expansion per provider */
+const linkCache=new Map();
+
+/* Apple link expansion by song/artist */
+async function expandAppleLinks(song, artist){
+  const k=`apple|${keySong(song,artist)}`; if(linkCache.has(k)) return linkCache.get(k);
+  try{
+    const data=await jsonp('https://itunes.apple.com/search',{term:`${song} ${artist}`.trim(),entity:'musicTrack',country:EVENT_MARKET, limit:1});
+    const r=data?.results?.[0];
+    const out={
+      track: r?.trackViewUrl || '',
+      album: r?.collectionViewUrl || '',
+      artist: r?.artistViewUrl || '',
+      artwork: r?.artworkUrl100 || r?.artworkUrl60 || ''
+    };
+    linkCache.set(k,out); return out;
+  }catch{ const out={track:'',album:'',artist:'',artwork:''}; linkCache.set(k,out); return out; }
+}
+
+/* Spotify link expansion via helper */
+async function expandSpotifyLinks(song, artist, storedLink){
+  const baseKey = storedLink ? storedLink : `q|${keySong(song,artist)}`;
+  const k=`spotify|${baseKey}`; if(linkCache.has(k)) return linkCache.get(k);
+  if(!SPOTIFY_HELPER_URL){ const out={track:'',album:'',artist:'',artwork:'', uriTrack:'', uriAlbum:'', uriArtist:''}; linkCache.set(k,out); return out; }
+  try{
+    let u = new URL(SPOTIFY_HELPER_URL);
+    if (storedLink){
+      u.searchParams.set('trackUrl', storedLink);
+    }else{
+      u.searchParams.set('q', `${song} ${artist}`.trim());
+      u.searchParams.set('market', EVENT_MARKET);
+      u.searchParams.set('limit','1');
+    }
+    const res=await fetch(u.toString(),{mode:'cors'});
+    if(!res.ok){ const out={track:'',album:'',artist:'',artwork:'', uriTrack:'', uriAlbum:'', uriArtist:''}; linkCache.set(k,out); return out; }
+    const data=await res.json(); const t = Array.isArray(data?.items)?data.items[0]:data?.item;
+    const out = t ? {
+      track: `https://open.spotify.com/track/${t.trackId}`,
+      album: `https://open.spotify.com/album/${t.albumId}`,
+      artist: `https://open.spotify.com/artist/${t.artistId}`,
+      artwork: t.artwork||'',
+      uriTrack: `spotify:track:${t.trackId}`,
+      uriAlbum: `spotify:album:${t.albumId}`,
+      uriArtist: `spotify:artist:${t.artistId}`
+    } : {track:'',album:'',artist:'',artwork:'', uriTrack:'', uriAlbum:'', uriArtist:''};
+    linkCache.set(k,out); return out;
+  }catch{ const out={track:'',album:'',artist:'',artwork:'', uriTrack:'', uriAlbum:'', uriArtist:''}; linkCache.set(k,out); return out; }
+}
+
+/* Open-in-app with fallback */
+function openSpotifyWithFallback(ev){
+  const a = ev.currentTarget;
+  const web = a.getAttribute('data-web');
+  let opened=false;
+  const t = setTimeout(()=>{ if(!opened && web) window.open(web, '_blank'); }, 1200);
+  window.location.href = a.getAttribute('href');
+  document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ opened=true; clearTimeout(t); } }, {once:true});
+  ev.preventDefault();
+}
+
+/* Render one card */
+function renderCard(item, bucket){
+  const card = document.createElement('div'); card.className='card';
+  const cover = document.createElement('div'); cover.className='cover'; cover.textContent='♪';
+  const mid = document.createElement('div');
+  const title = document.createElement('h3'); title.className='title'; title.textContent=item.song||'';
+  const sub = document.createElement('p'); sub.className='sub'; sub.textContent=item.artist||'';
+  const reqline = document.createElement('div'); reqline.className='reqline';
+  const car = document.createElement('span'); car.className='car'; car.textContent='👤';
+  const txt = document.createElement('span'); txt.className='txt'; txt.textContent = `${item.count} request${item.count>1?'s':''}`;
+  reqline.append(car, txt);
+
+  const namesBox = document.createElement('div'); namesBox.className='names-box';
+  const hdr=document.createElement('p'); hdr.className='hdr'; hdr.textContent='Requested by:';
+  const ul=document.createElement('ul');
+  for(const n of item.names){ const li=document.createElement('li'); li.textContent=n; ul.appendChild(li); }
+  namesBox.append(hdr, ul);
+  reqline.addEventListener('click', ()=> namesBox.classList.toggle('open'));
+
+  mid.append(title, sub, reqline, namesBox);
+
+  const actions = document.createElement('div'); actions.className='actions';
+  const markPlayed = document.createElement('button'); markPlayed.className='btn played'; markPlayed.textContent='Mark Played';
+  const markUnplayed = document.createElement('button'); markUnplayed.className='btn unplayed'; markUnplayed.textContent='Mark Unplayed';
+  actions.append(markPlayed, markUnplayed);
+
+  card.append(cover, mid, actions);
+
+  (async ()=>{
+    let links={track:'',album:'',artist:'',artwork:''}, useSpotify=false, uri={};
+    if (EVENT_PROVIDER==='apple'){
+      links = await expandAppleLinks(item.song, item.artist);
+    }else if (EVENT_PROVIDER==='spotify'){
+      useSpotify=true;
+      const exp = await expandSpotifyLinks(item.song, item.artist, item.link||'');
+      links = {track:exp.track, album:exp.album, artist:exp.artist, artwork:exp.artwork};
+      uri = {track:exp.uriTrack, album:exp.uriAlbum, artist:exp.uriArtist};
+    }
+
+    if (links.artwork){
+      const img=new Image(); img.src=links.artwork; img.alt='';
+      cover.textContent=''; cover.appendChild(img);
+    }
+
+    function makeLink(el, uriStr, web){
+      if(!uriStr && !web) return;
+      if(EVENT_PROVIDER==='spotify' && uriStr){
+        el.setAttribute('href', uriStr);
+        el.setAttribute('data-web', web||'');
+        el.style.cursor='pointer';
+        el.addEventListener('click', openSpotifyWithFallback);
+      }else if (web){
+        el.onclick=()=>{ window.open(web,'_blank'); };
+        el.style.cursor='pointer';
       }
     }
-    cursor = node.nextSibling;
-  }
 
-  requestAnimationFrame(()=> container.classList.remove('no-anim'));
+    makeLink(cover, useSpotify?uri.album:'', links.album);
+    makeLink(title, useSpotify?uri.track:'', links.track);
+    makeLink(sub,   useSpotify?uri.artist:'', links.artist);
+  })();
+
+  markPlayed.onclick = ()=> togglePlayed(item.ids, true, markPlayed, markUnplayed);
+  markUnplayed.onclick = ()=> togglePlayed(item.ids, false, markPlayed, markUnplayed);
+
+  return card;
 }
 
-/* Build & render */
+/* Render all */
 function renderAll(rows){
-  const {requests, played, removed, spam}=splitBuckets(rows);
+  const {requests, played} = splitBuckets(rows);
+  requestsEl.innerHTML=''; playedEl.innerHTML='';
 
-  const sortedReq=[...requests].sort((a,b)=> b.people.length - a.people.length || (a.song||'').localeCompare(b.song||''));
-  renderList(reqList, sortedReq,
-    (obj)=>{ const el=buildCardBase(obj); attachRequestActions(el); return el; },
-    (node,obj)=> updateCardBase(node,obj)
-  );
+  for(const it of requests){ requestsEl.appendChild(renderCard(it, 'requests')); }
+  for(const it of played){ playedEl.appendChild(renderCard(it, 'played')); }
+}
 
-  const pg=[...played].sort((a,b)=>(a.song||'').localeCompare(b.song||''));
-  renderList(playedList, pg,
-    (obj)=>{ const el=buildCardBase(obj); attachPlayedActions(el); return el; },
-    (node,obj)=> updateCardBase(node,obj)
-  );
-
-  renderList(removedList, removed,
-    (obj)=>{ const el=buildCardBase(obj); attachRemovedActions(el); return el; },
-    (node,obj)=> updateCardBase(node,obj)
-  );
-
-  spamList.innerHTML='';
-  for(const s of spam){
-    const el=document.createElement('div'); el.className='card';
-    el.innerHTML=`
-      <img class="thumb" alt="">
-      <div class="meta">
-        <p class="title">${escapeHTML(s.song||'Unknown Title')}</p>
-        <p class="sub">${escapeHTML(s.artist||'Unknown Artist')}</p>
-        <p class="sub">Requested by ${escapeHTML(s.name||'Guest')} (x${s.count})</p>
-      </div>
-      <div class="actions"></div>
-    `;
-    getArtwork(s.song,s.artist).then(src=>{ if(src){ el.querySelector('.thumb').src=src; }});
-    spamList.appendChild(el);
+/* Played toggle -> calls setPlayed per id */
+async function togglePlayed(ids, val, btnA, btnB){
+  btnA.disabled=true; btnB.disabled=true;
+  try{
+    for(const id of ids){
+      await jsonp(ENDPOINT_URL, {mode:'setPlayed', id, played: val?'true':'false'});
+    }
+    await fetchRows({background:false});
+  }finally{
+    btnA.disabled=false; btnB.disabled=false;
   }
-
-  reqCountEl.textContent    = `(${reqList.children.length})`;
-  playedCountEl.textContent = `(${playedList.children.length})`;
-  removedCountEl.textContent= `(${removedList.children.length})`;
-  spamCountTop.textContent  = `(${spamList.children.length})`;
 }
 
-/* Collapsibles & tabs */
-function initCollapsibles(){
-  document.querySelectorAll('.collapsible-header').forEach(h=>{
-    h.addEventListener('click',()=>{
-      const p=h.parentElement; p.classList.toggle('open');
-      const t=h.querySelector('.twist'); if(t) t.textContent=p.classList.contains('open')?'▾':'▸';
-    });
-  });
-}
-function setTab(which){
-  if(which==='spam'){ tabSpamBtn.classList.add('active'); tabRequestsBtn.classList.remove('active'); tabSpamPane.classList.remove('hidden'); tabRequestsPane.classList.add('hidden'); }
-  else{ tabRequestsBtn.classList.add('active'); tabSpamBtn.classList.remove('active'); tabRequestsPane.classList.remove('hidden'); tabSpamPane.classList.add('hidden'); }
-}
-tabRequestsBtn.addEventListener('click',()=>setTab('requests'));
-tabSpamBtn.addEventListener('click',()=>setTab('spam'));
-
-/* Init */
+/* Change event */
 eventSel.addEventListener('change', async ()=>{
-  currentCode=eventSel.value||''; removedKeySet.clear();
-  initialRequestsLoaded = false;              // full-bar load on event change
-  await fetchRows({background:false});        // show full text + bar
-  startPolling();
+  currentCode = eventSel.value||'';
+  initialRequestsLoaded = false;
+  if (currentCode){
+    showFullLoading('Loading your requests.');
+    await loadEventConfig(currentCode);
+    await fetchRows({background:false});
+    startPolling();
+  }
 });
 
-(async function boot(){
+/* Init */
+(async ()=>{
   await loadActiveEvents();
-  initCollapsibles();
-  setTab('requests');
-  if(eventSel.value){
-    currentCode=eventSel.value;
-    initialRequestsLoaded = false;
-    await fetchRows({background:false});      // first load: full bar
-    startPolling();                           // background polls: spinner only
-  }
+  if (eventSel.value){ currentCode=eventSel.value; await loadEventConfig(currentCode); await fetchRows({background:false}); startPolling(); }
 })();
 </script>
 </body>
