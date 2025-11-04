@@ -73,4 +73,423 @@
     display:none;
   }
   .progress.show{ display:block; }
-  .progress::after
+  .progress::after{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(90deg, rgba(29,206,201,0) 0%, rgba(29,206,201,.9) 50%, rgba(29,206,201,0) 100%);
+    animation:bar 1.5s linear infinite;
+  }
+  @keyframes bar{ 0%{ transform:translateX(-60%);} 100%{ transform:translateX(60%);} }
+
+  .spin{
+    width:20px; height:20px; border-radius:50%; border:2px solid #999; border-top-color:#fff;
+    display:none; animation:spin .8s linear infinite;
+  }
+  .spin.show{ display:inline-block; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .tabs-bar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+  .tab{ background:#2a2a2a; border:1px solid #3a3a3a; color:#fff; padding:8px 10px; border-radius:10px; font-size:13px; }
+  .col{ background:var(--subsection); border:1px solid var(--border); border-radius:12px; padding:10px; }
+  .cols{ display:grid; grid-template-columns:1fr; gap:10px; }
+  @media(min-width:980px){ .cols{ grid-template-columns:1fr 1fr; } }
+
+  .card{ display:grid; grid-template-columns:64px 1fr 88px; gap:10px; padding:8px; border:1px solid #3a3a3a; border-radius:10px; background:#2a2a2a; margin-bottom:8px; }
+  .cover{ width:64px; height:64px; border-radius:8px; overflow:hidden; background:#1f1f1f; display:grid; place-items:center; }
+  .cover img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .title{ margin:0; font-size:15px; font-weight:800; color:#fff; }
+  .sub{ margin:0; color:#e6e6e6; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .reqline{ display:flex; align-items:center; gap:10px; margin-top:2px; cursor:pointer; user-select:none; }
+  .reqline .car{ font-size:18px; line-height:1; font-weight:800; color:#eaeaea; }
+  .reqline .txt{ font-size:14px; color:#eaeaea; font-weight:700; }
+
+  .names-box{ margin-top:6px; background:var(--subsection); border:1px solid var(--border); border-radius:10px; padding:8px 10px; display:none; }
+  .names-box.open{ display:block; }
+  .names-box .hdr{ color:#cfcfcf; font-size:13px; margin:0 0 4px; }
+  .names-box li{ margin:3px 0; color:#fafafa; font-size:13px; }
+
+  .actions{ display:grid; gap:6px; align-self:start; }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:0 10px; height:30px; font-size:12px; line-height:1;
+    border-radius:8px; border:1px solid transparent; cursor:pointer;
+    box-shadow:0 2px 0 rgba(0,0,0,.35), 0 8px 14px rgba(0,0,0,.15);
+    width:82%; margin:0 auto;
+  }
+  .btn:hover{ filter:brightness(1.05); }
+  .btn.played{   background:var(--accent); border-color:var(--accent); color:#000; }
+  .btn.unplayed{ background:var(--amber);  border-color:var(--amber);  color:#000; }
+  .btn.remove{   background:var(--danger); border-color:var(--danger); color:#fff; }
+  .btn.putback{  background:var(--put);    border-color:var(--put);    color:#fff; }
+  .btn[disabled]{ opacity:.7; cursor:not-allowed; }
+
+  .footer-line{ margin-top:10px; color:#fff; font-size:12px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="dce-logo">
+      <img src="assets/dce-logo.png" alt="David Charles Events" onerror="this.style.display='none'">
+    </div>
+    <div class="page-title">REQUESTS</div>
+
+    <div class="panel">
+      <label for="eventSel">Select Your Event</label>
+      <select id="eventSel"></select>
+
+      <div class="inline-row">
+        <span id="inlineText" class="inline-text"></span>
+        <div id="inlineProgress" class="progress"></div>
+        <span id="inlineSpin" class="spin" aria-hidden="true"></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="tabs-bar">
+        <span class="tab">Requests</span>
+        <span class="tab">Played</span>
+        <span class="tab">Removed</span>
+        <span class="tab">Spam</span>
+        <span class="tab" id="provBadge">Provider: —</span>
+      </div>
+      <div class="cols">
+        <div class="col">
+          <div id="requests"></div>
+        </div>
+        <div class="col">
+          <div id="played"></div>
+          <div class="footer-line">Click a song to see requesters. Use buttons to mark Played / Unplayed or Remove / Put Back.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxaN-0GQmvwy3G9GKD4hqZ1D6mjrIbBNDZZW-uGbuHIpiVTQ0BtOkmlQzSqjU6yjkmJ-g/exec';
+const SPOTIFY_HELPER_URL = ''; // to be added later
+const POLL_MS = 5000;
+
+const eventSel = document.getElementById('eventSel');
+const inlineText = document.getElementById('inlineText');
+const inlineProgress = document.getElementById('inlineProgress');
+const inlineSpin = document.getElementById('inlineSpin');
+const provBadge = document.getElementById('provBadge');
+const requestsEl = document.getElementById('requests');
+const playedEl = document.getElementById('played');
+
+let currentCode = '';
+let pollTimer = null;
+let rowsCache = [];
+let initialRequestsLoaded = false;
+
+let EVENT_PROVIDER = 'apple';
+let EVENT_MARKET = 'US';
+let EXPLICIT_ALLOWED = true;
+
+/* ===== Utils ===== */
+function pad2(n){return String(n).padStart(2,'0');}
+function dow3(n){return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][n]||'';}
+function formatHeaderDate(s){ const d=new Date(s); if(isNaN(d))return''; return `${dow3(d.getDay())} ${pad2(d.getMonth()+1)}.${pad2(d.getDate())}.${String(d.getFullYear()).slice(-2)}`;}
+function keySong(song,artist){ return `${(song||'').toLowerCase()}|${(artist||'').toLowerCase()}`;}
+function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* JSONP */
+function jsonp(url,params={}){ const qs=new URLSearchParams(params); const cb='cb_'+Math.random().toString(36).slice(2); qs.set('callback',cb); qs.set('t',Date.now());
+  return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=url+(url.includes('?')?'&':'?')+qs.toString();
+    const kill=setTimeout(()=>{cleanup(); rej(new Error('timeout'));},9000);
+    function cleanup(){clearTimeout(kill); try{delete window[cb];}catch{} s.remove();}
+    window[cb]=(d)=>{cleanup(); res(d);}; s.onerror=()=>{cleanup(); rej(new Error('jsonp'));}; document.body.appendChild(s);
+  });
+}
+
+/* Inline UI helpers */
+function showFullLoading(msg='Loading your requests.'){
+  inlineText.textContent = msg;
+  inlineText.classList.remove('bad'); inlineText.classList.add('good');
+  inlineProgress.classList.add('show');
+  inlineSpin.classList.remove('show');
+}
+function showSpinnerOnly(){
+  inlineText.textContent = '';
+  inlineText.classList.remove('good','bad');
+  inlineProgress.classList.remove('show');
+  inlineSpin.classList.add('show');
+}
+function clearInline(){
+  inlineText.textContent = '';
+  inlineText.classList.remove('good','bad');
+  inlineProgress.classList.remove('show');
+  inlineSpin.classList.remove('show');
+}
+function showEventsError(){
+  inlineText.textContent = 'Could not load events.';
+  inlineText.classList.remove('good'); inlineText.classList.add('bad');
+  inlineProgress.classList.remove('show'); inlineSpin.classList.remove('show');
+}
+
+/* Event config */
+async function loadEventConfig(code){
+  EVENT_PROVIDER='apple'; EVENT_MARKET='US'; EXPLICIT_ALLOWED=true;
+  try{
+    const r=await jsonp(ENDPOINT_URL,{mode:'getEventConfig', event:code});
+    if(r && r.ok && r.config){
+      EVENT_PROVIDER = (r.config.provider||'apple').toLowerCase();
+      EVENT_MARKET = (r.config.market||'US').toUpperCase();
+      EXPLICIT_ALLOWED = !!r.config.explicitAllowed;
+    }
+  }catch{}
+  provBadge.textContent = `Provider: ${EVENT_PROVIDER.toUpperCase()}`;
+}
+
+/* Active events */
+async function loadActiveEvents(){
+  showFullLoading('Loading your events.');
+  try{
+    const r=await jsonp(ENDPOINT_URL,{mode:'listActive'}); const list=Array.isArray(r?.events)?r.events:[];
+    list.sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
+    eventSel.innerHTML='';
+    if(!list.length){ const opt=document.createElement('option'); opt.value=''; opt.textContent='No active events'; eventSel.appendChild(opt); currentCode=''; showEventsError(); return; }
+    for(const ev of list){
+      const opt=document.createElement('option'); opt.value=ev.code;
+      const d=formatHeaderDate(ev.date); opt.textContent=d?`${d} - ${ev.name}`:(ev.name||ev.code);
+      eventSel.appendChild(opt);
+    }
+    const pre=(new URLSearchParams(location.search).get('event')||'').trim();
+    if(pre && Array.from(eventSel.options).some(o=>o.value===pre)) eventSel.value=pre;
+    currentCode=eventSel.value||'';
+    clearInline();
+  }catch{ showEventsError(); }
+}
+
+function startPolling(){ stopPolling(); pollTimer=setInterval(()=>fetchRows({background:true}), POLL_MS); }
+function stopPolling(){ if(pollTimer) clearInterval(pollTimer); pollTimer=null; }
+
+/* Fetch rows */
+async function fetchRows({background=false} = {}){
+  if(!currentCode) return;
+  if (!initialRequestsLoaded || !background) showFullLoading('Loading your requests.');
+  else showSpinnerOnly();
+
+  try{
+    const r=await jsonp(ENDPOINT_URL,{mode:'read',event:currentCode});
+    const raw = Array.isArray(r?.rows)?r.rows:[];
+    rowsCache = raw.map(x=>({...x}));
+    renderAll(rowsCache);
+    initialRequestsLoaded = true;
+  }catch{
+    inlineText.textContent='Connection error.'; inlineText.classList.add('bad');
+  } finally{
+    if (!background) clearInline(); else inlineSpin.classList.remove('show');
+  }
+}
+
+/* Split buckets */
+function splitBuckets(rows){
+  const bySong=new Map(), playedGroups=new Map();
+
+  for(const row of rows){
+    const song=row.song_title||row.song||''; const artist=row.artist||''; const k=keySong(song,artist);
+
+    if(!row.played){
+      let g=bySong.get(k); if(!g){ g={key:k,song,artist,ids:[],names:new Set(), link:row.link||''}; bySong.set(k,g); }
+      g.ids.push(row.id); if(row.name) g.names.add(row.name);
+      if(!g.link && row.link) g.link = row.link;
+    }else{
+      let pg=playedGroups.get(k); if(!pg){ pg={key:k,song,artist,ids:[],names:new Set(), link:row.link||''}; playedGroups.set(k,pg); }
+      pg.ids.push(row.id); if(row.name) pg.names.add(row.name);
+      if(!pg.link && row.link) pg.link = row.link;
+    }
+  }
+
+  const requests = Array.from(bySong.values()).map(g=>({
+    key:g.key, song:g.song, artist:g.artist, count:g.ids.length, ids:g.ids, names:Array.from(g.names), link:g.link||''
+  })).sort((a,b)=> a.song.localeCompare(b.song));
+
+  const played = Array.from(playedGroups.values()).map(g=>({
+    key:g.key, song:g.song, artist:g.artist, count:g.ids.length, ids:g.ids, names:Array.from(g.names), link:g.link||''
+  })).sort((a,b)=> a.song.localeCompare(b.song));
+
+  return {requests, played};
+}
+
+/* Artwork (Apple quick lookup) */
+const artCache=new Map();
+async function getArtworkApple(song,artist){
+  const k=keySong(song,artist); if(artCache.has(k)) return artCache.get(k);
+  try{
+    const data=await jsonp('https://itunes.apple.com/search',{term:`${song} ${artist}`.trim(),entity:'musicTrack',limit:1});
+    const url=data?.results?.[0]?.artworkUrl100||data?.results?.[0]?.artworkUrl60||'';
+    artCache.set(k,url||''); return url||'';
+  }catch{ artCache.set(k,''); return ''; }
+}
+
+/* Link expansion per provider */
+const linkCache=new Map();
+
+/* Apple link expansion by song/artist */
+async function expandAppleLinks(song, artist){
+  const k=`apple|${keySong(song,artist)}`; if(linkCache.has(k)) return linkCache.get(k);
+  try{
+    const data=await jsonp('https://itunes.apple.com/search',{term:`${song} ${artist}`.trim(),entity:'musicTrack',country:EVENT_MARKET, limit:1});
+    const r=data?.results?.[0];
+    const out={
+      track: r?.trackViewUrl || '',
+      album: r?.collectionViewUrl || '',
+      artist: r?.artistViewUrl || '',
+      artwork: r?.artworkUrl100 || r?.artworkUrl60 || ''
+    };
+    linkCache.set(k,out); return out;
+  }catch{ const out={track:'',album:'',artist:'',artwork:''}; linkCache.set(k,out); return out; }
+}
+
+/* Spotify link expansion via helper */
+async function expandSpotifyLinks(song, artist, storedLink){
+  const baseKey = storedLink ? storedLink : `q|${keySong(song,artist)}`;
+  const k=`spotify|${baseKey}`; if(linkCache.has(k)) return linkCache.get(k);
+  if(!SPOTIFY_HELPER_URL){ const out={track:'',album:'',artist:'',artwork:'', uriTrack:'', uriAlbum:'', uriArtist:''}; linkCache.set(k,out); return out; }
+  try{
+    let u = new URL(SPOTIFY_HELPER_URL);
+    if (storedLink){
+      u.searchParams.set('trackUrl', storedLink);
+    }else{
+      u.searchParams.set('q', `${song} ${artist}`.trim());
+      u.searchParams.set('market', EVENT_MARKET);
+      u.searchParams.set('limit','1');
+    }
+    const res=await fetch(u.toString(),{mode:'cors'});
+    if(!res.ok){ const out={track:'',album:'',artist:'',artwork:'', uriTrack:'', uriAlbum:'', uriArtist:''}; linkCache.set(k,out); return out; }
+    const data=await res.json(); const t = Array.isArray(data?.items)?data.items[0]:data?.item;
+    const out = t ? {
+      track: `https://open.spotify.com/track/${t.trackId}`,
+      album: `https://open.spotify.com/album/${t.albumId}`,
+      artist: `https://open.spotify.com/artist/${t.artistId}`,
+      artwork: t.artwork||'',
+      uriTrack: `spotify:track:${t.trackId}`,
+      uriAlbum: `spotify:album:${t.albumId}`,
+      uriArtist: `spotify:artist:${t.artistId}`
+    } : {track:'',album:'',artist:'',artwork:'', uriTrack:'', uriAlbum:'', uriArtist:''};
+    linkCache.set(k,out); return out;
+  }catch{ const out={track:'',album:'',artist:'',artwork:'', uriTrack:'', uriAlbum:'', uriArtist:''}; linkCache.set(k,out); return out; }
+}
+
+/* Open-in-app with fallback */
+function openSpotifyWithFallback(ev){
+  const a = ev.currentTarget;
+  const web = a.getAttribute('data-web');
+  let opened=false;
+  const t = setTimeout(()=>{ if(!opened && web) window.open(web, '_blank'); }, 1200);
+  window.location.href = a.getAttribute('href');
+  document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ opened=true; clearTimeout(t); } }, {once:true});
+  ev.preventDefault();
+}
+
+/* Render one card */
+function renderCard(item, bucket){
+  const card = document.createElement('div'); card.className='card';
+  const cover = document.createElement('div'); cover.className='cover'; cover.textContent='♪';
+  const mid = document.createElement('div');
+  const title = document.createElement('h3'); title.className='title'; title.textContent=item.song||'';
+  const sub = document.createElement('p'); sub.className='sub'; sub.textContent=item.artist||'';
+  const reqline = document.createElement('div'); reqline.className='reqline';
+  const car = document.createElement('span'); car.className='car'; car.textContent='👤';
+  const txt = document.createElement('span'); txt.className='txt'; txt.textContent = `${item.count} request${item.count>1?'s':''}`;
+  reqline.append(car, txt);
+
+  const namesBox = document.createElement('div'); namesBox.className='names-box';
+  const hdr=document.createElement('p'); hdr.className='hdr'; hdr.textContent='Requested by:';
+  const ul=document.createElement('ul');
+  for(const n of item.names){ const li=document.createElement('li'); li.textContent=n; ul.appendChild(li); }
+  namesBox.append(hdr, ul);
+  reqline.addEventListener('click', ()=> namesBox.classList.toggle('open'));
+
+  mid.append(title, sub, reqline, namesBox);
+
+  const actions = document.createElement('div'); actions.className='actions';
+  const markPlayed = document.createElement('button'); markPlayed.className='btn played'; markPlayed.textContent='Mark Played';
+  const markUnplayed = document.createElement('button'); markUnplayed.className='btn unplayed'; markUnplayed.textContent='Mark Unplayed';
+  actions.append(markPlayed, markUnplayed);
+
+  card.append(cover, mid, actions);
+
+  (async ()=>{
+    let links={track:'',album:'',artist:'',artwork:''}, useSpotify=false, uri={};
+    if (EVENT_PROVIDER==='apple'){
+      links = await expandAppleLinks(item.song, item.artist);
+    }else if (EVENT_PROVIDER==='spotify'){
+      useSpotify=true;
+      const exp = await expandSpotifyLinks(item.song, item.artist, item.link||'');
+      links = {track:exp.track, album:exp.album, artist:exp.artist, artwork:exp.artwork};
+      uri = {track:exp.uriTrack, album:exp.uriAlbum, artist:exp.uriArtist};
+    }
+
+    if (links.artwork){
+      const img=new Image(); img.src=links.artwork; img.alt='';
+      cover.textContent=''; cover.appendChild(img);
+    }
+
+    function makeLink(el, uriStr, web){
+      if(!uriStr && !web) return;
+      if(EVENT_PROVIDER==='spotify' && uriStr){
+        el.setAttribute('href', uriStr);
+        el.setAttribute('data-web', web||'');
+        el.style.cursor='pointer';
+        el.addEventListener('click', openSpotifyWithFallback);
+      }else if (web){
+        el.onclick=()=>{ window.open(web,'_blank'); };
+        el.style.cursor='pointer';
+      }
+    }
+
+    makeLink(cover, useSpotify?uri.album:'', links.album);
+    makeLink(title, useSpotify?uri.track:'', links.track);
+    makeLink(sub,   useSpotify?uri.artist:'', links.artist);
+  })();
+
+  markPlayed.onclick = ()=> togglePlayed(item.ids, true, markPlayed, markUnplayed);
+  markUnplayed.onclick = ()=> togglePlayed(item.ids, false, markPlayed, markUnplayed);
+
+  return card;
+}
+
+/* Render all */
+function renderAll(rows){
+  const {requests, played} = splitBuckets(rows);
+  requestsEl.innerHTML=''; playedEl.innerHTML='';
+
+  for(const it of requests){ requestsEl.appendChild(renderCard(it, 'requests')); }
+  for(const it of played){ playedEl.appendChild(renderCard(it, 'played')); }
+}
+
+/* Played toggle -> calls setPlayed per id */
+async function togglePlayed(ids, val, btnA, btnB){
+  btnA.disabled=true; btnB.disabled=true;
+  try{
+    for(const id of ids){
+      await jsonp(ENDPOINT_URL, {mode:'setPlayed', id, played: val?'true':'false'});
+    }
+    await fetchRows({background:false});
+  }finally{
+    btnA.disabled=false; btnB.disabled=false;
+  }
+}
+
+/* Change event */
+eventSel.addEventListener('change', async ()=>{
+  currentCode = eventSel.value||'';
+  initialRequestsLoaded = false;
+  if (currentCode){
+    showFullLoading('Loading your requests.');
+    await loadEventConfig(currentCode);
+    await fetchRows({background:false});
+    startPolling();
+  }
+});
+
+/* Init */
+(async ()=>{
+  await loadActiveEvents();
+  if (eventSel.value){ currentCode=eventSel.value; await loadEventConfig(currentCode); await fetchRows({background:false}); startPolling(); }
+})();
+</script>
+</body>
+</html>
